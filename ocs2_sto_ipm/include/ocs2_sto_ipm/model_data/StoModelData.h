@@ -28,6 +28,7 @@ struct StoModelData {
 
   // Inequality constraints
   VectorFunctionLinearApproximationWrapper stateIneqConstraint;
+  VectorFunctionLinearApproximationWrapper inputIneqConstraint;
   VectorFunctionLinearApproximationWrapper stateInputIneqConstraint;
 
   // Equality constraints

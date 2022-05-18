@@ -34,7 +34,10 @@ std::string checkSize(const StoModelData& data, int stateDim, int inputDim) {
   // state inequality constraints
   errorDescription << checkSize(data.stateIneqConstraint.base.f.size(), stateDim, 0, data.stateIneqConstraint, "stateIneqConstraint");
 
-  // state inequality constraints
+  // input inequality constraints
+  errorDescription << checkSize(data.stateIneqConstraint.base.f.size(), 0, inputDim, data.inputIneqConstraint, "inputIneqConstraint");
+
+  // state-input inequality constraints
   errorDescription << checkSize(data.stateInputIneqConstraint.base.f.size(), stateDim, inputDim, data.stateInputIneqConstraint, 
                                 "stateInputIneqConstraint");
 
@@ -153,6 +156,15 @@ std::string checkConstraintProperties(const StoModelData& data) {
     }
     if (!data.stateIneqConstraint.base.dfdx.allFinite()) {
       errorDescription << "State-only inequality constraint derivative w.r.t. state is not finite.\n";
+    }
+  }
+
+  if (data.stateIneqConstraint.base.f.rows() > 0) {
+    if (!data.inputIneqConstraint.base.f.allFinite()) {
+      errorDescription << "Input-only inequality constraint is not finite.\n";
+    }
+    if (!data.inputIneqConstraint.base.dfdu.allFinite()) {
+      errorDescription << "Input-only inequality constraint derivative w.r.t. input is not finite.\n";
     }
   }
 

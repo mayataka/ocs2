@@ -27,7 +27,7 @@ void approximateIntermediateLQ(SwitchingTimeOptimalControlProblem& problem, cons
   modelData.dynamics.base = problem.dynamicsPtr->linearApproximation(time, state, input, preComputation);
 
   // Cost
-  modelData.cost.base = ocs2::approximateCost(problem, time, state, input);
+  modelData.cost.base = approximateCost(problem, time, state, input);
 
   // Inequality constraints
   modelData.stateIneqConstraint.base = problem.stateInequalityConstraintPtr->getLinearApproximation(time, state, preComputation);
@@ -40,13 +40,13 @@ void approximateIntermediateLQ(SwitchingTimeOptimalControlProblem& problem, cons
   // Lagrangians
   if (!problem.stateEqualityLagrangianPtr->empty()) {
     auto approx = problem.stateEqualityLagrangianPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
-    modelData.cost.base.f.noalias() += approx.f;
+    modelData.cost.base.f += approx.f;
     modelData.cost.base.dfdx.noalias() += approx.dfdx;
     modelData.cost.base.dfdxx.noalias() += approx.dfdxx;
   }
   if (!problem.stateInequalityLagrangianPtr->empty()) {
     auto approx = problem.stateInequalityLagrangianPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
-    modelData.cost.base.f.noalias() += approx.f;
+    modelData.cost.base.f += approx.f;
     modelData.cost.base.dfdx.noalias() += approx.dfdx;
     modelData.cost.base.dfdxx.noalias() += approx.dfdxx;
   }
@@ -61,7 +61,7 @@ void approximateIntermediateLQ(SwitchingTimeOptimalControlProblem& problem, cons
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void approximatePreJumpLQ(SwitchingTimeOptimalControlProblem& problem, const scalar_t& time, const vector_t& state, StoModeData& modelData) {
+void approximatePreJumpLQ(SwitchingTimeOptimalControlProblem& problem, const scalar_t& time, const vector_t& state, StoModelData& modelData) {
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   auto& preComputation = *problem.preComputationPtr;
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Dynamics + Request::Approximation;
@@ -87,22 +87,22 @@ void approximatePreJumpLQ(SwitchingTimeOptimalControlProblem& problem, const sca
   // Lagrangians
   if (!problem.preJumpEqualityLagrangianPtr->empty()) {
     auto approx = problem.preJumpEqualityLagrangianPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
-    modelData.cost.f.noalias() += approx.f;
-    modelData.cost.dfdx.noalias() += approx.dfdx;
-    modelData.cost.dfdxx.noalias() += approx.dfdxx;
+    modelData.cost.base.f += approx.f;
+    modelData.cost.base.dfdx.noalias() += approx.dfdx;
+    modelData.cost.base.dfdxx.noalias() += approx.dfdxx;
   }
   if (!problem.preJumpInequalityLagrangianPtr->empty()) {
     auto approx = problem.preJumpInequalityLagrangianPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
-    modelData.cost.f.noalias() += approx.f;
-    modelData.cost.dfdx.noalias() += approx.dfdx;
-    modelData.cost.dfdxx.noalias() += approx.dfdxx;
+    modelData.cost.base.f += approx.f;
+    modelData.cost.base.dfdx.noalias() += approx.dfdx;
+    modelData.cost.base.dfdxx.noalias() += approx.dfdxx;
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-void approximateFinalLQ(SwitchingTimeOptimalControlProblem& problem, const scalar_t& time, const vector_t& state, StoModeData& modelData) {
+void approximateFinalLQ(SwitchingTimeOptimalControlProblem& problem, const scalar_t& time, const vector_t& state, StoModelData& modelData) {
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   auto& preComputation = *problem.preComputationPtr;
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Approximation;
@@ -128,13 +128,13 @@ void approximateFinalLQ(SwitchingTimeOptimalControlProblem& problem, const scala
   // Lagrangians
   if (!problem.finalEqualityLagrangianPtr->empty()) {
     auto approx = problem.finalEqualityLagrangianPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
-    modelData.cost.base.f.noalias() += approx.f;
+    modelData.cost.base.f += approx.f;
     modelData.cost.base.dfdx.noalias() += approx.dfdx;
     modelData.cost.base.dfdxx.noalias() += approx.dfdxx;
   }
   if (!problem.finalInequalityLagrangianPtr->empty()) {
     auto approx = problem.finalInequalityLagrangianPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
-    modelData.cost.base.f.noalias() += approx.f;
+    modelData.cost.base.f += approx.f;
     modelData.cost.base.dfdx.noalias() += approx.dfdx;
     modelData.cost.base.dfdxx.noalias() += approx.dfdxx;
   }
@@ -175,15 +175,15 @@ ScalarFunctionQuadraticApproximation approximateCost(const SwitchingTimeOptimalC
   if (!problem.stateCostPtr->empty()) {
     auto stateCost = problem.stateCostPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
     cost.f += stateCost.f;
-    cost.dfdx += stateCost.dfdx;
-    cost.dfdxx += stateCost.dfdxx;
+    cost.dfdx.noalias() += stateCost.dfdx;
+    cost.dfdxx.noalias() += stateCost.dfdxx;
   }
 
   if (!problem.stateSoftConstraintPtr->empty()) {
     auto stateCost = problem.stateSoftConstraintPtr->getQuadraticApproximation(time, state, targetTrajectories, preComputation);
     cost.f += stateCost.f;
-    cost.dfdx += stateCost.dfdx;
-    cost.dfdxx += stateCost.dfdxx;
+    cost.dfdx.noalias() += stateCost.dfdx;
+    cost.dfdxx.noalias() += stateCost.dfdxx;
   }
 
   return cost;

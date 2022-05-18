@@ -52,6 +52,9 @@ add_library(${PROJECT_NAME}
   src/TimeDiscretization.cpp
   src/model_data/StoModelData.cpp
   src/stoc_problem/SwitchingTimeOptimalControlProblem.cpp
+  src/approximate_model/LinearQuadraticApproximator.cpp
+  src/interior_point_method/InteriorPointMethodData.cpp
+  src/interior_point_method/InteriorPointMethod.cpp
   src/reference/DiscreteTimeModeSchedule.cpp
   src/riccati_recursion/BackwardRiccatiRecursion.cpp
   src/riccati_recursion/ForwardRiccatiRecursion.cpp
