@@ -45,11 +45,11 @@ ScalarFunctionQuadraticApproximation::ScalarFunctionQuadraticApproximation(size_
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::operator+=(const ScalarFunctionQuadraticApproximation& rhs) {
   f += rhs.f;
-  dfdx += rhs.dfdx;
-  dfdu += rhs.dfdu;
-  dfdxx += rhs.dfdxx;
-  dfdux += rhs.dfdux;
-  dfduu += rhs.dfduu;
+  dfdx.noalias() += rhs.dfdx;
+  dfdu.noalias() += rhs.dfdu;
+  dfdxx.noalias() += rhs.dfdxx;
+  dfdux.noalias() += rhs.dfdux;
+  dfduu.noalias() += rhs.dfduu;
   return *this;
 }
 
@@ -58,11 +58,11 @@ ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::oper
 /******************************************************************************************************/
 ScalarFunctionQuadraticApproximation& ScalarFunctionQuadraticApproximation::operator*=(scalar_t scalar) {
   f *= scalar;
-  dfdx *= scalar;
-  dfdu *= scalar;
-  dfdxx *= scalar;
-  dfdux *= scalar;
-  dfduu *= scalar;
+  dfdx.array() *= scalar;
+  dfdu.array() *= scalar;
+  dfdxx.array() *= scalar;
+  dfdux.array() *= scalar;
+  dfduu.array() *= scalar;
   return *this;
 }
 
