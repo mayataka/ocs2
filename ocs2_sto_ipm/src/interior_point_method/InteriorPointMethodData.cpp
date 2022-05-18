@@ -31,6 +31,7 @@ InteriorPointMethodData& InteriorPointMethodData::resize(size_t nc, size_t nx, s
   slackDirection.resize(nc);
   dualDirection.resize(nc);
   cond.resize(nc);
+  dualDivSlack.resize(nc);
   linearApproximation.resize(nc, nx, nu);
   return *this;
 }
@@ -47,6 +48,7 @@ InteriorPointMethodData& InteriorPointMethodData::setZero(size_t nc, size_t nx, 
   slackDirection.setZero(nc);
   dualDirection.setZero(nc);
   cond.setZero(nc);
+  dualDivSlack.setZero(nc);
   linearApproximation.setZero(nc, nx, nu);
   return *this;
 }
@@ -63,6 +65,7 @@ InteriorPointMethodData& InteriorPointMethodData::setBarrier(scalar_t inputBarri
   slackDirection.setZero();
   dualDirection.setZero();
   cond.setZero();
+  dualDivSlack.setZero();
   linearApproximation.f.setZero();
   linearApproximation.dfdx.setZero();
   linearApproximation.dfdu.setZero();
@@ -92,6 +95,9 @@ InteriorPointMethodData InteriorPointMethodData::Zero(size_t nc, size_t nx, size
 std::string checkSize(int constraintDim, const InteriorPointMethodData& data, const std::string& dataName) {
   std::stringstream errorDescription;
 
+  if (data.dim != constraintDim) {
+    errorDescription << dataName << ".dim != " << constraintDim << "\n";
+  }
   if (data.slack.size() != constraintDim) {
     errorDescription << dataName << ".slack.size() != " << constraintDim << "\n";
   }
@@ -112,6 +118,9 @@ std::string checkSize(int constraintDim, const InteriorPointMethodData& data, co
   }
   if (data.cond.size() != constraintDim) {
     errorDescription << dataName << ".cond.size() != " << constraintDim << "\n";
+  }
+  if (data.dualDivSlack.size() != constraintDim) {
+    errorDescription << dataName << ".dualDivSlack.size() != " << constraintDim << "\n";
   }
   return errorDescription.str();
 }

@@ -46,19 +46,28 @@ void condensingStateInputIneqConstraint(
     InteriorPointMethodData& data, 
     ScalarFunctionQuadraticApproximation& cost);
 
+void computeDualDirection(InteriorPointMethodData& data);
+
 void expansionStateIneqConstraint(
     const VectorFunctionLinearApproximation& stateIneqConstraint,
     const vector_t& dx, InteriorPointMethodData& data);
 
 void expansionInputIneqConstraint(
     const VectorFunctionLinearApproximation& inputIneqConstraint,
-    const vector_t& dx, InteriorPointMethodData& data);
+    const vector_t& du, InteriorPointMethodData& data);
 
 void expansionStateInputIneqConstraint(
     const VectorFunctionLinearApproximation& stateInputIneqConstraint, 
     const vector_t& dx, const vector_t& du, InteriorPointMethodData& data);
 
-scalar_t fractionToBoundaryStepSize(const InteriorPointMethodData& data);
+scalar_t fractionToBoundaryStepSize(size_t dim, const vector_t& v, const vector_t& dv,
+                                    scalar_t marginRate=0.995);
+
+scalar_t fractionToBoundaryPrimalStepSize(const InteriorPointMethodData& data,
+                                          scalar_t marginRate=0.995);
+
+scalar_t fractionToBoundaryDualStepSize(const InteriorPointMethodData& data,
+                                        scalar_t marginRate=0.995);
 
 }  // namespace sto_ipm
 }  // namespace ocs2

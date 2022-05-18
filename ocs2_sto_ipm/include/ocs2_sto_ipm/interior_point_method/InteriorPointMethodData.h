@@ -29,7 +29,7 @@ struct InteriorPointMethodData {
   vector_t dualDirection;
 
   // Temporal data in condensing
-  vector_t cond;
+  vector_t cond, dualDivSlack;
   VectorFunctionLinearApproximation linearApproximation;
 
   /** Default constructor */
