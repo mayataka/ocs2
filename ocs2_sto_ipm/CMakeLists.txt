@@ -50,6 +50,8 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/Types.cpp
   src/TimeDiscretization.cpp
+  src/model_data/StoModelData.cpp
+  src/stoc_problem/SwitchingTimeOptimalControlProblem.cpp
   src/reference/DiscreteTimeModeSchedule.cpp
   src/riccati_recursion/BackwardRiccatiRecursion.cpp
   src/riccati_recursion/ForwardRiccatiRecursion.cpp
