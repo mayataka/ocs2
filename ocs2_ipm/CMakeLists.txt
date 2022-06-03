@@ -50,7 +50,8 @@ add_library(${PROJECT_NAME}
   src/oc_problem/OptimalControlProblem.cpp
   src/oc_data/Metrics.cpp
   src/approximate_model/LinearQuadraticApproximator.cpp
-  src/ipm/SlackDualData.cpp
+  src/approximate_model/LinearQuadraticDiscretizer.cpp
+  src/ipm/SlackDual.cpp
   src/ipm/InteriorPointMethodSolution.cpp
   src/ipm/InteriorPointMethodData.cpp
   src/ipm/InteriorPointMethod.cpp

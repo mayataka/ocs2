@@ -9,27 +9,27 @@ namespace ocs2 {
 /**
  * This class contains the slack and dual variables of the primal-dual interior point method.
  */
-struct SlackDualData {
+struct SlackDual {
   /** Constructor */
-  SlackDualData() = default;
+  SlackDual() = default;
 
   /** Destructor */
-  ~SlackDualData() = default;
+  ~SlackDual() = default;
 
   /** Copy constructor */
-  SlackDualData(const SlackDualData& other) = default;
+  SlackDual(const SlackDual& other) = default;
 
   /** Copy Assignment */
-  SlackDualData& operator=(const SlackDualData& other) = default;
+  SlackDual& operator=(const SlackDual& other) = default;
 
   /** Move constructor */
-  SlackDualData(SlackDualData&& other) noexcept = default;
+  SlackDual(SlackDual&& other) noexcept = default;
 
   /** Move Assignment */
-  SlackDualData& operator=(SlackDualData&& other) noexcept = default;
+  SlackDual& operator=(SlackDual&& other) noexcept = default;
 
   /** Swap */
-  void swap(SlackDualData& other) {
+  void swap(SlackDual& other) {
     slack.swap(other.slack);
     dual.swap(other.dual);
   }
@@ -45,35 +45,35 @@ struct SlackDualData {
  *
  * @param[in] nc: Size of the constraint. Must be non-negative.
  * @param[in] barrier: The barrier parameter. Must be positive.
- * @param[in] slackDual: Given SlackDualData.
+ * @param[in] slackDual: Given SlackDual.
  */
-void setBarrier(size_t nc, scalar_t barrier, SlackDualData& slackDual);
+void setBarrier(size_t nc, scalar_t barrier, SlackDual& slackDual);
 
 /**
  * Sets the default values to slack and dual.
  *
  * @param[in] barrier: The barrier parameter. Must be positive.
- * @param[in] slackDual: Given SlackDualData.
+ * @param[in] slackDual: Given SlackDual.
  */
-void setBarrier(scalar_t barrier, SlackDualData& slackDual);
+void setBarrier(scalar_t barrier, SlackDual& slackDual);
 
 /**
- * Checks the size of the given SlackDualData.
+ * Checks the size of the given SlackDual.
  *
  * @param[in] constraintDim: Constraint dimension.
- * @param[in] slackDual: Given SlackDualData.
+ * @param[in] slackDual: Given SlackDual.
  * @param[in] dataName: The name of the data which appears in the output error message.
  * @return The description of the error. If there was no error it would be empty;
  */
-std::string checkSize(int constraintDim, const SlackDualData& slackDual, const std::string& dataName);
+std::string checkSize(int constraintDim, const SlackDual& slackDual, const std::string& dataName);
 
 /**
- * Checks that some coefficients of the given SlackDualData is positive.
+ * Checks that some coefficients of the given SlackDual is positive.
  *
- * @param[in] slackDual: Given SlackDualData.
+ * @param[in] slackDual: Given SlackDual.
  * @param[in] dataName: The name of the data which appears in the output error message.
  * @return The description of the error. If there was no error it would be empty;
  */
-std::string checkPositive(const SlackDualData& slackDual, const std::string& dataName);
+std::string checkPositive(const SlackDual& slackDual, const std::string& dataName);
 
 }  // namespace ocs2

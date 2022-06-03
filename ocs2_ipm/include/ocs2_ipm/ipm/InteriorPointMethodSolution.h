@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include <ocs2_ipm/ipm/SlackDualData.h>
+#include <ocs2_ipm/ipm/SlackDual.h>
 
 namespace ocs2 {
 
@@ -37,7 +37,7 @@ struct InteriorPointMethodSolution {
     slackDualTrajectory_.clear();
   }
 
-  std::vector<SlackDualData> slackDualTrajectory_;
+  std::vector<SlackDual> slackDualTrajectory_;
 };
 
 

@@ -187,6 +187,12 @@ struct VectorFunctionLinearApproximation {
   /** Construct and resize the members to given size. */
   VectorFunctionLinearApproximation(size_t nv, size_t nx, size_t nu);
 
+  /** Compound addition assignment operator */
+  VectorFunctionLinearApproximation& operator+=(const VectorFunctionLinearApproximation& rhs);
+
+  /** Compound scalar multiplication and assignment operator */
+  VectorFunctionLinearApproximation& operator*=(scalar_t scalar);
+
   /**
    * Resize the members to the given size
    * @param[in] nv Vector dimension
@@ -227,6 +233,13 @@ std::ostream& operator<<(std::ostream& out, const VectorFunctionLinearApproximat
  */
 std::string checkSize(int vectorDim, int stateDim, int inputDim, const VectorFunctionLinearApproximation& data,
                       const std::string& dataName);
+
+inline VectorFunctionLinearApproximation operator*(VectorFunctionLinearApproximation lhs, scalar_t scalar) {
+  return lhs *= scalar;
+}
+inline VectorFunctionLinearApproximation operator*(scalar_t scalar, VectorFunctionLinearApproximation rhs) {
+  return rhs *= scalar;
+}
 
 /**
  * Defines quadratic approximation of a vector-valued function

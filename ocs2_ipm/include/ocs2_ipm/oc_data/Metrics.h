@@ -12,7 +12,11 @@ struct Metrics {
   // Cost
   scalar_t cost;
 
+  // (Discretized) state equation  
+  vector_t stateEquation;
+
   // Inequality constraints
+  scalar_t slackBarrier;
   vector_t stateIneqConstraint;
   vector_t stateInputIneqConstraint;
 

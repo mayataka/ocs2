@@ -10,6 +10,9 @@ void swap(Metrics& lhs, Metrics& rhs) {
   // Cost
   std::swap(lhs.cost, rhs.cost);
 
+  // (Discretized) state equation  
+  lhs.stateEquation.swap(rhs.stateEquation);
+
   // Inequality constraints
   lhs.stateIneqConstraint.swap(rhs.stateIneqConstraint);
   lhs.stateInputIneqConstraint.swap(rhs.stateInputIneqConstraint);
@@ -36,6 +39,9 @@ void swap(Metrics& lhs, Metrics& rhs) {
 void clear(Metrics& m) {
   // Cost
   m.cost = 0.0;
+
+  // (Discretized) state equation  
+  m.stateEquation = vector_t();
 
   // Inequality constraints
   m.stateIneqConstraint = vector_t();

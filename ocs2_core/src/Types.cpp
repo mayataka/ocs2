@@ -219,6 +219,26 @@ VectorFunctionLinearApproximation::VectorFunctionLinearApproximation(size_t nv, 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+VectorFunctionLinearApproximation& VectorFunctionLinearApproximation::operator+=(const VectorFunctionLinearApproximation& rhs) {
+  f.noalias() += rhs.f;
+  dfdx.noalias() += rhs.dfdx;
+  dfdu.noalias() += rhs.dfdu;
+  return *this;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+VectorFunctionLinearApproximation& VectorFunctionLinearApproximation::operator*=(scalar_t scalar) {
+  f.array() *= scalar;
+  dfdx.array() *= scalar;
+  dfdu.array() *= scalar;
+  return *this;
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 VectorFunctionLinearApproximation& VectorFunctionLinearApproximation::resize(size_t nv, size_t nx, size_t nu) {
   f.resize(nv);
   dfdx.resize(nv, nx);

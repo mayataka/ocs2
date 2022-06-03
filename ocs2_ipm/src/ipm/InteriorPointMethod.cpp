@@ -5,11 +5,11 @@
 
 namespace ocs2 {
 
-void initSlackDualData(const VectorFunctionLinearApproximation& constraint,
-                       SlackDualData& slackDual, scalar_t barrier) {
-  const auto nc = constraint.f.size();
+void initSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
+                   SlackDual& slackDual, scalar_t barrier) {
+  const auto nc = ineqConstraint.f.size();
   setBarrier(nc, barrier, slackDual);
-  slackDual.slack = - constraint.f;
+  slackDual.slack = - ineqConstraint.f;
   for (size_t i=0; i<nc; ++i) {
     slackDual.slack[i] = std::max(slackDual.slack[i], std::sqrt(barrier));
   }
@@ -17,121 +17,81 @@ void initSlackDualData(const VectorFunctionLinearApproximation& constraint,
 }
 
 
-void initInteriorPointMethodData(const VectorFunctionLinearApproximation& constraint,
+void initInteriorPointMethodData(const VectorFunctionLinearApproximation& ineqConstraint,
                                  InteriorPointMethodData& data) {
-  const auto nc = constraint.f.size();
-  const auto nx = constraint.dfdx.cols();
-  const auto nu = constraint.dfdu.cols();
+  const auto nc = ineqConstraint.f.size();
+  const auto nx = ineqConstraint.dfdx.cols();
+  const auto nu = ineqConstraint.dfdu.cols();
   data.setZero(nc, nx, nu);
 }
 
 
-void evalPerturbedResidual(const VectorFunctionLinearApproximation& constraint,
-                           const SlackDualData& slackDual, 
-                           InteriorPointMethodData& data) {
-  data.primalResidual = constraint.f + slackDual.slack;
+void evalPerturbedResidual(const VectorFunctionLinearApproximation& ineqConstraint,
+                           const SlackDual& slackDual, 
+                           InteriorPointMethodData& data,
+                           ScalarFunctionQuadraticApproximation& cost,
+                           bool stateConstraint, bool inputConstraint) {
+  // primal feasibility
+  data.primalResidual = ineqConstraint.f + slackDual.slack;
+  // complementary
   data.complementary.array() = slackDual.slack.array() * slackDual.dual.array() - slackDual.barrier;
+  // dual feasibility
+  if (stateConstraint) {
+    cost.dfdx.noalias() += ineqConstraint.dfdx.transpose() * slackDual.dual;
+  }
+  if (inputConstraint) {
+    cost.dfdu.noalias() += ineqConstraint.dfdu.transpose() * slackDual.dual;
+  }
 }
 
 
-void evalLagrangianDerivativesStateIneqConstraint(
-    const VectorFunctionLinearApproximation& stateConstraint, 
-    const SlackDualData& slackDual, ScalarFunctionQuadraticApproximation& cost) {
-  cost.dfdx.noalias() += stateConstraint.dfdx.transpose() * slackDual.dual;
-}
-
-
-void evalLagrangianDerivativesInputIneqConstraint(
-    const VectorFunctionLinearApproximation& inputConstraint, 
-    const SlackDualData& slackDual, ScalarFunctionQuadraticApproximation& cost) {
-  cost.dfdu.noalias() += inputConstraint.dfdu.transpose() * slackDual.dual;
-}
-
-
-void evalLagrangianDerivativesStateInputIneqConstraint(
-    const VectorFunctionLinearApproximation& stateInputConstraint, 
-    const SlackDualData& slackDual, ScalarFunctionQuadraticApproximation& cost) {
-  evalLagrangianDerivativesStateIneqConstraint(stateInputConstraint, slackDual, cost);
-  evalLagrangianDerivativesInputIneqConstraint(stateInputConstraint, slackDual, cost);
-}
-
-
-void computeCondensingCoefficient(const SlackDualData& slackDual, InteriorPointMethodData& data) {
+void condenseSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
+                       const SlackDual& slackDual, InteriorPointMethodData& data, 
+                       ScalarFunctionQuadraticApproximation& cost,
+                       bool stateConstraint, bool inputConstraint) {
+  // some coefficients for condensing
   data.cond.array() = (slackDual.dual.array()*data.primalResidual.array()-data.complementary.array()) 
                         / slackDual.slack.array();
   data.dualDivSlack.array() = slackDual.dual.array() / slackDual.slack.array();
+  // condensing
+  if (stateConstraint) {
+    cost.dfdx.noalias() += ineqConstraint.dfdx.transpose() * data.cond;
+    data.linearApproximation.dfdx.noalias() = data.dualDivSlack.asDiagonal() * ineqConstraint.dfdx;
+    cost.dfdxx.noalias() += ineqConstraint.dfdx.transpose() * data.linearApproximation.dfdx;
+  }
+  if (inputConstraint) {
+    cost.dfdu.noalias() += ineqConstraint.dfdu.transpose() * data.cond;
+    data.linearApproximation.dfdu.noalias() = data.dualDivSlack.asDiagonal() * ineqConstraint.dfdu;
+    cost.dfduu.noalias() += ineqConstraint.dfdu.transpose() * data.linearApproximation.dfdu;
+  }
+  if (stateConstraint && inputConstraint) {
+    cost.dfdux.noalias() += ineqConstraint.dfdu.transpose() * data.linearApproximation.dfdx;
+  }
 }
 
 
-void condensingStateIneqConstraint(
-    const VectorFunctionLinearApproximation& stateIneqConstraint,
-    const SlackDualData& slackDual, InteriorPointMethodData& data, 
-    ScalarFunctionQuadraticApproximation& cost) {
-  computeCondensingCoefficient(slackDual, data);
-  cost.dfdx.noalias() += stateIneqConstraint.dfdx.transpose() * data.cond;
-  data.linearApproximation.dfdx.noalias() = data.dualDivSlack.asDiagonal() * stateIneqConstraint.dfdx;
-  cost.dfdxx.noalias() += stateIneqConstraint.dfdx.transpose() * data.linearApproximation.dfdx;
-}
-
-
-void condensingInputIneqConstraint(
-    const VectorFunctionLinearApproximation& inputIneqConstraint,
-    const SlackDualData& slackDual, InteriorPointMethodData& data, 
-    ScalarFunctionQuadraticApproximation& cost) {
-  computeCondensingCoefficient(slackDual, data);
-  cost.dfdu.noalias() += inputIneqConstraint.dfdu.transpose() * data.cond;
-  data.linearApproximation.dfdu.noalias() = data.dualDivSlack.asDiagonal() * inputIneqConstraint.dfdu;
-  cost.dfduu.noalias() += inputIneqConstraint.dfdu.transpose() * data.linearApproximation.dfdu;
-}
-
-
-void condensingStateInputIneqConstraint(
-    const VectorFunctionLinearApproximation& stateInputIneqConstraint,
-    const SlackDualData& slackDual, InteriorPointMethodData& data, 
-    ScalarFunctionQuadraticApproximation& cost) {
-  computeCondensingCoefficient(slackDual, data);
-  cost.dfdx.noalias() += stateInputIneqConstraint.dfdx.transpose() * data.cond;
-  cost.dfdu.noalias() += stateInputIneqConstraint.dfdu.transpose() * data.cond;
-  data.linearApproximation.dfdx.noalias() = data.dualDivSlack.asDiagonal() * stateInputIneqConstraint.dfdx;
-  data.linearApproximation.dfdu.noalias() = data.dualDivSlack.asDiagonal() * stateInputIneqConstraint.dfdu;
-  cost.dfdxx.noalias() += stateInputIneqConstraint.dfdx.transpose() * data.linearApproximation.dfdx;
-  cost.dfdux.noalias() += stateInputIneqConstraint.dfdu.transpose() * data.linearApproximation.dfdx;
-  cost.dfduu.noalias() += stateInputIneqConstraint.dfdu.transpose() * data.linearApproximation.dfdu;
-}
-
-
-void computeDualDirection(const SlackDualData& slackDual, InteriorPointMethodData& data) {
+void expandDual(const SlackDual& slackDual, InteriorPointMethodData& data) {
   data.dualDirection.array() = - (slackDual.dual.array()*data.slackDirection.array()+data.complementary.array())
                                   / slackDual.slack.array();
 }
 
 
-void expansionStateIneqConstraint(
-    const VectorFunctionLinearApproximation& stateIneqConstraint,
-    const SlackDualData& slackDual, const vector_t& dx, InteriorPointMethodData& data) {
+void expandSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
+                     const SlackDual& slackDual, const vector_t& dx, const vector_t& du,
+                     InteriorPointMethodData& data) {
   data.slackDirection = - data.primalResidual;
-  data.slackDirection.noalias() -= stateIneqConstraint.dfdx * dx;
-  computeDualDirection(slackDual, data);
+  data.slackDirection.noalias() -= ineqConstraint.dfdx * dx;
+  data.slackDirection.noalias() -= ineqConstraint.dfdu * du;
+  expandDual(slackDual, data);
 }
 
 
-void expansionInputIneqConstraint(
-    const VectorFunctionLinearApproximation& inputIneqConstraint,
-    const SlackDualData& slackDual, const vector_t& du, InteriorPointMethodData& data) {
+void expandSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
+                     const SlackDual& slackDual, const vector_t& dx,
+                     InteriorPointMethodData& data) {
   data.slackDirection = - data.primalResidual;
-  data.slackDirection.noalias() -= inputIneqConstraint.dfdu * du;
-  computeDualDirection(slackDual, data);
-}
-
-
-void expansionStateInputIneqConstraint(
-    const VectorFunctionLinearApproximation& stateInputIneqConstraint, 
-    const SlackDualData& slackDual, const vector_t& dx, const vector_t& du, 
-    InteriorPointMethodData& data) {
-  data.slackDirection = - data.primalResidual;
-  data.slackDirection.noalias() -= stateInputIneqConstraint.dfdx * dx;
-  data.slackDirection.noalias() -= stateInputIneqConstraint.dfdu * du;
-  computeDualDirection(slackDual, data);
+  data.slackDirection.noalias() -= ineqConstraint.dfdx * dx;
+  expandDual(slackDual, data);
 }
 
 
@@ -155,17 +115,22 @@ scalar_t fractionToBoundaryStepSize(size_t dim, const vector_t& v, const vector_
 }
 
 
-scalar_t fractionToBoundaryPrimalStepSize(const SlackDualData& slackDual, 
+scalar_t fractionToBoundaryPrimalStepSize(const SlackDual& slackDual, 
                                           const InteriorPointMethodData& data,
                                           scalar_t marginRate) {
   return fractionToBoundaryStepSize(data.dim, slackDual.slack, data.slackDirection, marginRate);
 }
 
 
-scalar_t fractionToBoundaryDualStepSize(const SlackDualData& slackDual, 
+scalar_t fractionToBoundaryDualStepSize(const SlackDual& slackDual, 
                                         const InteriorPointMethodData& data,
                                         scalar_t marginRate) {
   return fractionToBoundaryStepSize(data.dim, slackDual.dual, data.dualDirection, marginRate);
+}
+
+
+scalar_t slackLogBarrier(const SlackDual& slackDual) {
+  return - slackDual.barrier * slackDual.slack.array().log().sum();
 }
 
 }  // namespace ocs2

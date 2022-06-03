@@ -37,8 +37,8 @@ struct ModelData {
   VectorFunctionLinearApproximation stateInputIneqConstraint;
 
   // Interior point method data
-  InteriorPointMethodData stateIneqIpmData;
-  InteriorPointMethodData stateInputIneqIpmData;
+  InteriorPointMethodData ipmDataStateIneqConstraint;
+  InteriorPointMethodData ipmDataStateInputIneqConstraint;
 
   // Hamiltonian
   Hamiltonian hamiltonian;

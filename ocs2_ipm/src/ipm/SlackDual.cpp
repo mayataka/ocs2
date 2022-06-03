@@ -1,22 +1,22 @@
-#include <ocs2_ipm/ipm/SlackDualData.h>
+#include <ocs2_ipm/ipm/SlackDual.h>
 
 namespace ocs2 {
 
-void setBarrier(size_t nc, scalar_t barrier, SlackDualData& slackDual) {
+void setBarrier(size_t nc, scalar_t barrier, SlackDual& slackDual) {
   slackDual.slack.resize(nc);
   slackDual.dual.resize(nc);
   setBarrier(barrier, slackDual);
 }
 
 
-void setBarrier(scalar_t barrier, SlackDualData& slackDual) {
+void setBarrier(scalar_t barrier, SlackDual& slackDual) {
   slackDual.barrier = barrier;
   slackDual.slack.fill(std::sqrt(barrier));
   slackDual.dual.fill(std::sqrt(barrier));
 }
 
 
-std::string checkSize(int constraintDim, const SlackDualData& slackDual, const std::string& dataName) {
+std::string checkSize(int constraintDim, const SlackDual& slackDual, const std::string& dataName) {
   std::stringstream errorDescription;
 
   if (slackDual.slack.size() != constraintDim) {
@@ -29,7 +29,7 @@ std::string checkSize(int constraintDim, const SlackDualData& slackDual, const s
 }
 
 
-std::string checkPositive(const SlackDualData& slackDual, const std::string& dataName) {
+std::string checkPositive(const SlackDual& slackDual, const std::string& dataName) {
   std::stringstream errorDescription;
   if (slackDual.barrier <= 0.0) {
     errorDescription << dataName << ".barrier = " << slackDual.barrier << "\n";
