@@ -8,7 +8,7 @@
 #include <ocs2_core/control/LinearController.h>
 
 namespace ocs2 {
-namespace stoc{
+namespace stoc {
 
 /**
  * Primal data container
@@ -64,4 +64,5 @@ struct DualDataContainer {
   }
 };
 
+}  // namespace stoc
 }  // namespace ocs2

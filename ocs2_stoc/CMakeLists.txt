@@ -55,6 +55,7 @@ add_library(${PROJECT_NAME}
   src/riccati_recursion/RiccatiRecursion.cpp
   src/TimeDiscretization.cpp
   src/STOC_Settings.cpp
+  src/STOC.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
