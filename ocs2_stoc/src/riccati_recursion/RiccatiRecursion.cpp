@@ -51,12 +51,8 @@ RiccatiRecursion::RiccatiRecursion(const size_t nx, const size_t nu, const size_
 }
 
 
-void RiccatiRecursion::backwardRecursion(
-    const DiscreteTimeModeSchedule& modeSchedule, 
-    const std::vector<VectorFunctionLinearApproximation>& dynamics,
-    std::vector<ScalarFunctionQuadraticApproximation>& cost, 
-    std::vector<Hamiltonian>& hamiltonian) {
-  backwardRecursion_.compute(cost[N_], riccati_[N_]);
+void RiccatiRecursion::backwardRecursion(const DiscreteTimeModeSchedule& modeSchedule, std::vector<ipm::ModelData>& modelData) {
+  backwardRecursion_.compute(modelData[N_].cost, riccati_[N_]);
   for (int i=N_-1; i>=0; --i) {
     const auto phase     = modeSchedule.phaseAtTimeStage(i);
     const auto phaseNext = modeSchedule.phaseAtTimeStage(i+1);
@@ -67,71 +63,53 @@ void RiccatiRecursion::backwardRecursion(
       // In this case, the new mode becomes active at the grid i+1. 
       // This switch is indexed by the phase.
       const bool stoNextNext = modeSchedule.isStoEnabledAtPhase(phase+2); 
-      backwardRecursion_.phaseTransition(riccati_[i+1], riccatiPreEvent_[phase+1], 
-                                         stoPolicy_[phase+1], stoNextNext);
-      backwardRecursion_.compute(riccatiPreEvent_[phase+1], dynamics[i], cost[i], hamiltonian[i],
+      backwardRecursion_.phaseTransition(riccati_[i+1], riccatiPreEvent_[phase+1], stoPolicy_[phase+1], stoNextNext);
+      backwardRecursion_.compute(riccatiPreEvent_[phase+1], modelData[i].dynamics, modelData[i].cost, modelData[i].hamiltonian, 
                                  riccati_[i], lqrPolicy_[i], sto, stoNext);
     }
     else {
-      backwardRecursion_.compute(riccati_[i+1], dynamics[i], cost[i], hamiltonian[i],
+      backwardRecursion_.compute(riccati_[i+1], modelData[i].dynamics, modelData[i].cost, modelData[i].hamiltonian, 
                                  riccati_[i], lqrPolicy_[i], sto, stoNext);
     }
   }
   const auto phase = modeSchedule.phaseAtTimeStage(0);
   if (modeSchedule.isStoEnabledAtPhase(phase)) {
     const bool stoNext = modeSchedule.isStoEnabledAtPhase(phase+1);
-    backwardRecursion_.phaseTransition(riccati_[0], riccatiPreEvent_[phase],
-                                       stoPolicy_[phase], stoNext);
+    backwardRecursion_.phaseTransition(riccati_[0], riccatiPreEvent_[phase], stoPolicy_[phase], stoNext);
   }
 }
 
 
-void RiccatiRecursion::forwardRecursion(
-    const DiscreteTimeModeSchedule& modeSchedule, 
-    const std::vector<VectorFunctionLinearApproximation>& dynamics,
-    const std::vector<Hamiltonian>& hamiltonian,
-    vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, 
-    vector_array_t& costateTrajectory, scalar_array_t& switchingTimes) {
+void RiccatiRecursion::forwardRecursion(const DiscreteTimeModeSchedule& modeSchedule, const std::vector<ipm::ModelData>& modelData, 
+                                        vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, 
+                                        vector_array_t& costateTrajectory, scalar_array_t& switchingTimes) {
   const auto phase = modeSchedule.phaseAtTimeStage(0);
   switchingTimes[phase] = 0.0;
   if (modeSchedule.isStoEnabledAtPhase(phase)) {
     // This is the switching time from phase to phase+1
-    switchingTimes[phase+1] 
-      = ForwardRiccatiRecursion::computeSwitchingTime(stoPolicy_[phase], 
-                                                      stateTrajectory[0], 
-                                                      switchingTimes[phase], 
-                                                      false);
+    switchingTimes[phase+1] = ForwardRiccatiRecursion::computeSwitchingTime(stoPolicy_[phase], stateTrajectory[0], 
+                                                                            switchingTimes[phase], false);
   }
   for (int i=0; i<N_; ++i) {
     const auto phase     = modeSchedule.phaseAtTimeStage(i);
     const auto phaseNext = modeSchedule.phaseAtTimeStage(i+1);
     const bool sto         = modeSchedule.isStoEnabledAtPhase(phase);
     const bool stoNext     = modeSchedule.isStoEnabledAtPhase(phase+1);
-    ForwardRiccatiRecursion::computeInput(lqrPolicy_[i], stateTrajectory[i], 
-                                          inputTrajectory[i], 
-                                          switchingTimes[phase], 
-                                          switchingTimes[phase+1], sto, stoNext);
-    ForwardRiccatiRecursion::computeState(dynamics[i], hamiltonian[i], stateTrajectory[i], 
-                                          inputTrajectory[i], stateTrajectory[i+1], 
-                                          switchingTimes[phase], 
-                                          switchingTimes[phase+1], sto);
-    ForwardRiccatiRecursion::computeCostate(riccati_[i], stateTrajectory[i], 
-                                            costateTrajectory[i],
-                                            switchingTimes[phase], 
-                                            switchingTimes[phase+1], sto, stoNext);
+    ForwardRiccatiRecursion::computeInput(lqrPolicy_[i], stateTrajectory[i], inputTrajectory[i], 
+                                          switchingTimes[phase], switchingTimes[phase+1], sto, stoNext);
+    ForwardRiccatiRecursion::computeState(modelData[i].dynamics, modelData[i].hamiltonian, stateTrajectory[i], inputTrajectory[i], 
+                                          stateTrajectory[i+1], switchingTimes[phase], switchingTimes[phase+1], sto);
+    ForwardRiccatiRecursion::computeCostate(riccati_[i], stateTrajectory[i], costateTrajectory[i],
+                                            switchingTimes[phase], switchingTimes[phase+1], sto, stoNext);
     if (phase != phaseNext) {
       assert(phase+1 == phaseNext);
       // In this case, the new mode becomes active at the grid i+1. 
       // This switch is indexed by the phase.
-      switchingTimes[phase+1]
-        = ForwardRiccatiRecursion::computeSwitchingTime(stoPolicy_[phase+1], 
-                                                        stateTrajectory[i+1], 
-                                                        switchingTimes[phase],
-                                                        stoNext);
+      switchingTimes[phase+1] = ForwardRiccatiRecursion::computeSwitchingTime(stoPolicy_[phase+1], stateTrajectory[i+1], 
+                                                                              switchingTimes[phase], stoNext);
     }
   }
-  ForwardRiccatiRecursion::computeCostate(riccati_[N_], stateTrajectory[N_], 
-                                          costateTrajectory[N_]);
+  ForwardRiccatiRecursion::computeCostate(riccati_[N_], stateTrajectory[N_], costateTrajectory[N_]);
 }
 
 } // namespace stoc

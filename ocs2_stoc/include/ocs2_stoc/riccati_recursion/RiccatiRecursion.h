@@ -3,7 +3,7 @@
 #include <unordered_map>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_ipm/model_data/Hamiltonian.h>
+#include <ocs2_ipm/model_data/ModelData.h>
 #include <ocs2_stoc/riccati_recursion/RiccatiRecursionData.h>
 #include <ocs2_stoc/riccati_recursion/LqrPolicy.h>
 #include <ocs2_stoc/riccati_recursion/StoPolicy.h>
@@ -21,14 +21,9 @@ public:
 
   RiccatiRecursion();
 
-  void backwardRecursion(const DiscreteTimeModeSchedule& modeSchedule,
-                         const std::vector<VectorFunctionLinearApproximation>& dynamics,
-                         std::vector<ScalarFunctionQuadraticApproximation>& cost,
-                         std::vector<Hamiltonian>& hamiltonian);
+  void backwardRecursion(const DiscreteTimeModeSchedule& modeSchedule, std::vector<ipm::ModelData>& modelData);
 
-  void forwardRecursion(const DiscreteTimeModeSchedule& modeSchedule, 
-                        const std::vector<VectorFunctionLinearApproximation>& dynamics,
-                        const std::vector<Hamiltonian>& hamiltonian,
+  void forwardRecursion(const DiscreteTimeModeSchedule& modeSchedule, const std::vector<ipm::ModelData>& modelData,
                         vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, 
                         vector_array_t& costateTrajectory, scalar_array_t& switchingTimes);
 

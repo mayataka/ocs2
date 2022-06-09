@@ -3,6 +3,7 @@ project(ocs2_ipm)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
+  ocs2_oc
 )
 
 find_package(catkin REQUIRED COMPONENTS

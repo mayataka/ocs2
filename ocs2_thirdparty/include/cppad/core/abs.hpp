@@ -94,7 +94,7 @@ AD<Base> AD<Base>::abs_me (void) const
         return result;
 
     if(ad_type_ == dynamic_enum)
-    {   // dynamic paramter argument
+    {   // dynamic Parameter argument
         result.taddr_   = tape->Rec_.put_dyn_par(
             result.value_, local::abs_dyn, taddr_
         );

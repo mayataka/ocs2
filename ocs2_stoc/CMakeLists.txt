@@ -49,11 +49,12 @@ include_directories(
 
 # ocs2_stoc library
 add_library(${PROJECT_NAME}
-  src/TimeDiscretization.cpp
   src/reference/DiscreteTimeModeSchedule.cpp
   src/riccati_recursion/BackwardRiccatiRecursion.cpp
   src/riccati_recursion/ForwardRiccatiRecursion.cpp
   src/riccati_recursion/RiccatiRecursion.cpp
+  src/TimeDiscretization.cpp
+  src/STOC_Settings.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
