@@ -1,6 +1,6 @@
 #pragma once
 
-#include <memory>
+#include <vector>
 
 #include <ocs2_ipm/ipm/SlackDual.h>
 

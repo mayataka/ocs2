@@ -47,19 +47,21 @@ struct PrimalDataContainer {
  *
  */
 struct DualDataContainer {
-  // projected model data trajectory
   std::vector<ipm::DualVariable> dualVariableTrajectory;
+  std::vector<ipm::DualVariableDirection> dualDirectionTrajectory;
 
   // Riccati solution coefficients
   std::vector<ScalarFunctionQuadraticApproximation> valueFunctionTrajectory;
 
   inline void swap(DualDataContainer& other) {
     dualVariableTrajectory.swap(other.dualVariableTrajectory);
+    dualDirectionTrajectory.swap(other.dualDirectionTrajectory);
     valueFunctionTrajectory.swap(other.valueFunctionTrajectory);
   }
 
   inline void clear() {
     dualVariableTrajectory.clear();
+    dualDirectionTrajectory.clear();
     valueFunctionTrajectory.clear();
   }
 };

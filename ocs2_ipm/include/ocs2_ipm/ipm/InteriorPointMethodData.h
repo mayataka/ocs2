@@ -1,6 +1,6 @@
 #pragma once
 
-#include <memory>
+#include <string>
 
 #include <ocs2_core/Types.h>
 

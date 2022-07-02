@@ -1,11 +1,8 @@
 #pragma once
 
-#include <ostream>
-#include <string>
-#include <vector>
-
 #include <ocs2_core/Types.h>
 #include <ocs2_ipm/ipm/SlackDual.h>
+#include <ocs2_ipm/ipm/SlackDualDirection.h>
 
 namespace ocs2 {
 namespace ipm {
@@ -20,6 +17,15 @@ struct DualVariable {
   // Interior point method related variables
   SlackDual slackDualStateIneqConstraint; 
   SlackDual slackDualStateInputIneqConstraint; 
+};
+
+/**
+ * The direction of the dual variables for the interior point method.
+ */
+struct DualVariableDirection {
+  // Interior point method related variables
+  SlackDualDirection slackDualDirectionStateIneqConstraint; 
+  SlackDualDirection slackDualDirectionStateInputIneqConstraint; 
 };
 
 }  // namespace ipm

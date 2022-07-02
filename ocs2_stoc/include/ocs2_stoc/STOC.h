@@ -15,6 +15,7 @@
 // #include <ocs2_ipm/model_data/ModelDataLinearInterpolation.h> :TODO
 #include <ocs2_ipm/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_ipm/approximate_model/LinearQuadraticDiscretizer.h>
+#include <ocs2_ipm/approximate_model/DualVariableReconstructor.h>
 
 #include "ocs2_stoc/riccati_recursion/RiccatiRecursion.h"
 #include "ocs2_stoc/TimeDiscretization.h"
@@ -83,8 +84,8 @@ class STOC : public SolverBase {
 
   PerformanceIndex approximateOptimalControlProblem(const vector_t& initState, const std::vector<AnnotatedTime>& timeDiscretization);
 
-  double fractionToBoundaryRule(const std::vector<AnnotatedTime>& timeDiscretization, 
-                                const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts); 
+  std::pair<scalar_t, scalar_t> fractionToBoundaryRule(const std::vector<AnnotatedTime>& timeDiscretization, 
+                                                       const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts); 
 
   // Problem definition
   stoc::Settings settings_;
@@ -97,6 +98,13 @@ class STOC : public SolverBase {
 
   // riccati Recurision
   stoc::RiccatiRecursion riccatiRecursion_;
+
+  // Directions
+  vector_array_t dx_;
+  vector_array_t du_;
+  vector_array_t dlmd_;
+  scalar_array_t dts_;
+  std::vector<ipm::DualVariableDirection> dualDirectionTrajectory_;
 
   // Threading
   ThreadPool threadPool_;

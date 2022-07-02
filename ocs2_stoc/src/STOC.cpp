@@ -116,16 +116,14 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     riccatiRecursionTimer_.startTimer();
     stoc::DiscreteTimeModeSchedule modeSchedule;
     riccatiRecursion_.backwardRecursion(modeSchedule, primalData_.modelDataTrajectory);
-    vector_array_t dx;
-    vector_array_t du;
-    vector_array_t dlmd;
-    scalar_array_t dts;
-    riccatiRecursion_.forwardRecursion(modeSchedule, primalData_.modelDataTrajectory, dx, du, dlmd, dts);
+    riccatiRecursion_.forwardRecursion(modeSchedule, primalData_.modelDataTrajectory, dx_, du_, dlmd_, dts_);
     riccatiRecursionTimer_.endTimer();
 
     // Search step
     linesearchTimer_.startTimer();
-    const auto stepSize = fractionToBoundaryRule(timeDiscretization, dx, du, dts);
+    const auto stepSizes = fractionToBoundaryRule(timeDiscretization, dx_, du_, dts_);
+    const scalar_t primalStepSize = stepSizes.first;
+    const scalar_t dualStepSize = stepSizes.second;
     linesearchTimer_.endTimer();
 
     // Check convergence
@@ -220,8 +218,8 @@ PerformanceIndex STOC::approximateOptimalControlProblem(const vector_t& initStat
   return totalPerformance;
 }
 
-double STOC::fractionToBoundaryRule(const std::vector<AnnotatedTime>& timeDiscretization, 
-                                    const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts) {
+std::pair<scalar_t, scalar_t> STOC::fractionToBoundaryRule(const std::vector<AnnotatedTime>& timeDiscretization, 
+                                                           const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts) {
   // Problem horizon
   const int N = static_cast<int>(timeDiscretization.size()) - 1;
   // create alias
@@ -231,41 +229,54 @@ double STOC::fractionToBoundaryRule(const std::vector<AnnotatedTime>& timeDiscre
   const auto& postEventIndices = primalData_.primalSolution.postEventIndices_;
   auto& modelDataTrajectory = primalData_.modelDataTrajectory;
   auto& dualTrajectory = dualData_.dualVariableTrajectory;
+  auto& dualDirectionTrajectory = dualDirectionTrajectory_;
 
-  std::vector<double> stepSize(settings_.nThreads, PerformanceIndex());
+  scalar_array_t primalStepSize(settings_.nThreads, 0.0);
+  scalar_array_t dualStepSize(settings_.nThreads, 0.0);
 
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {
     // Get worker specific resources
-    ipm::OptimalControlProblem& optimalControlProblem = optimalControlProblemStock_[workerId];
-    double workerStepSize;  // Accumulate performance in local variable
-    // const bool projection = settings_.projectStateInputEqualityConstraints;
+    scalar_t workerPrimalStepSize = 1.0;
+    scalar_t workerDualStepSize = 1.0;
 
     int i = timeIndex++;
     while (i < N) {
       if (timeDiscretization[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
-        ipm::expandPreJumpDualVariables(modelDataTrajectory[i], dx[i], dualTrajectory[i]);
-        workerStepSize = std::min(ipm::fractionToBoundaryRule(dualTrajectory[i]), workerStepSize);
+        ipm::expandPreJumpDualVariables(modelDataTrajectory[i], dualTrajectory[i], dx[i], dualDirectionTrajectory[i]);
+        workerPrimalStepSize = std::min(ipm::primalStepSizePreJumpVariables(modelDataTrajectory[i], dualTrajectory[i], dualDirectionTrajectory[i]), 
+                                        workerPrimalStepSize);
+        workerDualStepSize = std::min(ipm::dualStepSizePreJumpVariables(modelDataTrajectory[i], dualTrajectory[i], dualDirectionTrajectory[i]), 
+                                      workerDualStepSize);
       } else {
         // Normal, intermediate node
-        ipm::expandIntermediateDualVariables(modelDataTrajectory[i], dx[i], du[i], dualTrajectory[i]); 
-        workerStepSize = std::min(ipm::fractionToBoundaryRule(dualTrajectory[i]), workerStepSize);
+        ipm::expandIntermediateDualVariables(modelDataTrajectory[i], dualTrajectory[i], dx[i], du[i], dualDirectionTrajectory[i]);
+        workerPrimalStepSize = std::min(ipm::primalStepSizePreJumpVariables(modelDataTrajectory[i], dualTrajectory[i], dualDirectionTrajectory[i]), 
+                                        workerPrimalStepSize);
+        workerDualStepSize = std::min(ipm::dualStepSizePreJumpVariables(modelDataTrajectory[i], dualTrajectory[i], dualDirectionTrajectory[i]), 
+                                      workerDualStepSize);
       }
 
       i = timeIndex++;
     }
 
     if (i == N) {  // Only one worker will execute this
-      ipm::expandFinalDualVariables(modelDataTrajectory[N], dx[N], dualTrajectory[N]); 
-      workerStepSize = std::min(ipm::fractionToBoundaryRule(dualTrajectory[i]), workerStepSize);
+        ipm::expandFinalDualVariables(modelDataTrajectory[N], dualTrajectory[N], dx[N], dualDirectionTrajectory[N]);
+        workerPrimalStepSize = std::min(ipm::primalStepSizeFinalVariables(modelDataTrajectory[N], dualTrajectory[N], dualDirectionTrajectory[N]), 
+                                        workerPrimalStepSize);
+        workerDualStepSize = std::min(ipm::dualStepSizeFinalVariables(modelDataTrajectory[N], dualTrajectory[N], dualDirectionTrajectory[N]), 
+                                      workerDualStepSize);
     }
 
     // Accumulate! Same worker might run multiple tasks
-    stepSize[workerId] = workerStepSize;
+    primalStepSize[workerId] = workerPrimalStepSize;
+    dualStepSize[workerId] = workerDualStepSize;
   };
   runParallel(std::move(parallelTask));
 
-  return *std::min_element(stepSize.begin(), stepSize.end());
+  return {*std::min_element(primalStepSize.begin(), primalStepSize.end()), 
+          *std::min_element(dualStepSize.begin(), dualStepSize.end())};
+}
 
 }  // namespace ocs2

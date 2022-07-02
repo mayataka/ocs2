@@ -1,6 +1,6 @@
 #pragma once
 
-#include <memory>
+#include <string>
 
 #include <ocs2_core/Types.h>
 
@@ -38,7 +38,6 @@ struct SlackDual {
   vector_t slack;
   vector_t dual;
 };
-
 
 /**
  * Resizes and sets the default values to slack and dual.

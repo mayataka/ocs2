@@ -1,8 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <string>
-
 #include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
 #include <ocs2_ipm/model_data/ModelData.h>

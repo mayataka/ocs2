@@ -18,23 +18,23 @@ void initSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
 
 
 void initInteriorPointMethodData(const VectorFunctionLinearApproximation& ineqConstraint,
-                                 InteriorPointMethodData& data) {
+                                 InteriorPointMethodData& ipmData) {
   const auto nc = ineqConstraint.f.size();
   const auto nx = ineqConstraint.dfdx.cols();
   const auto nu = ineqConstraint.dfdu.cols();
-  data.setZero(nc, nx, nu);
+  ipmData.setZero(nc, nx, nu);
 }
 
 
 void evalPerturbedResidual(const VectorFunctionLinearApproximation& ineqConstraint,
                            const SlackDual& slackDual, 
-                           InteriorPointMethodData& data,
+                           InteriorPointMethodData& ipmData,
                            ScalarFunctionQuadraticApproximation& cost,
                            bool stateConstraint, bool inputConstraint) {
   // primal feasibility
-  data.primalResidual = ineqConstraint.f + slackDual.slack;
+  ipmData.primalResidual = ineqConstraint.f + slackDual.slack;
   // complementary
-  data.complementary.array() = slackDual.slack.array() * slackDual.dual.array() - slackDual.barrier;
+  ipmData.complementary.array() = slackDual.slack.array() * slackDual.dual.array() - slackDual.barrier;
   // dual feasibility
   if (stateConstraint) {
     cost.dfdx.noalias() += ineqConstraint.dfdx.transpose() * slackDual.dual;
@@ -46,52 +46,54 @@ void evalPerturbedResidual(const VectorFunctionLinearApproximation& ineqConstrai
 
 
 void condenseSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
-                       const SlackDual& slackDual, InteriorPointMethodData& data, 
+                       const SlackDual& slackDual, InteriorPointMethodData& ipmData, 
                        ScalarFunctionQuadraticApproximation& cost,
                        bool stateConstraint, bool inputConstraint) {
   // some coefficients for condensing
-  data.cond.array() = (slackDual.dual.array()*data.primalResidual.array()-data.complementary.array()) 
+  ipmData.cond.array() = (slackDual.dual.array()*ipmData.primalResidual.array()-ipmData.complementary.array()) 
                         / slackDual.slack.array();
-  data.dualDivSlack.array() = slackDual.dual.array() / slackDual.slack.array();
+  ipmData.dualDivSlack.array() = slackDual.dual.array() / slackDual.slack.array();
   // condensing
   if (stateConstraint) {
-    cost.dfdx.noalias() += ineqConstraint.dfdx.transpose() * data.cond;
-    data.linearApproximation.dfdx.noalias() = data.dualDivSlack.asDiagonal() * ineqConstraint.dfdx;
-    cost.dfdxx.noalias() += ineqConstraint.dfdx.transpose() * data.linearApproximation.dfdx;
+    cost.dfdx.noalias() += ineqConstraint.dfdx.transpose() * ipmData.cond;
+    ipmData.linearApproximation.dfdx.noalias() = ipmData.dualDivSlack.asDiagonal() * ineqConstraint.dfdx;
+    cost.dfdxx.noalias() += ineqConstraint.dfdx.transpose() * ipmData.linearApproximation.dfdx;
   }
   if (inputConstraint) {
-    cost.dfdu.noalias() += ineqConstraint.dfdu.transpose() * data.cond;
-    data.linearApproximation.dfdu.noalias() = data.dualDivSlack.asDiagonal() * ineqConstraint.dfdu;
-    cost.dfduu.noalias() += ineqConstraint.dfdu.transpose() * data.linearApproximation.dfdu;
+    cost.dfdu.noalias() += ineqConstraint.dfdu.transpose() * ipmData.cond;
+    ipmData.linearApproximation.dfdu.noalias() = ipmData.dualDivSlack.asDiagonal() * ineqConstraint.dfdu;
+    cost.dfduu.noalias() += ineqConstraint.dfdu.transpose() * ipmData.linearApproximation.dfdu;
   }
   if (stateConstraint && inputConstraint) {
-    cost.dfdux.noalias() += ineqConstraint.dfdu.transpose() * data.linearApproximation.dfdx;
+    cost.dfdux.noalias() += ineqConstraint.dfdu.transpose() * ipmData.linearApproximation.dfdx;
   }
 }
 
 
-void expandDual(const SlackDual& slackDual, InteriorPointMethodData& data) {
-  data.dualDirection.array() = - (slackDual.dual.array()*data.slackDirection.array()+data.complementary.array())
-                                  / slackDual.slack.array();
+void expandDual(const SlackDual& slackDual, const InteriorPointMethodData& ipmData, 
+                SlackDualDirection& slackDualDirection) {
+  slackDualDirection.dualDirection.array() 
+      = - (slackDual.dual.array()*slackDualDirection.slackDirection.array()+ipmData.complementary.array())
+            / slackDual.slack.array();
 }
 
 
 void expandSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
-                     const SlackDual& slackDual, const vector_t& dx, const vector_t& du,
-                     InteriorPointMethodData& data) {
-  data.slackDirection = - data.primalResidual;
-  data.slackDirection.noalias() -= ineqConstraint.dfdx * dx;
-  data.slackDirection.noalias() -= ineqConstraint.dfdu * du;
-  expandDual(slackDual, data);
+                     const SlackDual& slackDual, const InteriorPointMethodData& ipmData, 
+                     const vector_t& dx, const vector_t& du, SlackDualDirection& slackDualDirection) {
+  slackDualDirection.slackDirection = - ipmData.primalResidual;
+  slackDualDirection.slackDirection.noalias() -= ineqConstraint.dfdx * dx;
+  slackDualDirection.slackDirection.noalias() -= ineqConstraint.dfdu * du;
+  expandDual(slackDual, ipmData, slackDualDirection);
 }
 
 
 void expandSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
-                     const SlackDual& slackDual, const vector_t& dx,
-                     InteriorPointMethodData& data) {
-  data.slackDirection = - data.primalResidual;
-  data.slackDirection.noalias() -= ineqConstraint.dfdx * dx;
-  expandDual(slackDual, data);
+                     const SlackDual& slackDual, const InteriorPointMethodData& ipmData, 
+                     const vector_t& dx, SlackDualDirection& slackDualDirection) {
+  slackDualDirection.slackDirection = - ipmData.primalResidual;
+  slackDualDirection.slackDirection.noalias() -= ineqConstraint.dfdx * dx;
+  expandDual(slackDual, ipmData, slackDualDirection);
 }
 
 
@@ -115,17 +117,15 @@ scalar_t fractionToBoundaryStepSize(size_t dim, const vector_t& v, const vector_
 }
 
 
-scalar_t fractionToBoundaryPrimalStepSize(const SlackDual& slackDual, 
-                                          const InteriorPointMethodData& data,
-                                          scalar_t marginRate) {
-  return fractionToBoundaryStepSize(data.dim, slackDual.slack, data.slackDirection, marginRate);
+scalar_t fractionToBoundaryPrimalStepSize(const SlackDual& slackDual, const SlackDualDirection& slackDualDirection,
+                                          const InteriorPointMethodData& ipmData, scalar_t marginRate) {
+  return fractionToBoundaryStepSize(ipmData.dim, slackDual.slack, slackDualDirection.slackDirection, marginRate);
 }
 
 
-scalar_t fractionToBoundaryDualStepSize(const SlackDual& slackDual, 
-                                        const InteriorPointMethodData& data,
-                                        scalar_t marginRate) {
-  return fractionToBoundaryStepSize(data.dim, slackDual.dual, data.dualDirection, marginRate);
+scalar_t fractionToBoundaryDualStepSize(const SlackDual& slackDual, const SlackDualDirection& slackDualDirection,
+                                        const InteriorPointMethodData& ipmData, scalar_t marginRate) {
+  return fractionToBoundaryStepSize(ipmData.dim, slackDual.dual, slackDualDirection.dualDirection, marginRate);
 }
 
 
