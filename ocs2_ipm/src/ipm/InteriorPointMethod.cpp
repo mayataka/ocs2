@@ -4,6 +4,7 @@
 #include <ocs2_ipm/ipm/InteriorPointMethod.h>
 
 namespace ocs2 {
+namespace ipm {
 
 void initSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
                    SlackDual& slackDual, scalar_t barrier) {
@@ -133,4 +134,5 @@ scalar_t slackLogBarrier(const SlackDual& slackDual) {
   return - slackDual.barrier * slackDual.slack.array().log().sum();
 }
 
+}  // namespace ipm
 }  // namespace ocs2

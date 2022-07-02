@@ -5,6 +5,7 @@
 #include <ocs2_ipm/ipm/SlackDual.h>
 
 namespace ocs2 {
+namespace ipm {
 
 /**
  * This class contains the solution related to the primal-dual interior point method.
@@ -58,4 +59,5 @@ void setBarrier(scalar_t barrier, InteriorPointMethodSolution& solution);
  */
 std::string checkPositive(const InteriorPointMethodSolution& solution, const std::string& solutionName);
 
+}  // namespace ipm
 }  // namespace ocs2

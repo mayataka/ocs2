@@ -1,6 +1,7 @@
 #include <ocs2_ipm/ipm/SlackDual.h>
 
 namespace ocs2 {
+namespace ipm {
 
 void setBarrier(size_t nc, scalar_t barrier, SlackDual& slackDual) {
   slackDual.slack.resize(nc);
@@ -47,4 +48,5 @@ std::string checkPositive(const SlackDual& slackDual, const std::string& dataNam
   return errorDescription.str();
 }
 
+}  // namespace ipm
 }  // namespace ocs2

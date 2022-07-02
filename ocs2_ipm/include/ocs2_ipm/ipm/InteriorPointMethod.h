@@ -6,6 +6,7 @@
 #include <ocs2_ipm/ipm/InteriorPointMethodData.h>
 
 namespace ocs2 {
+namespace ipm {
 
 void initSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
                    SlackDual& slackDual, scalar_t barrier);
@@ -45,4 +46,5 @@ scalar_t fractionToBoundaryDualStepSize(const SlackDual& slackDual, const SlackD
 
 scalar_t slackLogBarrier(const SlackDual& slackDual);
 
+}  // namespace ipm
 }  // namespace ocs2

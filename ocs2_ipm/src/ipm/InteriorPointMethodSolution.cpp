@@ -1,6 +1,7 @@
 #include <ocs2_ipm/ipm/InteriorPointMethodSolution.h>
 
 namespace ocs2 {
+namespace ipm {
 
 void setBarrier(scalar_t barrier, InteriorPointMethodSolution& solution) {
   for (auto& e : solution.slackDualTrajectory_) {
@@ -19,4 +20,5 @@ std::string checkPositive(const InteriorPointMethodSolution& solution, const std
   return errorDescription.str();
 }
 
+}  // namespace ipm
 }  // namespace ocs2

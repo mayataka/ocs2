@@ -5,6 +5,7 @@
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
+namespace ipm {
 
 /** Data for the interior point method */
 struct InteriorPointMethodData {
@@ -65,4 +66,5 @@ struct InteriorPointMethodData {
  */
 std::string checkSize(int constraintDim, const InteriorPointMethodData& data, const std::string& dataName);
 
+}  // namespace ipm
 }  // namespace ocs2

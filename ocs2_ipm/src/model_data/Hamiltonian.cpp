@@ -3,6 +3,7 @@
 #include "ocs2_ipm/model_data/Hamiltonian.h"
 
 namespace ocs2 {
+namespace ipm {
 
 Hamiltonian::Hamiltonian(size_t nx, size_t nu) {
   resize(nx, nu);
@@ -80,4 +81,5 @@ std::string checkSize(int stateDim, int inputDim, const Hamiltonian& data, const
   return errorDescription.str();
 }
 
+}  // namespace ipm
 }  // namespace ocs2

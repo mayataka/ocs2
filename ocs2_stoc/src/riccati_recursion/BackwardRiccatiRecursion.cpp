@@ -111,7 +111,7 @@ void BackwardRiccatiRecursion::compute(
 void BackwardRiccatiRecursion::compute(
     const RiccatiRecursionData& riccati_next,
     const VectorFunctionLinearApproximation& dynamics, 
-    ScalarFunctionQuadraticApproximation& cost, Hamiltonian& hamiltonian,
+    ScalarFunctionQuadraticApproximation& cost, ipm::Hamiltonian& hamiltonian,
     RiccatiRecursionData& riccati, LqrPolicy& lqr_policy, 
     const bool sto, const bool has_next_sto_phase) {
   compute(riccati_next, dynamics, cost, riccati, lqr_policy);

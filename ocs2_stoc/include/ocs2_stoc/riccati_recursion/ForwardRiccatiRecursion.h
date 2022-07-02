@@ -15,7 +15,7 @@ void computeInput(const LqrPolicy& lqr_policy, const vector_t& dx, vector_t& du,
                   const bool sto=false, const bool has_next_sto_phase=false);
 
 void computeState(const VectorFunctionLinearApproximation& dynamics,
-                  const Hamiltonian& hamiltonian,
+                  const ipm::Hamiltonian& hamiltonian,
                   const vector_t& dx, const vector_t& du, vector_t& dx_next, 
                   const scalar_t dt=0.0, const scalar_t dts_next=0.0, 
                   const bool sto=false);

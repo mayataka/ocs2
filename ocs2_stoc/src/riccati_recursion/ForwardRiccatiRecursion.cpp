@@ -22,7 +22,7 @@ void computeInput(const LqrPolicy& lqr_policy, const vector_t& dx, vector_t& du,
 
 
 void computeState(const VectorFunctionLinearApproximation& dynamics, 
-                  const Hamiltonian& hamiltonian,
+                  const ipm::Hamiltonian& hamiltonian,
                   const vector_t& dx, const vector_t& du, vector_t& dx_next, 
                   const scalar_t dts, const scalar_t dts_next, const bool sto) {
   dx_next = dynamics.f;

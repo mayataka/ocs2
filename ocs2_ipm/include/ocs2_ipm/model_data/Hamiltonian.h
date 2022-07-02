@@ -7,6 +7,7 @@
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
+namespace ipm {
 
 struct Hamiltonian {
   /** Value of the hamiltonian. */
@@ -77,4 +78,5 @@ inline Hamiltonian operator*(scalar_t scalar, Hamiltonian rhs) {
   return rhs *= scalar;
 }
 
+}  // namespace ipm
 }  // namespace ocs2

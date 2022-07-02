@@ -3,6 +3,7 @@
 #include <ocs2_ipm/ipm/InteriorPointMethodData.h>
 
 namespace ocs2 {
+namespace ipm {
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -79,4 +80,5 @@ std::string checkSize(int constraintDim, const InteriorPointMethodData& data, co
   return errorDescription.str();
 }
 
+}  // namespace ipm
 }  // namespace ocs2

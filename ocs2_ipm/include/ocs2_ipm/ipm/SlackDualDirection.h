@@ -3,6 +3,7 @@
 #include <ocs2_core/Types.h>
 
 namespace ocs2 {
+namespace ipm {
 
 /**
  * This class contains the directions of the slack and dual variables of the primal-dual interior point method.
@@ -36,4 +37,5 @@ struct SlackDualDirection {
   vector_t dualDirection;
 };
 
+}  // namespace ipm
 }  // namespace ocs2
