@@ -55,7 +55,6 @@ add_library(${PROJECT_NAME}
   src/approximate_model/LinearQuadraticApproximator.cpp
   src/approximate_model/LinearQuadraticDiscretizer.cpp
   src/ipm/SlackDual.cpp
-  src/ipm/InteriorPointMethodSolution.cpp
   src/ipm/InteriorPointMethodData.cpp
   src/ipm/InteriorPointMethod.cpp
 )
@@ -101,6 +100,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 catkin_add_gtest(test_${PROJECT_NAME}
+  test/testSlackDual.cpp
   test/testInteriorPointMethod.cpp
 )
 add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
