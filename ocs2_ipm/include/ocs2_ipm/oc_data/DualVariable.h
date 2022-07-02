@@ -28,5 +28,8 @@ struct DualVariableDirection {
   SlackDualDirection slackDualDirectionStateInputIneqConstraint; 
 };
 
+void updateSlackDualIterate(DualVariable& dualVariable, const DualVariableDirection& dualDirection,
+                            scalar_t primalStepSize, scalar_t dualStepSize);
+
 }  // namespace ipm
 }  // namespace ocs2

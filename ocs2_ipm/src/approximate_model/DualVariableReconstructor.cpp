@@ -4,7 +4,7 @@
 namespace ocs2 {
 namespace ipm {
 
-void expandIntermediateDualVariables(const ModelData& modelData, const DualVariable& dualVariable,
+void expandIntermediateDualDirection(const ModelData& modelData, const DualVariable& dualVariable,
                                      const vector_t& dx, const vector_t& du, DualVariableDirection& dualDirection) {
   expandSlackDual(modelData.stateIneqConstraint, dualVariable.slackDualStateIneqConstraint, 
                   modelData.ipmDataStateIneqConstraint, dx, 
@@ -14,20 +14,20 @@ void expandIntermediateDualVariables(const ModelData& modelData, const DualVaria
                   dualDirection.slackDualDirectionStateInputIneqConstraint);
 }
 
-void expandPreJumpDualVariables(const ModelData& modelData, const DualVariable& dualVariable,
+void expandPreJumpDualDirection(const ModelData& modelData, const DualVariable& dualVariable,
                                 const vector_t& dx, DualVariableDirection& dualDirection) {
   expandSlackDual(modelData.stateIneqConstraint, dualVariable.slackDualStateIneqConstraint, 
                   modelData.ipmDataStateIneqConstraint, dx, 
                   dualDirection.slackDualDirectionStateIneqConstraint);
 }
 
-void expandFinalDualVariables(const ModelData& modelData, const vector_t& dx, 
+void expandFinalDualDirection(const ModelData& modelData, const vector_t& dx, 
                               const DualVariable& dualVariable, DualVariableDirection& dualDirection) {
-  expandPreJumpDualVariables(modelData, dualVariable, dx, dualDirection);
+  expandPreJumpDualDirection(modelData, dualVariable, dx, dualDirection);
 }
 
-scalar_t primalStepSizeIntermediateVariables(const ModelData& modelData, const DualVariable& dualVariable, 
-                                             const DualVariableDirection& dualDirection) {
+scalar_t intermediatePrimalStepSize(const ModelData& modelData, const DualVariable& dualVariable, 
+                                    const DualVariableDirection& dualDirection) {
   return std::min(
       fractionToBoundaryPrimalStepSize(dualVariable.slackDualStateIneqConstraint, 
                                        dualDirection.slackDualDirectionStateIneqConstraint,  
@@ -37,8 +37,8 @@ scalar_t primalStepSizeIntermediateVariables(const ModelData& modelData, const D
                                        modelData.ipmDataStateInputIneqConstraint));
 }
 
-scalar_t dualStepSizeIntermediateVariables(const ModelData& modelData, const DualVariable& dualVariable, 
-                                           const DualVariableDirection& dualDirection) {
+scalar_t intermediateDualStepSize(const ModelData& modelData, const DualVariable& dualVariable, 
+                                  const DualVariableDirection& dualDirection) {
   return std::min(
       fractionToBoundaryDualStepSize(dualVariable.slackDualStateIneqConstraint, 
                                      dualDirection.slackDualDirectionStateIneqConstraint,  
@@ -49,28 +49,28 @@ scalar_t dualStepSizeIntermediateVariables(const ModelData& modelData, const Dua
 }
 
 
-scalar_t primalStepSizePreJumpVariables(const ModelData& modelData, const DualVariable& dualVariable, 
-                                        const DualVariableDirection& dualDirection) {
+scalar_t preJumpPrimalStepSize(const ModelData& modelData, const DualVariable& dualVariable, 
+                               const DualVariableDirection& dualDirection) {
   return fractionToBoundaryPrimalStepSize(dualVariable.slackDualStateIneqConstraint, 
                                           dualDirection.slackDualDirectionStateIneqConstraint,  
                                           modelData.ipmDataStateIneqConstraint);
 }
 
-scalar_t dualStepSizePreJumpVariables(const ModelData& modelData, const DualVariable& dualVariable, 
-                                      const DualVariableDirection& dualDirection) {
+scalar_t preJumpDualStepSize(const ModelData& modelData, const DualVariable& dualVariable, 
+                             const DualVariableDirection& dualDirection) {
   return fractionToBoundaryDualStepSize(dualVariable.slackDualStateIneqConstraint, 
                                         dualDirection.slackDualDirectionStateIneqConstraint,  
                                         modelData.ipmDataStateIneqConstraint);
 }
 
-scalar_t primalStepSizeFinalVariables(const ModelData& modelData, const DualVariable& dualVariable, 
-                                      const DualVariableDirection& dualDirection) {
-  return primalStepSizePreJumpVariables(modelData, dualVariable, dualDirection);
+scalar_t finalPrimalStepSize(const ModelData& modelData, const DualVariable& dualVariable, 
+                             const DualVariableDirection& dualDirection) {
+  return preJumpPrimalStepSize(modelData, dualVariable, dualDirection);
 }
 
-scalar_t dualStepSizeFinalVariables(const ModelData& modelData, const DualVariable& dualVariable, 
-                                    const DualVariableDirection& dualDirection) {
-  return dualStepSizePreJumpVariables(modelData, dualVariable, dualDirection);
+scalar_t finalDualStepSize(const ModelData& modelData, const DualVariable& dualVariable, 
+                           const DualVariableDirection& dualDirection) {
+  return preJumpDualStepSize(modelData, dualVariable, dualDirection);
 }
 
 }  // namespace ipm

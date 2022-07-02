@@ -100,6 +100,13 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   // Bookkeeping
   performanceIndeces_.clear();
 
+  // Directions
+  vector_array_t dx;
+  vector_array_t du;
+  vector_array_t dlmd;
+  scalar_array_t dts;
+  std::vector<ipm::DualVariableDirection> dualDirectionTrajectory;
+
   int iter = 0;
   bool convergence = false;
   while (!convergence) {
@@ -116,15 +123,17 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     riccatiRecursionTimer_.startTimer();
     stoc::DiscreteTimeModeSchedule modeSchedule;
     riccatiRecursion_.backwardRecursion(modeSchedule, primalData_.modelDataTrajectory);
-    riccatiRecursion_.forwardRecursion(modeSchedule, primalData_.modelDataTrajectory, dx_, du_, dlmd_, dts_);
+    riccatiRecursion_.forwardRecursion(modeSchedule, primalData_.modelDataTrajectory, dx, du, dlmd, dts);
     riccatiRecursionTimer_.endTimer();
 
-    // Search step
+    // Search step sizes
     linesearchTimer_.startTimer();
-    const auto stepSizes = fractionToBoundaryRule(timeDiscretization, dx_, du_, dts_);
+    const auto stepSizes = fractionToBoundaryRule(timeDiscretization, dx, du, dts, dualDirectionTrajectory);
     const scalar_t primalStepSize = stepSizes.first;
     const scalar_t dualStepSize = stepSizes.second;
     linesearchTimer_.endTimer();
+
+    updateIterate(timeDiscretization, dx, du, dts, dlmd, dualDirectionTrajectory, primalStepSize, dualStepSize);
 
     // Check convergence
     // convergence = checkConvergence(iter, baselinePerformance, stepInfo);
@@ -219,17 +228,14 @@ PerformanceIndex STOC::approximateOptimalControlProblem(const vector_t& initStat
 }
 
 std::pair<scalar_t, scalar_t> STOC::fractionToBoundaryRule(const std::vector<AnnotatedTime>& timeDiscretization, 
-                                                           const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts) {
+                                                           const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts,
+                                                           std::vector<ipm::DualVariableDirection>& dualDirectionTrajectory) {
   // Problem horizon
   const int N = static_cast<int>(timeDiscretization.size()) - 1;
   // create alias
-  const auto& timeTrajectory = primalData_.primalSolution.timeTrajectory_;
-  const auto& stateTrajectory = primalData_.primalSolution.stateTrajectory_;
-  const auto& inputTrajectory = primalData_.primalSolution.inputTrajectory_;
   const auto& postEventIndices = primalData_.primalSolution.postEventIndices_;
-  auto& modelDataTrajectory = primalData_.modelDataTrajectory;
-  auto& dualTrajectory = dualData_.dualVariableTrajectory;
-  auto& dualDirectionTrajectory = dualDirectionTrajectory_;
+  const auto& modelDataTrajectory = primalData_.modelDataTrajectory;
+  const auto& dualTrajectory = dualData_.dualVariableTrajectory;
 
   scalar_array_t primalStepSize(settings_.nThreads, 0.0);
   scalar_array_t dualStepSize(settings_.nThreads, 0.0);
@@ -244,17 +250,17 @@ std::pair<scalar_t, scalar_t> STOC::fractionToBoundaryRule(const std::vector<Ann
     while (i < N) {
       if (timeDiscretization[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
-        ipm::expandPreJumpDualVariables(modelDataTrajectory[i], dualTrajectory[i], dx[i], dualDirectionTrajectory[i]);
-        workerPrimalStepSize = std::min(ipm::primalStepSizePreJumpVariables(modelDataTrajectory[i], dualTrajectory[i], dualDirectionTrajectory[i]), 
+        ipm::expandPreJumpDualDirection(modelDataTrajectory[i], dualTrajectory[i], dx[i], dualDirectionTrajectory[i]);
+        workerPrimalStepSize = std::min(ipm::preJumpPrimalStepSize(modelDataTrajectory[i], dualTrajectory[i], dualDirectionTrajectory[i]), 
                                         workerPrimalStepSize);
-        workerDualStepSize = std::min(ipm::dualStepSizePreJumpVariables(modelDataTrajectory[i], dualTrajectory[i], dualDirectionTrajectory[i]), 
+        workerDualStepSize = std::min(ipm::preJumpDualStepSize(modelDataTrajectory[i], dualTrajectory[i], dualDirectionTrajectory[i]), 
                                       workerDualStepSize);
       } else {
         // Normal, intermediate node
-        ipm::expandIntermediateDualVariables(modelDataTrajectory[i], dualTrajectory[i], dx[i], du[i], dualDirectionTrajectory[i]);
-        workerPrimalStepSize = std::min(ipm::primalStepSizePreJumpVariables(modelDataTrajectory[i], dualTrajectory[i], dualDirectionTrajectory[i]), 
+        ipm::expandIntermediateDualDirection(modelDataTrajectory[i], dualTrajectory[i], dx[i], du[i], dualDirectionTrajectory[i]);
+        workerPrimalStepSize = std::min(ipm::intermediatePrimalStepSize(modelDataTrajectory[i], dualTrajectory[i], dualDirectionTrajectory[i]), 
                                         workerPrimalStepSize);
-        workerDualStepSize = std::min(ipm::dualStepSizePreJumpVariables(modelDataTrajectory[i], dualTrajectory[i], dualDirectionTrajectory[i]), 
+        workerDualStepSize = std::min(ipm::intermediateDualStepSize(modelDataTrajectory[i], dualTrajectory[i], dualDirectionTrajectory[i]), 
                                       workerDualStepSize);
       }
 
@@ -262,10 +268,10 @@ std::pair<scalar_t, scalar_t> STOC::fractionToBoundaryRule(const std::vector<Ann
     }
 
     if (i == N) {  // Only one worker will execute this
-        ipm::expandFinalDualVariables(modelDataTrajectory[N], dualTrajectory[N], dx[N], dualDirectionTrajectory[N]);
-        workerPrimalStepSize = std::min(ipm::primalStepSizeFinalVariables(modelDataTrajectory[N], dualTrajectory[N], dualDirectionTrajectory[N]), 
+        ipm::expandFinalDualDirection(modelDataTrajectory[N], dualTrajectory[N], dx[N], dualDirectionTrajectory[N]);
+        workerPrimalStepSize = std::min(ipm::finalPrimalStepSize(modelDataTrajectory[N], dualTrajectory[N], dualDirectionTrajectory[N]), 
                                         workerPrimalStepSize);
-        workerDualStepSize = std::min(ipm::dualStepSizeFinalVariables(modelDataTrajectory[N], dualTrajectory[N], dualDirectionTrajectory[N]), 
+        workerDualStepSize = std::min(ipm::finalDualStepSize(modelDataTrajectory[N], dualTrajectory[N], dualDirectionTrajectory[N]), 
                                       workerDualStepSize);
     }
 
@@ -277,6 +283,23 @@ std::pair<scalar_t, scalar_t> STOC::fractionToBoundaryRule(const std::vector<Ann
 
   return {*std::min_element(primalStepSize.begin(), primalStepSize.end()), 
           *std::min_element(dualStepSize.begin(), dualStepSize.end())};
+}
+
+
+void STOC::updateIterate(const std::vector<AnnotatedTime>& timeDiscretization,
+                         const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts, const vector_array_t& dlmd,
+                         const std::vector<ipm::DualVariableDirection>& dualDirectionTrajectory, 
+                         scalar_t primalStepSize, scalar_t dualStepSize) {
+  const size_t N = static_cast<size_t>(timeDiscretization.size()) - 1;
+  for (size_t i=0; i<N; ++i) {
+    primalData_.primalSolution.stateTrajectory_[i].noalias() += primalStepSize * dx[i];
+    if (primalData_.primalSolution.inputTrajectory_[i].size() > 0) {
+      primalData_.primalSolution.inputTrajectory_[i].noalias() += primalStepSize * du[i];
+    }
+    dualData_.dualVariableTrajectory[i].costate.noalias() += primalStepSize * dlmd[i];
+    updateSlackDualIterate(dualData_.dualVariableTrajectory[i], dualDirectionTrajectory[i],
+                           primalStepSize, dualStepSize);
+  }
 }
 
 }  // namespace ocs2

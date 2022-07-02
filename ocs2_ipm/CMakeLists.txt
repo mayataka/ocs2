@@ -49,6 +49,7 @@ add_library(${PROJECT_NAME}
   src/model_data/Hamiltonian.cpp
   src/model_data/ModelData.cpp
   src/oc_problem/OptimalControlProblem.cpp
+  src/oc_data/DualVariable.cpp
   src/oc_data/Metrics.cpp
   src/approximate_model/DualVariableReconstructor.cpp
   src/approximate_model/LinearQuadraticApproximator.cpp

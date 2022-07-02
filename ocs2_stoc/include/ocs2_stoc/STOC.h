@@ -85,7 +85,13 @@ class STOC : public SolverBase {
   PerformanceIndex approximateOptimalControlProblem(const vector_t& initState, const std::vector<AnnotatedTime>& timeDiscretization);
 
   std::pair<scalar_t, scalar_t> fractionToBoundaryRule(const std::vector<AnnotatedTime>& timeDiscretization, 
-                                                       const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts); 
+                                                       const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts,
+                                                       std::vector<ipm::DualVariableDirection>& dualDirectionTrajectory); 
+
+  void updateIterate(const std::vector<AnnotatedTime>& timeDiscretization,
+                     const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts, const vector_array_t& dlmd,
+                     const std::vector<ipm::DualVariableDirection>& dualDirectionTrajectory,
+                     scalar_t primalStepSize, scalar_t dualStepSize);
 
   // Problem definition
   stoc::Settings settings_;
@@ -98,13 +104,6 @@ class STOC : public SolverBase {
 
   // riccati Recurision
   stoc::RiccatiRecursion riccatiRecursion_;
-
-  // Directions
-  vector_array_t dx_;
-  vector_array_t du_;
-  vector_array_t dlmd_;
-  scalar_array_t dts_;
-  std::vector<ipm::DualVariableDirection> dualDirectionTrajectory_;
 
   // Threading
   ThreadPool threadPool_;
