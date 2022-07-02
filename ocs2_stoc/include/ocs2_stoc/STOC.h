@@ -83,6 +83,9 @@ class STOC : public SolverBase {
 
   PerformanceIndex approximateOptimalControlProblem(const vector_t& initState, const std::vector<AnnotatedTime>& timeDiscretization);
 
+  double fractionToBoundaryRule(const std::vector<AnnotatedTime>& timeDiscretization, 
+                                const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts); 
+
   // Problem definition
   stoc::Settings settings_;
   std::vector<ipm::OptimalControlProblem> optimalControlProblemStock_;

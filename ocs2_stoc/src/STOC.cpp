@@ -89,11 +89,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
   // Determine time discretization, taking into account event times.
   const auto& eventTimes = this->getReferenceManager().getModeSchedule().eventTimes;
-  const auto timeDiscretization = stoc::multiPhaseTimeDiscretization(initTime, finalTime, settings_.dt, eventTimes);
-
-  // // Initialize the state and input
-  // vector_array_t x, u;
-  // initializeStateInputTrajectories(initState, timeDiscretization, x, u);
+  auto timeDiscretization = stoc::multiPhaseTimeDiscretization(initTime, finalTime, settings_.dt, eventTimes);
 
   // Initialize references
   for (auto& optimalControlProblem : optimalControlProblemStock_) {
@@ -118,9 +114,6 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
     // Solve QP
     riccatiRecursionTimer_.startTimer();
-    const vector_t delta_x0 = initState - x[0];
-    const auto deltaSolution = getOCPSolution(delta_x0);
-
     stoc::DiscreteTimeModeSchedule modeSchedule;
     riccatiRecursion_.backwardRecursion(modeSchedule, primalData_.modelDataTrajectory);
     vector_array_t dx;
@@ -132,29 +125,28 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
     // Search step
     linesearchTimer_.startTimer();
-    const auto stepSize = fractionToBoundaryRule(optimalControlProblemStock_, timeDiscretization, dx, du, dts, primalData_.modelDataTrajectory);
+    const auto stepSize = fractionToBoundaryRule(timeDiscretization, dx, du, dts);
     linesearchTimer_.endTimer();
 
     // Check convergence
-    convergence = checkConvergence(iter, baselinePerformance, stepInfo);
+    // convergence = checkConvergence(iter, baselinePerformance, stepInfo);
 
     // Next iteration
     ++iter;
     ++totalNumIterations_;
   }
 
-  computeControllerTimer_.startTimer();
-  setPrimalSolution(timeDiscretization, std::move(x), std::move(u));
-  computeControllerTimer_.endTimer();
+//   computeControllerTimer_.startTimer();
+//   setPrimalSolution(timeDiscretization, std::move(x), std::move(u));
+//   computeControllerTimer_.endTimer();
+//   ++numProblems_;
 
-  ++numProblems_;
-
-  if (settings_.printSolverStatus || settings_.printLinesearch) {
-    std::cerr << "\nConvergence : " << toString(convergence) << "\n";
-    std::cerr << "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-    std::cerr << "\n+++++++++++++ STOC solver has terminated ++++++++++++++";
-    std::cerr << "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
-  }
+//   if (settings_.printSolverStatus || settings_.printLinesearch) {
+//     std::cerr << "\nConvergence : " << toString(convergence) << "\n";
+//     std::cerr << "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+//     std::cerr << "\n+++++++++++++ STOC solver has terminated ++++++++++++++";
+//     std::cerr << "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+//   }
 }
 
 void STOC::runParallel(std::function<void(int)> taskFunction) {
@@ -173,13 +165,15 @@ PerformanceIndex STOC::approximateOptimalControlProblem(const vector_t& initStat
   auto& modelDataTrajectory = primalData_.modelDataTrajectory;
   const auto& dualTrajectory = dualData_.dualVariableTrajectory;
 
+  modelDataTrajectory.clear();
+  modelDataTrajectory.resize(timeTrajectory.size());
+
   std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());
-  // primalData_.resize() ???;
 
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {
     // Get worker specific resources
-    OptimalControlProblem& optimalControlProblem = optimalControlProblemStock_[workerId];
+    ipm::OptimalControlProblem& optimalControlProblem = optimalControlProblemStock_[workerId];
     PerformanceIndex workerPerformance;  // Accumulate performance in local variable
     // const bool projection = settings_.projectStateInputEqualityConstraints;
 
@@ -188,7 +182,7 @@ PerformanceIndex STOC::approximateOptimalControlProblem(const vector_t& initStat
       if (timeDiscretization[i].event == AnnotatedTime::Event::PreEvent) {
         // Event node
         const scalar_t ti = getIntervalStart(timeDiscretization[i]);
-        ipm::approximatePreJumpLQ(optimalControlProblem, ti, stateTrajectory[i], inputTrajectory[i], modelDataTrajectory[i]);
+        ipm::approximatePreJumpLQ(optimalControlProblem, ti, stateTrajectory[i], modelDataTrajectory[i]);
         ipm::discretizePreJumpLQ(stateTrajectory[i], stateTrajectory[i+1],
                                  dualTrajectory[i], dualTrajectory[i+1], modelDataTrajectory[i]);
         workerPerformance += modelDataTrajectory[i].performanceIndex;
@@ -218,12 +212,60 @@ PerformanceIndex STOC::approximateOptimalControlProblem(const vector_t& initStat
   runParallel(std::move(parallelTask));
 
   // Account for init state in performance
-  performance.front().dynamicsViolationSSE += (initState - x.front()).squaredNorm();
+  performance.front().dynamicsViolationSSE += (initState - stateTrajectory.front()).squaredNorm();
 
   // Sum performance of the threads
   PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
   totalPerformance.merit = totalPerformance.cost + totalPerformance.equalityLagrangian + totalPerformance.inequalityLagrangian;
   return totalPerformance;
 }
+
+double STOC::fractionToBoundaryRule(const std::vector<AnnotatedTime>& timeDiscretization, 
+                                    const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts) {
+  // Problem horizon
+  const int N = static_cast<int>(timeDiscretization.size()) - 1;
+  // create alias
+  const auto& timeTrajectory = primalData_.primalSolution.timeTrajectory_;
+  const auto& stateTrajectory = primalData_.primalSolution.stateTrajectory_;
+  const auto& inputTrajectory = primalData_.primalSolution.inputTrajectory_;
+  const auto& postEventIndices = primalData_.primalSolution.postEventIndices_;
+  auto& modelDataTrajectory = primalData_.modelDataTrajectory;
+  auto& dualTrajectory = dualData_.dualVariableTrajectory;
+
+  std::vector<double> stepSize(settings_.nThreads, PerformanceIndex());
+
+  std::atomic_int timeIndex{0};
+  auto parallelTask = [&](int workerId) {
+    // Get worker specific resources
+    ipm::OptimalControlProblem& optimalControlProblem = optimalControlProblemStock_[workerId];
+    double workerStepSize;  // Accumulate performance in local variable
+    // const bool projection = settings_.projectStateInputEqualityConstraints;
+
+    int i = timeIndex++;
+    while (i < N) {
+      if (timeDiscretization[i].event == AnnotatedTime::Event::PreEvent) {
+        // Event node
+        ipm::expandPreJumpDualVariables(modelDataTrajectory[i], dx[i], dualTrajectory[i]);
+        workerStepSize = std::min(ipm::fractionToBoundaryRule(dualTrajectory[i]), workerStepSize);
+      } else {
+        // Normal, intermediate node
+        ipm::expandIntermediateDualVariables(modelDataTrajectory[i], dx[i], du[i], dualTrajectory[i]); 
+        workerStepSize = std::min(ipm::fractionToBoundaryRule(dualTrajectory[i]), workerStepSize);
+      }
+
+      i = timeIndex++;
+    }
+
+    if (i == N) {  // Only one worker will execute this
+      ipm::expandFinalDualVariables(modelDataTrajectory[N], dx[N], dualTrajectory[N]); 
+      workerStepSize = std::min(ipm::fractionToBoundaryRule(dualTrajectory[i]), workerStepSize);
+    }
+
+    // Accumulate! Same worker might run multiple tasks
+    stepSize[workerId] = workerStepSize;
+  };
+  runParallel(std::move(parallelTask));
+
+  return *std::min_element(stepSize.begin(), stepSize.end());
 
 }  // namespace ocs2
