@@ -1,6 +1,8 @@
 #include <ocs2_ipm/approximate_model/IpmVariablesRetriver.h>
 #include <ocs2_ipm/core/InteriorPointMethod.h>
 
+#include <cassert>
+
 namespace ocs2 {
 namespace ipm {
 
@@ -41,6 +43,8 @@ scalar_t intermediatePrimalStepSize(const IpmData& ipmData, const IpmVariables& 
 
 scalar_t intermediateDualStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
                                   scalar_t marginRate) {
+  assert(marginRate > 0.0);
+  assert(marginRate < 1.0);
   return std::min(
       fractionToBoundaryDualStepSize(ipmVariables.slackDualStateIneqConstraint, 
                                      ipmVariablesDirection.slackDualDirectionStateIneqConstraint,  
@@ -52,6 +56,8 @@ scalar_t intermediateDualStepSize(const IpmData& ipmData, const IpmVariables& ip
 
 scalar_t preJumpPrimalStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
                                scalar_t marginRate) {
+  assert(marginRate > 0.0);
+  assert(marginRate < 1.0);
   return fractionToBoundaryPrimalStepSize(ipmVariables.slackDualStateIneqConstraint, 
                                           ipmVariablesDirection.slackDualDirectionStateIneqConstraint,  
                                           ipmData.dataStateIneqConstraint, marginRate);
@@ -59,6 +65,8 @@ scalar_t preJumpPrimalStepSize(const IpmData& ipmData, const IpmVariables& ipmVa
 
 scalar_t preJumpDualStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
                              scalar_t marginRate) {
+  assert(marginRate > 0.0);
+  assert(marginRate < 1.0);
   return fractionToBoundaryDualStepSize(ipmVariables.slackDualStateIneqConstraint, 
                                         ipmVariablesDirection.slackDualDirectionStateIneqConstraint,  
                                         ipmData.dataStateIneqConstraint, marginRate);
@@ -66,11 +74,15 @@ scalar_t preJumpDualStepSize(const IpmData& ipmData, const IpmVariables& ipmVari
 
 scalar_t finalPrimalStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
                              scalar_t marginRate) {
+  assert(marginRate > 0.0);
+  assert(marginRate < 1.0);
   return preJumpPrimalStepSize(ipmData, ipmVariables, ipmVariablesDirection, marginRate);
 }
 
 scalar_t finalDualStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
                            scalar_t marginRate) {
+  assert(marginRate > 0.0);
+  assert(marginRate < 1.0);
   return preJumpDualStepSize(ipmData, ipmVariables, ipmVariablesDirection, marginRate);
 }
 

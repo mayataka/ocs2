@@ -1,10 +1,13 @@
 #include <ocs2_ipm/approximate_model/LinearQuadraticDiscretizer.h>
 
+#include <cassert>
+
 namespace ocs2 {
 namespace ipm {
 
 void discretizeIntermediateLQ(const scalar_t dt, const vector_t& state, const vector_t& stateNext, const vector_t& costate, 
                               const vector_t& costateNext, ModelData& modelData) {
+  assert(dt > 0.0);
   // cost 
   modelData.cost.dfdx.noalias() += modelData.dynamics.dfdx.transpose() * costateNext; 
   modelData.cost.dfdu.noalias() += modelData.dynamics.dfdu.transpose() * costateNext; 
