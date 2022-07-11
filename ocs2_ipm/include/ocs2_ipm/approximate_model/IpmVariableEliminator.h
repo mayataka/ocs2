@@ -1,8 +1,9 @@
 #pragma once
 
-#include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
 #include <ocs2_ipm/model_data/ModelData.h>
+#include <ocs2_ipm/oc_data/IpmVariables.h>
+#include <ocs2_ipm/oc_data/IpmData.h>
 
 namespace ocs2 {
 namespace ipm {
@@ -16,8 +17,7 @@ namespace ipm {
  * @param [in] input: The current input.
  * @param [out] modelData: The output data model.
  */
-void discretizeIntermediateLQ(const scalar_t dt, const vector_t& state, const vector_t& stateNext, const vector_t& costate, 
-                              const vector_t& costateNext, ModelData& modelData);
+void eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData);
 
 /**
  * Calculates an LQ approximate of the constrained optimal control problem at a jump event time.
@@ -27,8 +27,7 @@ void discretizeIntermediateLQ(const scalar_t dt, const vector_t& state, const ve
  * @param [in] state: The current state.
  * @param [out] modelData: The output data model.
  */
-void discretizePreJumpLQ(const vector_t& state, const vector_t& stateNext, const vector_t& costate, 
-                         const vector_t& costateNext, ModelData& modelData);
+void eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData);
 
 /**
  * Calculates an LQ approximate of the constrained optimal control problem at final time.
@@ -38,7 +37,7 @@ void discretizePreJumpLQ(const vector_t& state, const vector_t& stateNext, const
  * @param [in] state: The current state.
  * @param [out] modelData: The output data model.
  */
-void discretizeFinalLQ(const vector_t& costate, ModelData& modelData);
+void eliminateIpmVariablesFinalLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData);
 
 }  // namespace ipm
 }  // namespace ocs2

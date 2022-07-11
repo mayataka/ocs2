@@ -18,9 +18,7 @@ InteriorPointMethodData::InteriorPointMethodData(size_t nc, size_t nx, size_t nu
 InteriorPointMethodData& InteriorPointMethodData::resize(size_t nc, size_t nx, size_t nu) {
   dim = nc;
   primalResidual.resize(nc);
-  complementary.resize(nc);
-  slackDirection.resize(nc);
-  dualDirection.resize(nc);
+  complementarySlackness.resize(nc);
   cond.resize(nc);
   dualDivSlack.resize(nc);
   linearApproximation.resize(nc, nx, nu);
@@ -33,9 +31,7 @@ InteriorPointMethodData& InteriorPointMethodData::resize(size_t nc, size_t nx, s
 InteriorPointMethodData& InteriorPointMethodData::setZero(size_t nc, size_t nx, size_t nu) {
   dim = nc;
   primalResidual.setZero(nc);
-  complementary.setZero(nc);
-  slackDirection.setZero(nc);
-  dualDirection.setZero(nc);
+  complementarySlackness.setZero(nc);
   cond.setZero(nc);
   dualDivSlack.setZero(nc);
   linearApproximation.setZero(nc, nx, nu);
@@ -62,14 +58,8 @@ std::string checkSize(int constraintDim, const InteriorPointMethodData& data, co
   if (data.primalResidual.size() != constraintDim) {
     errorDescription << dataName << ".primalResidual.size() != " << constraintDim << "\n";
   }
-  if (data.complementary.size() != constraintDim) {
-    errorDescription << dataName << ".complementary.size() != " << constraintDim << "\n";
-  }
-  if (data.slackDirection.size() != constraintDim) {
-    errorDescription << dataName << ".slackDirection.size() != " << constraintDim << "\n";
-  }
-  if (data.dualDirection.size() != constraintDim) {
-    errorDescription << dataName << ".dualDirection.size() != " << constraintDim << "\n";
+  if (data.complementarySlackness.size() != constraintDim) {
+    errorDescription << dataName << ".complementarySlackness.size() != " << constraintDim << "\n";
   }
   if (data.cond.size() != constraintDim) {
     errorDescription << dataName << ".cond.size() != " << constraintDim << "\n";
@@ -77,6 +67,19 @@ std::string checkSize(int constraintDim, const InteriorPointMethodData& data, co
   if (data.dualDivSlack.size() != constraintDim) {
     errorDescription << dataName << ".dualDivSlack.size() != " << constraintDim << "\n";
   }
+  return errorDescription.str();
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+std::string checkSize(int constraintDim, int stateDim, int inputDim, 
+                      const InteriorPointMethodData& data, const std::string& dataName) {
+  std::stringstream errorDescription;
+
+  errorDescription << checkSize(constraintDim, data, dataName);
+  errorDescription << checkSize(constraintDim, stateDim, inputDim, data.linearApproximation, dataName+".linearApproximation");
+
   return errorDescription.str();
 }
 

@@ -26,8 +26,9 @@ TEST(testInteriorPointMethod, testInteriorPointMethod) {
   EXPECT_TRUE(ipm::checkPositive(slackDual, "").empty());
 
   ipm::InteriorPointMethodData ipmData;
-  ipmData.setZero(nc, nx, nu);
+  ipm::initInteriorPointMethodData(ineqConstraint, ipmData);
   EXPECT_TRUE(ipm::checkSize(nc, ipmData, "").empty());
+  EXPECT_TRUE(ipm::checkSize(nc, nx, nu, ipmData, "").empty());
 
   ScalarFunctionQuadraticApproximation cost;
   cost.setZero(nx, nu);
@@ -60,4 +61,15 @@ TEST(testInteriorPointMethod, testFractionToBoundaryStepSize) {
   const scalar_t stepSize = ipm::fractionToBoundaryStepSize(nc, v, dv);
   EXPECT_TRUE(0.0 <= stepSize);
   EXPECT_TRUE(stepSize <= 1.0);
+
+  // If the var and dvar are positive, the step size has to be 1.0.
+  const vector_t dv1 = vector_t::Random(nc).cwiseAbs();
+  const scalar_t stepSize1 = ipm::fractionToBoundaryStepSize(nc, v, dv1);
+  EXPECT_DOUBLE_EQ(stepSize1, 1.0);
+
+  // If the var + dvar are negative, the step size has to be less than 1.0.
+  const vector_t dv2 = - v - vector_t::Random(nc).cwiseAbs();
+  const scalar_t stepSize2 = ipm::fractionToBoundaryStepSize(nc, v, dv2);
+  EXPECT_TRUE(0.0 <= stepSize2);
+  EXPECT_TRUE(stepSize2 < 1.0);
 }

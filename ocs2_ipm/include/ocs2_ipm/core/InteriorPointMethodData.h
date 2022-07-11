@@ -14,11 +14,7 @@ struct InteriorPointMethodData {
 
   // Primal residual and complementary slackness
   vector_t primalResidual;
-  vector_t complementary;
-
-  // Slack and dual search directions
-  vector_t slackDirection;
-  vector_t dualDirection;
+  vector_t complementarySlackness;
 
   // Temporal data in condensing
   vector_t cond, dualDivSlack;
@@ -65,6 +61,20 @@ struct InteriorPointMethodData {
  * @return The description of the error. If there was no error it would be empty;
  */
 std::string checkSize(int constraintDim, const InteriorPointMethodData& data, const std::string& dataName);
+
+/**
+ * Checks the size of the given InteriorPointMethodData including the derivative of
+ * the constraint.
+ *
+ * @param[in] constraintDim: Constraint dimension.
+ * @param[in] stateDim: Number of states.
+ * @param[in] inputDim: Number of inputs.
+ * @param[in] data: Given InteriorPointMethodData.
+ * @param[in] dataName: The name of the data which appears in the output error message.
+ * @return The description of the error. If there was no error it would be empty;
+ */
+std::string checkSize(int constraintDim, int stateDim, int inputDim, 
+                      const InteriorPointMethodData& data, const std::string& dataName);
 
 }  // namespace ipm
 }  // namespace ocs2

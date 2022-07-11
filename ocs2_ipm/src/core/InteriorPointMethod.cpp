@@ -34,8 +34,8 @@ void evalPerturbedResidual(const VectorFunctionLinearApproximation& ineqConstrai
                            bool stateConstraint, bool inputConstraint) {
   // primal feasibility
   ipmData.primalResidual = ineqConstraint.f + slackDual.slack;
-  // complementary
-  ipmData.complementary.array() = slackDual.slack.array() * slackDual.dual.array() - slackDual.barrier;
+  // complementary slackness
+  ipmData.complementarySlackness.array() = slackDual.slack.array() * slackDual.dual.array() - slackDual.barrier;
   // dual feasibility
   if (stateConstraint) {
     cost.dfdx.noalias() += ineqConstraint.dfdx.transpose() * slackDual.dual;
@@ -51,7 +51,7 @@ void condenseSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
                        ScalarFunctionQuadraticApproximation& cost,
                        bool stateConstraint, bool inputConstraint) {
   // some coefficients for condensing
-  ipmData.cond.array() = (slackDual.dual.array()*ipmData.primalResidual.array()-ipmData.complementary.array()) 
+  ipmData.cond.array() = (slackDual.dual.array()*ipmData.primalResidual.array()-ipmData.complementarySlackness.array()) 
                         / slackDual.slack.array();
   ipmData.dualDivSlack.array() = slackDual.dual.array() / slackDual.slack.array();
   // condensing
@@ -74,7 +74,7 @@ void condenseSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
 void expandDual(const SlackDual& slackDual, const InteriorPointMethodData& ipmData, 
                 SlackDualDirection& slackDualDirection) {
   slackDualDirection.dualDirection.array() 
-      = - (slackDual.dual.array()*slackDualDirection.slackDirection.array()+ipmData.complementary.array())
+      = - (slackDual.dual.array()*slackDualDirection.slackDirection.array()+ipmData.complementarySlackness.array())
             / slackDual.slack.array();
 }
 

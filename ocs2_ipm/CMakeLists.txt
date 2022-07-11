@@ -52,10 +52,11 @@ add_library(${PROJECT_NAME}
   src/model_data/Hamiltonian.cpp
   src/model_data/ModelData.cpp
   src/oc_problem/OptimalControlProblem.cpp
-  src/oc_data/DualVariable.cpp
-  src/approximate_model/DualVariableReconstructor.cpp
+  src/oc_data/IpmVariables.cpp
   src/approximate_model/LinearQuadraticApproximator.cpp
   src/approximate_model/LinearQuadraticDiscretizer.cpp
+  src/approximate_model/IpmVariablesEliminator.cpp
+  src/approximate_model/IpmVariablesRetriver.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
@@ -101,6 +102,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 catkin_add_gtest(test_${PROJECT_NAME}
   test/core/testSlackDual.cpp
   test/core/testInteriorPointMethod.cpp
+  test/model_data/testModelData.cpp
 )
 add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_${PROJECT_NAME}
