@@ -5,8 +5,8 @@
 #include <gtest/gtest.h>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_ipm/ipm/SlackDual.h>
-#include <ocs2_ipm/ipm/InteriorPointMethod.h>
+#include <ocs2_ipm/core/SlackDual.h>
+#include <ocs2_ipm/core/InteriorPointMethod.h>
 
 using namespace ocs2;
 

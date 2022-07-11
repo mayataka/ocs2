@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cassert>
 
-#include <ocs2_ipm/ipm/InteriorPointMethod.h>
+#include <ocs2_ipm/core/InteriorPointMethod.h>
 
 namespace ocs2 {
 namespace ipm {

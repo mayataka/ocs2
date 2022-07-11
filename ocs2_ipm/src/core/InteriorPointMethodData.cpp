@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include <ocs2_ipm/ipm/InteriorPointMethodData.h>
+#include <ocs2_ipm/core/InteriorPointMethodData.h>
 
 namespace ocs2 {
 namespace ipm {

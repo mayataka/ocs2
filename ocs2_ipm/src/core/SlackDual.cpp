@@ -1,4 +1,4 @@
-#include <ocs2_ipm/ipm/SlackDual.h>
+#include <ocs2_ipm/core/SlackDual.h>
 
 namespace ocs2 {
 namespace ipm {

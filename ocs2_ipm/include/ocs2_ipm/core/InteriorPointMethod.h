@@ -1,9 +1,9 @@
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_ipm/ipm/SlackDual.h>
-#include <ocs2_ipm/ipm/SlackDualDirection.h>
-#include <ocs2_ipm/ipm/InteriorPointMethodData.h>
+#include <ocs2_ipm/core/SlackDual.h>
+#include <ocs2_ipm/core/SlackDualDirection.h>
+#include <ocs2_ipm/core/InteriorPointMethodData.h>
 
 namespace ocs2 {
 namespace ipm {

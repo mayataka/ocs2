@@ -8,7 +8,7 @@
 #include <ocs2_core/model_data/ModelData.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_ipm/model_data/Hamiltonian.h>
-#include <ocs2_ipm/ipm/InteriorPointMethodData.h>
+#include <ocs2_ipm/core/InteriorPointMethodData.h>
 
 namespace ocs2 {
 namespace ipm {

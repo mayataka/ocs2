@@ -46,17 +46,16 @@ include_directories(
 
 # ocs2_ipm library
 add_library(${PROJECT_NAME}
+  src/core/SlackDual.cpp
+  src/core/InteriorPointMethodData.cpp
+  src/core/InteriorPointMethod.cpp
   src/model_data/Hamiltonian.cpp
   src/model_data/ModelData.cpp
   src/oc_problem/OptimalControlProblem.cpp
   src/oc_data/DualVariable.cpp
-  src/oc_data/Metrics.cpp
   src/approximate_model/DualVariableReconstructor.cpp
   src/approximate_model/LinearQuadraticApproximator.cpp
   src/approximate_model/LinearQuadraticDiscretizer.cpp
-  src/ipm/SlackDual.cpp
-  src/ipm/InteriorPointMethodData.cpp
-  src/ipm/InteriorPointMethod.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
@@ -100,8 +99,8 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 catkin_add_gtest(test_${PROJECT_NAME}
-  test/testSlackDual.cpp
-  test/testInteriorPointMethod.cpp
+  test/core/testSlackDual.cpp
+  test/core/testInteriorPointMethod.cpp
 )
 add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_${PROJECT_NAME}
