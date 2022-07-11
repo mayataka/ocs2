@@ -130,8 +130,8 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     // Select step sizes
     linesearchTimer_.startTimer();
     const auto stepSizes = selectStepSizes(timeDiscretization, dx, du, dlmd, dts, ipmDirectionTrajectory);
-    const scalar_t primalStepSize = stepSizes.first;
-    const scalar_t dualStepSize = stepSizes.second;
+    const scalar_t primalStepSize = stepSizes.primalStepSize;
+    const scalar_t dualStepSize = stepSizes.dualStepSize;
     linesearchTimer_.endTimer();
 
     updateIterate(timeDiscretization, dx, du, dts, dlmd, ipmDirectionTrajectory, primalStepSize, dualStepSize);
@@ -232,9 +232,9 @@ PerformanceIndex STOC::approximateOptimalControlProblem(const vector_t& initStat
   return totalPerformance;
 }
 
-std::pair<scalar_t, scalar_t> STOC::selectStepSizes(const std::vector<AnnotatedTime>& timeDiscretization, const vector_array_t& dx, 
-                                                    const vector_array_t& du, const vector_array_t& dlmd, const scalar_array_t& dts,
-                                                    std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory) {
+STOC::IpmStepSizes STOC::selectStepSizes(const std::vector<AnnotatedTime>& timeDiscretization, const vector_array_t& dx, const vector_array_t& du, 
+                                         const vector_array_t& dlmd, const scalar_array_t& dts,
+                                         std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory) {
   // Problem horizon
   const int N = static_cast<int>(timeDiscretization.size()) - 1;
   // create alias
@@ -288,8 +288,10 @@ std::pair<scalar_t, scalar_t> STOC::selectStepSizes(const std::vector<AnnotatedT
   };
   runParallel(std::move(parallelTask));
 
-  return {*std::min_element(primalStepSize.begin(), primalStepSize.end()), 
-          *std::min_element(dualStepSize.begin(), dualStepSize.end())};
+  IpmStepSizes stepSizes;
+  stepSizes.primalStepSize = *std::min_element(primalStepSize.begin(), primalStepSize.end());
+  stepSizes.dualStepSize = *std::min_element(dualStepSize.begin(), dualStepSize.end());
+  return stepSizes;
 }
 
 

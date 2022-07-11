@@ -46,9 +46,9 @@ class STOC : public SolverBase {
 
   const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
-  scalar_t getFinalTime() const override;
+  scalar_t getFinalTime() const override { return primalData_.primalSolution.timeTrajectory_.back(); };
 
-  void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const override;
+  void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const override { *primalSolutionPtr = primalData_.primalSolution; }
 
   ScalarFunctionQuadraticApproximation getValueFunction(scalar_t time, const vector_t& state) const override {
     throw std::runtime_error("[STOC] getValueFunction() not available yet.");
@@ -85,9 +85,13 @@ class STOC : public SolverBase {
 
   PerformanceIndex approximateOptimalControlProblem(const vector_t& initState, const std::vector<AnnotatedTime>& timeDiscretization);
 
-  std::pair<scalar_t, scalar_t> selectStepSizes(const std::vector<AnnotatedTime>& timeDiscretization, const vector_array_t& dx, 
-                                                const vector_array_t& du, const vector_array_t& dlmd, const scalar_array_t& dts,
-                                                std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory); 
+  struct IpmStepSizes {
+    scalar_t primalStepSize, dualStepSize;
+  };
+
+  IpmStepSizes selectStepSizes(const std::vector<AnnotatedTime>& timeDiscretization, const vector_array_t& dx, 
+                               const vector_array_t& du, const vector_array_t& dlmd, const scalar_array_t& dts,
+                               std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory); 
 
   void updateIterate(const std::vector<AnnotatedTime>& timeDiscretization,
                      const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts, const vector_array_t& dlmd,

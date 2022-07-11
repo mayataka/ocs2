@@ -13,8 +13,8 @@ namespace stoc {
 /******************************************************************************************************/
 /******************************************************************************************************/
 DiscreteTimeModeSchedule::DiscreteTimeModeSchedule(std::vector<size_t> modeSequenceInput, 
-                                                   std::vector<bool> isStoEnabled)
-    : modeSequence(std::move(modeSequenceInput)), isStoEnabled(std::move(isStoEnabled)) {
+                                                   std::vector<bool> isStoEnabledInput)
+    : modeSequence(std::move(modeSequenceInput)), isStoEnabled(std::move(isStoEnabledInput)) {
   assert(!modeSequence.empty());
   phaseSequence.clear();
   size_t modePrev = modeSequence[0];

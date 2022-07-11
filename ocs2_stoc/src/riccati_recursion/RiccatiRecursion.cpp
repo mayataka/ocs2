@@ -51,6 +51,10 @@ RiccatiRecursion::RiccatiRecursion(const size_t nx, const size_t nu, const size_
 }
 
 
+RiccatiRecursion::RiccatiRecursion() {
+}
+
+
 void RiccatiRecursion::backwardRecursion(const DiscreteTimeModeSchedule& modeSchedule, std::vector<ipm::ModelData>& modelData) {
   backwardRecursion_.compute(modelData[N_].cost, riccati_[N_]);
   for (int i=N_-1; i>=0; --i) {
