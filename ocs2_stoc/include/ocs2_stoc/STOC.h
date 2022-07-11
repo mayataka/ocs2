@@ -15,7 +15,8 @@
 // #include <ocs2_ipm/model_data/ModelDataLinearInterpolation.h> :TODO
 #include <ocs2_ipm/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_ipm/approximate_model/LinearQuadraticDiscretizer.h>
-#include <ocs2_ipm/approximate_model/DualVariableReconstructor.h>
+#include <ocs2_ipm/approximate_model/IpmVariableEliminator.h>
+#include <ocs2_ipm/approximate_model/IpmVariablesRetriver.h>
 
 #include "ocs2_stoc/riccati_recursion/RiccatiRecursion.h"
 #include "ocs2_stoc/TimeDiscretization.h"
@@ -84,13 +85,13 @@ class STOC : public SolverBase {
 
   PerformanceIndex approximateOptimalControlProblem(const vector_t& initState, const std::vector<AnnotatedTime>& timeDiscretization);
 
-  std::pair<scalar_t, scalar_t> fractionToBoundaryRule(const std::vector<AnnotatedTime>& timeDiscretization, 
-                                                       const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts,
-                                                       std::vector<ipm::DualVariableDirection>& dualDirectionTrajectory); 
+  std::pair<scalar_t, scalar_t> selectStepSizes(const std::vector<AnnotatedTime>& timeDiscretization, const vector_array_t& dx, 
+                                                const vector_array_t& du, const vector_array_t& dlmd, const scalar_array_t& dts,
+                                                std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory); 
 
   void updateIterate(const std::vector<AnnotatedTime>& timeDiscretization,
                      const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts, const vector_array_t& dlmd,
-                     const std::vector<ipm::DualVariableDirection>& dualDirectionTrajectory,
+                     const std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory,
                      scalar_t primalStepSize, scalar_t dualStepSize);
 
   // Problem definition
@@ -100,7 +101,7 @@ class STOC : public SolverBase {
 
   // Data
   stoc::PrimalDataContainer primalData_;
-  stoc::DualDataContainer dualData_;
+  stoc::IpmDataContainer ipmData_;
 
   // riccati Recurision
   stoc::RiccatiRecursion riccatiRecursion_;

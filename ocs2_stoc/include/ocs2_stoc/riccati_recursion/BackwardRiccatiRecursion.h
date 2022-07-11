@@ -6,6 +6,8 @@
 #include <ocs2_stoc/riccati_recursion/LqrPolicy.h>
 #include <ocs2_stoc/riccati_recursion/StoPolicy.h>
 
+#include <Eigen/LU>
+
 namespace ocs2 {
 namespace stoc {
 
