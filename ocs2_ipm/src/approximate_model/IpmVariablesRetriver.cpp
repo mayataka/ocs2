@@ -23,13 +23,13 @@ void retrivePreJumpIpmVariablesDirection(const ModelData& modelData, const IpmDa
                   ipmVariablesDirection.slackDualDirectionStateIneqConstraint);
 }
 
-void retriveFinalIpmVariablesDirection(const ModelData& modelData, const IpmData& ipmData, const vector_t& dx, 
-                                       const IpmVariables& ipmVariables, IpmVariablesDirection& ipmVariablesDirection) {
+void retriveFinalIpmVariablesDirection(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables, 
+                                       const vector_t& dx, IpmVariablesDirection& ipmVariablesDirection) {
   retrivePreJumpIpmVariablesDirection(modelData, ipmData, ipmVariables, dx, ipmVariablesDirection);
 }
 
-scalar_t intermediatePrimalStepSize(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables, 
-                                    const IpmVariablesDirection& ipmVariablesDirection, scalar_t marginRate) {
+scalar_t intermediatePrimalStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
+                                    scalar_t marginRate) {
   return std::min(
       fractionToBoundaryPrimalStepSize(ipmVariables.slackDualStateIneqConstraint, 
                                        ipmVariablesDirection.slackDualDirectionStateIneqConstraint,  
@@ -39,8 +39,8 @@ scalar_t intermediatePrimalStepSize(const ModelData& modelData, const IpmData& i
                                        ipmData.dataStateInputIneqConstraint, marginRate));
 }
 
-scalar_t intermediateDualStepSize(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables, 
-                                  const IpmVariablesDirection& ipmVariablesDirection, scalar_t marginRate) {
+scalar_t intermediateDualStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
+                                  scalar_t marginRate) {
   return std::min(
       fractionToBoundaryDualStepSize(ipmVariables.slackDualStateIneqConstraint, 
                                      ipmVariablesDirection.slackDualDirectionStateIneqConstraint,  
@@ -50,29 +50,28 @@ scalar_t intermediateDualStepSize(const ModelData& modelData, const IpmData& ipm
                                      ipmData.dataStateInputIneqConstraint, marginRate));
 }
 
-
-scalar_t preJumpPrimalStepSize(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables, 
-                               const IpmVariablesDirection& ipmVariablesDirection, scalar_t marginRate) {
+scalar_t preJumpPrimalStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
+                               scalar_t marginRate) {
   return fractionToBoundaryPrimalStepSize(ipmVariables.slackDualStateIneqConstraint, 
                                           ipmVariablesDirection.slackDualDirectionStateIneqConstraint,  
                                           ipmData.dataStateIneqConstraint, marginRate);
 }
 
-scalar_t preJumpDualStepSize(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables, 
-                             const IpmVariablesDirection& ipmVariablesDirection, scalar_t marginRate) {
+scalar_t preJumpDualStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
+                             scalar_t marginRate) {
   return fractionToBoundaryDualStepSize(ipmVariables.slackDualStateIneqConstraint, 
                                         ipmVariablesDirection.slackDualDirectionStateIneqConstraint,  
                                         ipmData.dataStateIneqConstraint, marginRate);
 }
 
-scalar_t finalPrimalStepSize(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables, 
-                             const IpmVariablesDirection& ipmVariablesDirection, scalar_t marginRate) {
-  return preJumpPrimalStepSize(modelData, ipmData, ipmVariables, ipmVariablesDirection, marginRate);
+scalar_t finalPrimalStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
+                             scalar_t marginRate) {
+  return preJumpPrimalStepSize(ipmData, ipmVariables, ipmVariablesDirection, marginRate);
 }
 
-scalar_t finalDualStepSize(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables, 
-                           const IpmVariablesDirection& ipmVariablesDirection, scalar_t marginRate) {
-  return preJumpDualStepSize(modelData, ipmData, ipmVariables, ipmVariablesDirection, marginRate);
+scalar_t finalDualStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
+                           scalar_t marginRate) {
+  return preJumpDualStepSize(ipmData, ipmVariables, ipmVariablesDirection, marginRate);
 }
 
 }  // namespace ipm

@@ -18,23 +18,23 @@ void retrivePreJumpIpmVariablesDirection(const ModelData& modelData, const IpmDa
 void retriveFinalIpmVariablesDirection(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables,
                                        const vector_t& dx, IpmVariablesDirection& ipmVariablesDirection);
 
-scalar_t intermediatePrimalStepSize(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables, 
-                                    const IpmVariablesDirection& ipmVariablesDirection, scalar_t marginRate=0.995);
+scalar_t intermediatePrimalStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
+                                    scalar_t marginRate=0.995);
 
-scalar_t intermediateDualStepSize(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables, 
-                                  const IpmVariablesDirection& ipmVariablesDirection, scalar_t marginRate=0.995);
+scalar_t intermediateDualStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
+                                  scalar_t marginRate=0.995);
 
-scalar_t preJumpPrimalStepSize(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables, 
-                               const IpmVariablesDirection& ipmVariablesDirection, scalar_t marginRate=0.995);
+scalar_t preJumpPrimalStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
+                               scalar_t marginRate=0.995);
 
-scalar_t preJumpDualStepSize(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables, 
-                             const IpmVariablesDirection& ipmVariablesDirection, scalar_t marginRate=0.995);
+scalar_t preJumpDualStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
+                             scalar_t marginRate=0.995);
 
-scalar_t finalPrimalStepSize(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables, 
-                             const IpmVariablesDirection& ipmVariablesDirection, scalar_t marginRate=0.995);
+scalar_t finalPrimalStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
+                             scalar_t marginRate=0.995);
 
-scalar_t finalDualStepSize(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables, 
-                           const IpmVariablesDirection& ipmVariablesDirection, scalar_t marginRate=0.995);
+scalar_t finalDualStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
+                           scalar_t marginRate=0.995);
 
 }  // namespace ipm
 }  // namespace ocs2
