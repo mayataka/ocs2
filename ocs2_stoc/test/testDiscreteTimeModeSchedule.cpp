@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-#include <ocs2_stoc/reference/DiscreteTimeModeSchedule.h>
+#include <ocs2_stoc/DiscreteTimeModeSchedule.h>
 
 using namespace ocs2;
 using namespace stoc;
@@ -14,14 +14,13 @@ TEST(testDiscreteTimeModeSchedule, testDiscreteTimeModeSchedule) {
   const size_array_t modeSequenceInput = modeSequenceRef;
   const std::vector<bool> isStoEnabledRef = {true, false, false, true};
   const std::vector<bool> isStoEnabledInput = isStoEnabledRef;
-
   DiscreteTimeModeSchedule modeSchedule(modeSequenceInput, isStoEnabledInput);
 
   for (int i=0; i<modeSequenceRef.size(); ++i) {
     EXPECT_EQ(modeSchedule.modeAtTimeStage(i), modeSequenceRef[i]);
   }
-  for (int i=0; i<isStoEnabledRef.size(); ++i) {
-    EXPECT_EQ(modeSchedule.isStoEnabledAtPhase(i), isStoEnabledInput[i]);
+  for (int i=0; i<modeSequenceRef.size(); ++i) {
+    EXPECT_EQ(modeSchedule.isStoEnabledAtPhase(i), isStoEnabledInput[modeSchedule.phaseAtTimeStage(i)]);
   }
   // mode 1: 3 time stages 
   for (int i=0; i<3; ++i) {

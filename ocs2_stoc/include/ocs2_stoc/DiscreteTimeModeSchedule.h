@@ -4,10 +4,10 @@
 #include <vector>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/reference/ModeSchedule.h>
 
 // stoc
 #include <ocs2_stoc/TimeDiscretization.h>
+#include <ocs2_stoc/reference/STOC_ModeSchedule.h>
 
 
 namespace ocs2 {
@@ -20,14 +20,22 @@ struct DiscreteTimeModeSchedule {
   /**
    * Default constructor.
    */
-  DiscreteTimeModeSchedule() : DiscreteTimeModeSchedule(std::vector<size_t>{0}, std::vector<bool>{false}) {}
+  DiscreteTimeModeSchedule() : DiscreteTimeModeSchedule(std::vector<size_t>{0}, std::vector<bool>{}) {}
 
   /**
    * Constructor for a DiscreteTimeModeSchedule. The number of modes must be greater than zero (N > 0)
    * @param [in] modeSequenceInput : mode sequence of size N.
-   * @param [in] isStoEnabled : isStoEnabled of size modeSequenceInput.back()+1.
+   * @param [in] isStoEnabledInput : isStoEnabled of size modeSequenceInput.back()+1.
    */
-  DiscreteTimeModeSchedule(std::vector<size_t> modeSequenceInput, std::vector<bool> isStoEnabled);
+  DiscreteTimeModeSchedule(std::vector<size_t> modeSequenceInput, std::vector<bool> isStoEnabledInput);
+
+  /**
+   * Constructor for a DiscreteTimeModeSchedule. The number of modes must be greater than zero (N > 0)
+   * @param [in] timeDiscretization : time discretization.
+   * @param [in] isStoEnabled : mode schedule reference.
+   */
+  DiscreteTimeModeSchedule(const std::vector<AnnotatedTime>& timeDiscretization,
+                           const STOC_ModeSchedule& modeScheduleReference);
 
   /**
    *  Returns the mode of the specified time stage.

@@ -102,6 +102,7 @@ class STOC : public SolverBase {
   stoc::Settings settings_;
   std::vector<ipm::OptimalControlProblem> optimalControlProblemStock_;
   std::unique_ptr<Initializer> initializerPtr_;
+  scalar_t barrierParam_;
 
   // Data
   stoc::PrimalDataContainer primalData_;

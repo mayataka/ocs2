@@ -1,10 +1,11 @@
-#include <ocs2_stoc/reference/DiscreteTimeModeSchedule.h>
+#include <ocs2_stoc/DiscreteTimeModeSchedule.h>
 
 #include <ocs2_core/misc/Display.h>
 #include <ocs2_core/misc/Lookup.h>
 #include <ocs2_core/misc/Numerics.h>
 
 #include <cassert>
+#include <iostream>
 
 namespace ocs2 {
 namespace stoc {
@@ -12,21 +13,49 @@ namespace stoc {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-DiscreteTimeModeSchedule::DiscreteTimeModeSchedule(std::vector<size_t> modeSequenceInput, 
-                                                   std::vector<bool> isStoEnabledInput)
-    : modeSequence(std::move(modeSequenceInput)), isStoEnabled(std::move(isStoEnabledInput)) {
+DiscreteTimeModeSchedule::DiscreteTimeModeSchedule(std::vector<size_t> modeSequenceInput, std::vector<bool> isStoEnabledInput)
+    : modeSequence(std::move(modeSequenceInput)), phaseSequence({}), isStoEnabled() {
   assert(!modeSequence.empty());
-  phaseSequence.clear();
-  size_t modePrev = modeSequence[0];
+  auto modePrev = modeSequence.front();
   size_t phase = 0;
   for (const auto mode : modeSequence) {
     if (mode != modePrev) {
       ++phase;
-      modePrev = mode;
     }
     phaseSequence.push_back(phase);
+    isStoEnabled.push_back(isStoEnabledInput[phase]);
+    modePrev = mode;
   }
-  assert(phase == isStoEnabled.size());
+  if (!isStoEnabledInput.empty()) {
+    assert(isStoEnabledInput.size() == phaseSequence.back());
+    for (const auto phase : phaseSequence) {
+      isStoEnabled.push_back(isStoEnabledInput[phase]);
+    }
+  }
+  else {
+    isStoEnabled = std::vector<bool>(modeSequence.size()-1, false);
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
+DiscreteTimeModeSchedule::DiscreteTimeModeSchedule(const std::vector<AnnotatedTime>& timeDiscretization,
+                                                   const STOC_ModeSchedule& modeScheduleReference) 
+    : modeSequence({}), phaseSequence({}), isStoEnabled({}) {
+  assert(!modeSequence.empty());
+  auto modePrev = modeScheduleReference.modeAtTime(timeDiscretization.front().time);
+  size_t phase = 0;
+  for (const auto& e : timeDiscretization) {
+    const auto mode = modeScheduleReference.modeAtTime(e.time);
+    if (mode != modePrev) {
+      ++phase;
+    }
+    modeSequence.push_back(mode);
+    phaseSequence.push_back(phase);
+    isStoEnabled.push_back(modeScheduleReference.isStoEnabled[phase]);
+    modePrev = mode;
+  }
 }
 
 /******************************************************************************************************/

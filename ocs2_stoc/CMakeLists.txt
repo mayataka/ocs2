@@ -3,10 +3,11 @@ project(ocs2_stoc)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
-  ocs2_ddp
   ocs2_oc
   ocs2_sqp
+  ocs2_ddp
   ocs2_ipm
+  ocs2_mpc
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -49,10 +50,11 @@ include_directories(
 
 # ocs2_stoc library
 add_library(${PROJECT_NAME}
-  src/reference/DiscreteTimeModeSchedule.cpp
+  src/reference/STOC_ModeSchedule.cpp
   src/riccati_recursion/BackwardRiccatiRecursion.cpp
   src/riccati_recursion/ForwardRiccatiRecursion.cpp
   src/riccati_recursion/RiccatiRecursion.cpp
+  src/DiscreteTimeModeSchedule.cpp
   src/TimeDiscretization.cpp
   src/STOC_Settings.cpp
   src/STOC.cpp
@@ -99,8 +101,8 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #############
 
 catkin_add_gtest(test_${PROJECT_NAME}
+  test/testDiscreteTimeModeSchedule.cpp
   test/testTimeDiscretization.cpp
-  test/reference/testDiscreteTimeModeSchedule.cpp
 )
 add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_${PROJECT_NAME}

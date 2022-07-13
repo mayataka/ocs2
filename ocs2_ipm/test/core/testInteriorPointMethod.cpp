@@ -24,6 +24,7 @@ TEST(testInteriorPointMethod, testInteriorPointMethod) {
   ipm::initSlackDual(ineqConstraint, slackDual, barrier);
   EXPECT_TRUE(ipm::checkSize(nc, slackDual, "").empty());
   EXPECT_TRUE(ipm::checkPositive(slackDual, "").empty());
+  EXPECT_TRUE((slackDual.slack.array()*slackDual.dual.array()).matrix().isApprox(vector_t::Constant(nc, barrier)));
 
   ipm::InteriorPointMethodData ipmData;
   ipm::initInteriorPointMethodData(ineqConstraint, ipmData);

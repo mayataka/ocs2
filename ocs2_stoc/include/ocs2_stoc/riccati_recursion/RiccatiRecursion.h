@@ -9,7 +9,7 @@
 #include <ocs2_stoc/riccati_recursion/StoPolicy.h>
 #include <ocs2_stoc/riccati_recursion/BackwardRiccatiRecursion.h>
 #include <ocs2_stoc/riccati_recursion/ForwardRiccatiRecursion.h>
-#include <ocs2_stoc/reference/DiscreteTimeModeSchedule.h>
+#include <ocs2_stoc/DiscreteTimeModeSchedule.h>
 
 namespace ocs2 {
 namespace stoc {
