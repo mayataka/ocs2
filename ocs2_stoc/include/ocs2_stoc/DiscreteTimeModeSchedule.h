@@ -52,6 +52,14 @@ struct DiscreteTimeModeSchedule {
   size_t phaseAtTimeStage(size_t timeStage) const;
 
   /**
+   *  Returns if the switching time optimization (STO) is enabled at the specified time stage.
+   *  If the input phase is larger than the total number of phases, return false.
+   *  @param [in] timeStage: The inquiry time stage.
+   *  @return if the switching time optimization (STO) is enabled or not.
+   */
+  bool isStoEnabledAtTimeStage(size_t timeStage) const;
+
+  /**
    *  Returns if the switching time optimization (STO) is enabled at the specified phase.
    *  The phase is counted from the beginning of the mode sequence.
    *  If the input phase is larger than the total number of phases, return false.

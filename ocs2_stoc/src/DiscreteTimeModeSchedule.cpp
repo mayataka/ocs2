@@ -5,7 +5,6 @@
 #include <ocs2_core/misc/Numerics.h>
 
 #include <cassert>
-#include <iostream>
 
 namespace ocs2 {
 namespace stoc {
@@ -14,7 +13,7 @@ namespace stoc {
 /******************************************************************************************************/
 /******************************************************************************************************/
 DiscreteTimeModeSchedule::DiscreteTimeModeSchedule(std::vector<size_t> modeSequenceInput, std::vector<bool> isStoEnabledInput)
-    : modeSequence(std::move(modeSequenceInput)), phaseSequence({}), isStoEnabled() {
+    : modeSequence(std::move(modeSequenceInput)), phaseSequence({}), isStoEnabled(std::move(isStoEnabledInput)) {
   assert(!modeSequence.empty());
   auto modePrev = modeSequence.front();
   size_t phase = 0;
@@ -23,17 +22,7 @@ DiscreteTimeModeSchedule::DiscreteTimeModeSchedule(std::vector<size_t> modeSeque
       ++phase;
     }
     phaseSequence.push_back(phase);
-    isStoEnabled.push_back(isStoEnabledInput[phase]);
     modePrev = mode;
-  }
-  if (!isStoEnabledInput.empty()) {
-    assert(isStoEnabledInput.size() == phaseSequence.back());
-    for (const auto phase : phaseSequence) {
-      isStoEnabled.push_back(isStoEnabledInput[phase]);
-    }
-  }
-  else {
-    isStoEnabled = std::vector<bool>(modeSequence.size()-1, false);
   }
 }
 
@@ -42,7 +31,7 @@ DiscreteTimeModeSchedule::DiscreteTimeModeSchedule(std::vector<size_t> modeSeque
 /******************************************************************************************************/
 DiscreteTimeModeSchedule::DiscreteTimeModeSchedule(const std::vector<AnnotatedTime>& timeDiscretization,
                                                    const STOC_ModeSchedule& modeScheduleReference) 
-    : modeSequence({}), phaseSequence({}), isStoEnabled({}) {
+    : modeSequence({}), phaseSequence({}), isStoEnabled(modeScheduleReference.isStoEnabled) {
   assert(!modeSequence.empty());
   auto modePrev = modeScheduleReference.modeAtTime(timeDiscretization.front().time);
   size_t phase = 0;
@@ -53,7 +42,6 @@ DiscreteTimeModeSchedule::DiscreteTimeModeSchedule(const std::vector<AnnotatedTi
     }
     modeSequence.push_back(mode);
     phaseSequence.push_back(phase);
-    isStoEnabled.push_back(modeScheduleReference.isStoEnabled[phase]);
     modePrev = mode;
   }
 }
@@ -62,7 +50,6 @@ DiscreteTimeModeSchedule::DiscreteTimeModeSchedule(const std::vector<AnnotatedTi
 /******************************************************************************************************/
 /******************************************************************************************************/
 size_t DiscreteTimeModeSchedule::modeAtTimeStage(size_t timeStage) const {
-  assert(timeStage >= 0);
   assert(timeStage < modeSequence.size());
   return modeSequence[timeStage];
 }
@@ -71,7 +58,6 @@ size_t DiscreteTimeModeSchedule::modeAtTimeStage(size_t timeStage) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 size_t DiscreteTimeModeSchedule::phaseAtTimeStage(size_t timeStage) const {
-  assert(timeStage >= 0);
   assert(timeStage < phaseSequence.size());
   return phaseSequence[timeStage];
 }
@@ -79,12 +65,20 @@ size_t DiscreteTimeModeSchedule::phaseAtTimeStage(size_t timeStage) const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+bool DiscreteTimeModeSchedule::isStoEnabledAtTimeStage(size_t timeStage) const {
+  assert(timeStage < phaseSequence.size());
+  return isStoEnabledAtPhase(phaseAtTimeStage(timeStage));
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 bool DiscreteTimeModeSchedule::isStoEnabledAtPhase(size_t phase) const {
-  if (phase >= phaseSequence.size()) {
-    return false;
+  if (phase < phaseSequence.size()) {
+    return isStoEnabled[phase];
   }
   else {
-    return isStoEnabled[phase];
+    return false;
   }
 }
 
