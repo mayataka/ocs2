@@ -9,7 +9,7 @@
 #include <ocs2_stoc/riccati_recursion/StoPolicy.h>
 #include <ocs2_stoc/riccati_recursion/BackwardRiccatiRecursion.h>
 #include <ocs2_stoc/riccati_recursion/ForwardRiccatiRecursion.h>
-#include <ocs2_stoc/DiscreteTimeModeSchedule.h>
+#include <ocs2_stoc/TimeDiscretization.h>
 
 namespace ocs2 {
 namespace stoc {
@@ -21,9 +21,9 @@ public:
 
   RiccatiRecursion();
 
-  void backwardRecursion(const DiscreteTimeModeSchedule& modeSchedule, std::vector<ipm::ModelData>& modelData);
+  void backwardRecursion(const std::vector<Grid>& timeDiscretizationGrid, std::vector<ipm::ModelData>& modelData);
 
-  void forwardRecursion(const DiscreteTimeModeSchedule& modeSchedule, const std::vector<ipm::ModelData>& modelData,
+  void forwardRecursion(const std::vector<Grid>& timeDiscretizationGrid, const std::vector<ipm::ModelData>& modelData,
                         vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, 
                         vector_array_t& costateTrajectory, scalar_array_t& switchingTimes);
 

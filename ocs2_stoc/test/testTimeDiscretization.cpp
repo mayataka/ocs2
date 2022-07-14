@@ -6,9 +6,9 @@
 
 #include <ocs2_stoc/TimeDiscretization.h>
 #include <ocs2_core/NumericTraits.h>
+#include <ocs2_core/reference/ModeSchedule.h>
 
 using namespace ocs2;
-using namespace stoc;
 
 
 TEST(testTimeDiscretization, testTimeStepsWithoutSwitches) {
@@ -133,5 +133,32 @@ TEST(testTimeDiscretization, testTimeStepsWithSwitches2) {
     EXPECT_NEAR(lastEventTime+(stage-lastPostEventStage)*dtPhase, 
                 timeDiscretization[stage].time, 
                 numeric_traits::weakEpsilon<scalar_t>());
+  }
+}
+
+TEST(testTimeDiscretization, testCastEvent) {
+  EXPECT_EQ(castEvent(AnnotatedTime::Event::None), Grid::Event::None);
+  EXPECT_EQ(castEvent(AnnotatedTime::Event::PreEvent), Grid::Event::PreEvent);
+  EXPECT_EQ(castEvent(AnnotatedTime::Event::PostEvent), Grid::Event::PostEvent);
+}
+
+TEST(testTimeDiscretization, testMultiPhaseTimeDiscretizationGrid) {
+  const scalar_t initTime  = 0.5;
+  const scalar_t finalTime = 5.0; 
+  const scalar_t dt = 0.06;
+  const scalar_array_t eventTimesInput = {1.0, 1.1, 1.5, 4.0};
+  const size_array_t modeScheduleInput = {1, 0, 1, 2, 0};
+  const auto modeSchedule = ModeSchedule(eventTimesInput, modeScheduleInput);
+  const auto grids = multiPhaseTimeDiscretizationGrid(initTime, finalTime, dt, modeSchedule);
+  const auto timeDiscretization = multiPhaseTimeDiscretization(initTime, finalTime, dt, modeSchedule.eventTimes);
+  size_t phase = 0;
+  size_t modePrev = modeSchedule.modeAtTime(grids[0].time);
+  for (size_t i=0; i<grids.size(); ++i) {
+    EXPECT_EQ(grids[i].time, timeDiscretization[i].time);
+    EXPECT_EQ(grids[i].event, castEvent(timeDiscretization[i].event));
+    EXPECT_EQ(grids[i].mode, modeSchedule.modeAtTime(grids[i].time));
+    if (grids[i].mode != modePrev) ++phase;
+    modePrev = grids[i].mode;
+    EXPECT_EQ(grids[i].phase, phase);
   }
 }

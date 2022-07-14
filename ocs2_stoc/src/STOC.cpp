@@ -89,8 +89,8 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   }
 
   // Determine time discretization, taking into account event times.
-  const auto& eventTimes = this->getReferenceManager().getModeSchedule().eventTimes;
-  auto timeDiscretization = stoc::multiPhaseTimeDiscretization(initTime, finalTime, settings_.dt, eventTimes);
+  const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
+  auto timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
 
   // Initialize references
   for (auto& optimalControlProblem : optimalControlProblemStock_) {
@@ -122,9 +122,8 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
     // Solve QP
     riccatiRecursionTimer_.startTimer();
-    stoc::DiscreteTimeModeSchedule modeSchedule;
-    riccatiRecursion_.backwardRecursion(modeSchedule, primalData_.modelDataTrajectory);
-    riccatiRecursion_.forwardRecursion(modeSchedule, primalData_.modelDataTrajectory, dx, du, dlmd, dts);
+    riccatiRecursion_.backwardRecursion(timeDiscretization, primalData_.modelDataTrajectory);
+    riccatiRecursion_.forwardRecursion(timeDiscretization, primalData_.modelDataTrajectory, dx, du, dlmd, dts);
     riccatiRecursionTimer_.endTimer();
 
     // Select step sizes
@@ -162,7 +161,7 @@ void STOC::runParallel(std::function<void(int)> taskFunction) {
 }
 
 PerformanceIndex STOC::approximateOptimalControlProblem(const vector_t& initState, 
-                                                        const std::vector<AnnotatedTime>& timeDiscretization) {
+                                                        const std::vector<Grid>& timeDiscretization) {
   // Problem horizon
   const int N = static_cast<int>(timeDiscretization.size()) - 1;
   // create alias
@@ -188,7 +187,7 @@ PerformanceIndex STOC::approximateOptimalControlProblem(const vector_t& initStat
 
     int i = timeIndex++;
     while (i < N) {
-      if (timeDiscretization[i].event == AnnotatedTime::Event::PreEvent) {
+      if (timeDiscretization[i].event == Grid::Event::PreEvent) {
         // Event node
         const scalar_t ti = getIntervalStart(timeDiscretization[i]);
         ipm::approximatePreJumpLQ(optimalControlProblem, ti, stateTrajectory[i], modelDataTrajectory[i]);
@@ -232,7 +231,7 @@ PerformanceIndex STOC::approximateOptimalControlProblem(const vector_t& initStat
   return totalPerformance;
 }
 
-STOC::IpmStepSizes STOC::selectStepSizes(const std::vector<AnnotatedTime>& timeDiscretization, const vector_array_t& dx, const vector_array_t& du, 
+STOC::IpmStepSizes STOC::selectStepSizes(const std::vector<Grid>& timeDiscretization, const vector_array_t& dx, const vector_array_t& du, 
                                          const vector_array_t& dlmd, const scalar_array_t& dts,
                                          std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory) {
   // Problem horizon
@@ -253,7 +252,7 @@ STOC::IpmStepSizes STOC::selectStepSizes(const std::vector<AnnotatedTime>& timeD
 
     int i = timeIndex++;
     while (i < N) {
-      if (timeDiscretization[i].event == AnnotatedTime::Event::PreEvent) {
+      if (timeDiscretization[i].event == Grid::Event::PreEvent) {
         // Event node
         ipm::retrivePreJumpIpmVariablesDirection(modelDataTrajectory[i], ipmDataTrajectory[i], ipmVariablesTrajectory[i], dx[i], 
                                                  ipmVariablesDirectionTrajectory[i]);
@@ -295,7 +294,7 @@ STOC::IpmStepSizes STOC::selectStepSizes(const std::vector<AnnotatedTime>& timeD
 }
 
 
-void STOC::updateIterate(const std::vector<AnnotatedTime>& timeDiscretization,
+void STOC::updateIterate(const std::vector<Grid>& timeDiscretization,
                          const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts, const vector_array_t& dlmd,
                          const std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory,
                          scalar_t primalStepSize, scalar_t dualStepSize) {

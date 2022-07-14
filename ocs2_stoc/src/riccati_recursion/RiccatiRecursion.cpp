@@ -55,18 +55,18 @@ RiccatiRecursion::RiccatiRecursion() {
 }
 
 
-void RiccatiRecursion::backwardRecursion(const DiscreteTimeModeSchedule& modeSchedule, std::vector<ipm::ModelData>& modelData) {
+void RiccatiRecursion::backwardRecursion(const std::vector<Grid>& timeDiscretizationGrid, std::vector<ipm::ModelData>& modelData) {
   backwardRecursion_.compute(modelData[N_].cost, riccati_[N_]);
   for (int i=N_-1; i>=0; --i) {
-    const auto phase     = modeSchedule.phaseAtTimeStage(i);
-    const auto phaseNext = modeSchedule.phaseAtTimeStage(i+1);
-    const bool sto     = modeSchedule.isStoEnabledAtPhase(phase);
-    const bool stoNext = modeSchedule.isStoEnabledAtPhase(phase+1); 
+    const auto phase     = timeDiscretizationGrid[i].phase;
+    const auto phaseNext = timeDiscretizationGrid[i+1].phase;
+    const bool sto       = timeDiscretizationGrid[i].sto;
+    const bool stoNext   = timeDiscretizationGrid[i].stoNext;
     if (phase != phaseNext) {
       assert(phase+1 == phaseNext);
       // In this case, the new mode becomes active at the grid i+1. 
       // This switch is indexed by the phase.
-      const bool stoNextNext = modeSchedule.isStoEnabledAtPhase(phase+2); 
+      const bool stoNextNext = timeDiscretizationGrid[i].stoNextNext;
       backwardRecursion_.phaseTransition(riccati_[i+1], riccatiPreEvent_[phase+1], stoPolicy_[phase+1], stoNextNext);
       backwardRecursion_.compute(riccatiPreEvent_[phase+1], modelData[i].dynamics, modelData[i].cost, modelData[i].hamiltonian, 
                                  riccati_[i], lqrPolicy_[i], sto, stoNext);
@@ -76,29 +76,31 @@ void RiccatiRecursion::backwardRecursion(const DiscreteTimeModeSchedule& modeSch
                                  riccati_[i], lqrPolicy_[i], sto, stoNext);
     }
   }
-  const auto phase = modeSchedule.phaseAtTimeStage(0);
-  if (modeSchedule.isStoEnabledAtPhase(phase)) {
-    const bool stoNext = modeSchedule.isStoEnabledAtPhase(phase+1);
+  const auto phase = timeDiscretizationGrid[0].phase;
+  const bool sto   = timeDiscretizationGrid[0].sto;
+  if (sto) {
+    const bool stoNext = timeDiscretizationGrid[0].stoNext;
     backwardRecursion_.phaseTransition(riccati_[0], riccatiPreEvent_[phase], stoPolicy_[phase], stoNext);
   }
 }
 
 
-void RiccatiRecursion::forwardRecursion(const DiscreteTimeModeSchedule& modeSchedule, const std::vector<ipm::ModelData>& modelData, 
+void RiccatiRecursion::forwardRecursion(const std::vector<Grid>& timeDiscretizationGrid, const std::vector<ipm::ModelData>& modelData,
                                         vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, 
                                         vector_array_t& costateTrajectory, scalar_array_t& switchingTimes) {
-  const auto phase = modeSchedule.phaseAtTimeStage(0);
+  const auto phase = timeDiscretizationGrid[0].phase;
+  const bool sto   = timeDiscretizationGrid[0].sto;
   switchingTimes[phase] = 0.0;
-  if (modeSchedule.isStoEnabledAtPhase(phase)) {
+  if (sto) {
     // This is the switching time from phase to phase+1
     switchingTimes[phase+1] = ForwardRiccatiRecursion::computeSwitchingTime(stoPolicy_[phase], stateTrajectory[0], 
                                                                             switchingTimes[phase], false);
   }
   for (int i=0; i<N_; ++i) {
-    const auto phase     = modeSchedule.phaseAtTimeStage(i);
-    const auto phaseNext = modeSchedule.phaseAtTimeStage(i+1);
-    const bool sto         = modeSchedule.isStoEnabledAtPhase(phase);
-    const bool stoNext     = modeSchedule.isStoEnabledAtPhase(phase+1);
+    const auto phase     = timeDiscretizationGrid[i].phase;
+    const auto phaseNext = timeDiscretizationGrid[i+1].phase;
+    const bool sto     = timeDiscretizationGrid[i].sto;
+    const bool stoNext = timeDiscretizationGrid[i].stoNext;
     ForwardRiccatiRecursion::computeInput(lqrPolicy_[i], stateTrajectory[i], inputTrajectory[i], 
                                           switchingTimes[phase], switchingTimes[phase+1], sto, stoNext);
     ForwardRiccatiRecursion::computeState(modelData[i].dynamics, modelData[i].hamiltonian, stateTrajectory[i], inputTrajectory[i], 

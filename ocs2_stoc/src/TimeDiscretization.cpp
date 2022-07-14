@@ -4,7 +4,60 @@
 #include <string>
 
 namespace ocs2 {
-namespace stoc {
+
+scalar_t getInterpolationTime(const Grid& grid) {
+  return grid.time + numeric_traits::limitEpsilon<scalar_t>();
+}
+
+scalar_t getIntervalStart(const Grid& start) {
+  scalar_t adaptedStart = start.time;
+  if (start.event == Grid::Event::PostEvent) {
+    adaptedStart += numeric_traits::weakEpsilon<scalar_t>();
+  }
+  return adaptedStart;
+}
+
+scalar_t getIntervalEnd(const Grid& end) {
+  scalar_t adaptedEnd = end.time;
+  if (end.event == Grid::Event::PreEvent) {
+    adaptedEnd -= numeric_traits::weakEpsilon<scalar_t>();
+  }
+  return adaptedEnd;
+}
+
+scalar_t getIntervalDuration(const Grid& start, const Grid& end) {
+  return getIntervalEnd(end) - getIntervalStart(start);
+}
+
+std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t finalTime, scalar_t dt, const ModeSchedule& modeSchedule, 
+                                                   const std::vector<bool>& isStoEnabled, scalar_t dt_min) {
+  const auto timeDiscretization = multiPhaseTimeDiscretization(initTime, finalTime, dt, modeSchedule.eventTimes, dt_min);
+  std::vector<Grid> timeDiscretizationGrid;
+  timeDiscretizationGrid.reserve(timeDiscretization.size());
+  size_t phase = 0;
+  size_t modePrev = modeSchedule.modeSequence.front();
+  for (const auto& e : timeDiscretization) {
+    const auto mode = modeSchedule.modeAtTime(e.time);
+    if (mode != modePrev) {
+      ++phase;
+    }
+    timeDiscretizationGrid.emplace_back(e.time, mode, phase, castEvent(e.event));
+    modePrev = mode;
+  }
+  if (!isStoEnabled.empty()) {
+    assert(isStoEnabled.size() == timeDiscretizationGrid.back().phase);
+    for (auto& e : timeDiscretizationGrid) {
+      e.sto = isStoEnabled[e.phase];
+      if (e.phase-1 < isStoEnabled.size()) {
+        e.stoNext = isStoEnabled[e.phase+1];
+      }
+      if (e.phase-2 < isStoEnabled.size()) {
+        e.stoNext = isStoEnabled[e.phase+2];
+      }
+    }
+  }
+  return timeDiscretizationGrid; 
+}
 
 std::vector<AnnotatedTime> multiPhaseTimeDiscretization(scalar_t initTime, scalar_t finalTime, scalar_t dt,
                                                         const scalar_array_t& eventTimes, scalar_t dt_min) {
@@ -51,21 +104,15 @@ std::vector<AnnotatedTime> multiPhaseTimeDiscretization(scalar_t initTime, scala
   return timeDiscretization;
 }
 
-}  // namespace stoc 
-}  // namespace ocs2
-
-
-namespace ocs2 {
-
-std::string EventName(const AnnotatedTime::Event& event) {
+std::string EventName(const Grid::Event& event) {
   switch (event) {
-    case AnnotatedTime::Event::None:
+    case Grid::Event::None:
       return "None";
       break;
-    case AnnotatedTime::Event::PreEvent:
+    case Grid::Event::PreEvent:
       return "PreEvent";
       break;
-    case AnnotatedTime::Event::PostEvent:
+    case Grid::Event::PostEvent:
       return "PostEvent";
       break;
     default:
@@ -76,7 +123,20 @@ std::string EventName(const AnnotatedTime::Event& event) {
 
 std::ostream& operator<<(std::ostream& stream, const std::vector<AnnotatedTime>& timeDiscretization) {
   for (const auto& e : timeDiscretization) {
-    stream << "time: " << e.time << ",  event type: " << EventName(e.event) << "\n";
+    stream << "time: " << e.time << ",  event type: " << EventName(castEvent(e.event)) << "\n";
+  }
+  return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const std::vector<Grid>& timeDiscretizationGrid) {
+  for (const auto& e : timeDiscretizationGrid) {
+    stream << "time: " << e.time 
+           << ", mode: " << e.mode 
+           << ", phase: " << e.phase 
+           << ", event: " << EventName(e.event) 
+           << ", sto: " << std::boolalpha << e.sto
+           << ", stoNext: " << std::boolalpha << e.stoNext
+           << ", stoNextNext: " << std::boolalpha << e.stoNextNext << "\n";
   }
   return stream;
 }
