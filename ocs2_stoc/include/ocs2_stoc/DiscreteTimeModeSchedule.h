@@ -4,10 +4,10 @@
 #include <vector>
 
 #include <ocs2_core/Types.h>
+#include <ocs2_core/reference/ModeSchedule.h>
 
 // stoc
 #include <ocs2_stoc/TimeDiscretization.h>
-#include <ocs2_stoc/reference/STOC_ModeSchedule.h>
 
 
 namespace ocs2 {
@@ -32,10 +32,12 @@ struct DiscreteTimeModeSchedule {
   /**
    * Constructor for a DiscreteTimeModeSchedule. The number of modes must be greater than zero (N > 0)
    * @param [in] timeDiscretization : time discretization.
-   * @param [in] isStoEnabled : mode schedule reference.
+   * @param [in] modeSchedule : mode schedule.
+   * @param [in] isStoEnabledInput : mode schedule reference.
    */
   DiscreteTimeModeSchedule(const std::vector<AnnotatedTime>& timeDiscretization,
-                           const STOC_ModeSchedule& modeScheduleReference);
+                           const ModeSchedule& modeScheduleReference,
+                           std::vector<bool> isStoEnabledInput);
 
   /**
    *  Returns the mode of the specified time stage.
@@ -53,7 +55,6 @@ struct DiscreteTimeModeSchedule {
 
   /**
    *  Returns if the switching time optimization (STO) is enabled at the specified time stage.
-   *  If the input phase is larger than the total number of phases, return false.
    *  @param [in] timeStage: The inquiry time stage.
    *  @return if the switching time optimization (STO) is enabled or not.
    */
@@ -62,11 +63,15 @@ struct DiscreteTimeModeSchedule {
   /**
    *  Returns if the switching time optimization (STO) is enabled at the specified phase.
    *  The phase is counted from the beginning of the mode sequence.
-   *  If the input phase is larger than the total number of phases, return false.
    *  @param [in] phase: The inquiry phase.
    *  @return if the switching time optimization (STO) is enabled or not.
    */
   bool isStoEnabledAtPhase(size_t phase) const;
+
+  size_t totalNumPhases() const {
+    if (phaseSequence.empty()) return 0;
+    else return phaseSequence.back()+1;
+  }
 
   /** Clears modeSchedule */
   void clear() {

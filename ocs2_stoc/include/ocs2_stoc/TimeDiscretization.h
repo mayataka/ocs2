@@ -4,6 +4,8 @@
 #include <ocs2_core/Types.h>
 #include <ocs2_sqp/TimeDiscretization.h>
 
+#include <iostream>
+
 namespace ocs2 {
 namespace stoc {
 
@@ -24,4 +26,11 @@ std::vector<AnnotatedTime> multiPhaseTimeDiscretization(scalar_t initTime, scala
                                                         scalar_t dt_min = 10.0 * numeric_traits::limitEpsilon<scalar_t>());
 
 }  // namespace stoc 
+}  // namespace ocs2
+
+
+namespace ocs2 {
+
+std::ostream& operator<<(std::ostream& stream, const std::vector<AnnotatedTime>& timeDiscretization);
+
 }  // namespace ocs2
