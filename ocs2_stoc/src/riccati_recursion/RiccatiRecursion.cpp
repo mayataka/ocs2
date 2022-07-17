@@ -22,9 +22,6 @@ RiccatiRecursion::RiccatiRecursion(const size_t nx, const size_t nu, const size_
   if (N <= 0) {
     throw std::out_of_range("N must be positive!");
   }
-  if (maxNumEvents < 0) {
-    throw std::out_of_range("maxNumEvents must be non-negative!");
-  }
   if (dts0_max < 0) {
     throw std::out_of_range("dts0_max must be non-negative!");
   }

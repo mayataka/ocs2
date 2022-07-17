@@ -35,7 +35,7 @@ std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t f
   std::vector<Grid> timeDiscretizationGrid;
   timeDiscretizationGrid.reserve(timeDiscretization.size());
   size_t phase = 0;
-  size_t modePrev = modeSchedule.modeSequence.front();
+  size_t modePrev = modeSchedule.modeAtTime(timeDiscretization.front().time);
   for (const auto& e : timeDiscretization) {
     const auto mode = modeSchedule.modeAtTime(e.time);
     if (mode != modePrev) {
@@ -45,14 +45,25 @@ std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t f
     modePrev = mode;
   }
   if (!isStoEnabled.empty()) {
-    assert(isStoEnabled.size() == timeDiscretizationGrid.back().phase);
+    assert(isStoEnabled.size() == modeSchedule.eventTimes.size());
+    size_t skipInitPhases = 0;
+    for (; skipInitPhases<modeSchedule.eventTimes.size(); ++skipInitPhases) {
+      if (modeSchedule.eventTimes[skipInitPhases] > initTime) break;
+    }
     for (auto& e : timeDiscretizationGrid) {
-      e.sto = isStoEnabled[e.phase];
-      if (e.phase-1 < isStoEnabled.size()) {
-        e.stoNext = isStoEnabled[e.phase+1];
+      const auto phase = e.phase;
+      e.sto = isStoEnabled[skipInitPhases+phase];
+      if (skipInitPhases+phase+1 < isStoEnabled.size()) {
+        e.stoNext = isStoEnabled[skipInitPhases+phase+1];
       }
-      if (e.phase-2 < isStoEnabled.size()) {
-        e.stoNext = isStoEnabled[e.phase+2];
+      else {
+        e.stoNext = false;
+      }
+      if (skipInitPhases+phase+2 < isStoEnabled.size()) {
+        e.stoNextNext = isStoEnabled[skipInitPhases+phase+2];
+      }
+      else {
+        e.stoNextNext = false;
       }
     }
   }

@@ -38,6 +38,20 @@ scalar_t getIntervalEnd(const Grid& grid);
 /** Computes the interval duration that respects interpolation rules around event times */
 scalar_t getIntervalDuration(const Grid& start, const Grid& end);
 
+/**
+ * Decides on multi-phase time discretization along the horizon. Tries to makes step of dt, but will also ensure that eventtimes are part of the
+ * discretization.
+ *
+ * @param initTime : start time.
+ * @param finalTime : final time.
+ * @param dt : desired discretization step.
+ * @param modeSchedule : Mode schedule reference.
+ * @param isStoEnabled : Falgs if the sto is enabled or not. If empty, sto is disabled for all switches. If not empty. size must be 
+ * the same as modeSchedule.eventTimes.
+ * @param dt_min : minimum discretization step. Smaller intervals will be merged. Needs to be bigger than limitEpsilon to avoid
+ * interpolation problems
+ * @return vector of discrete time grid
+ */
 std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t finalTime, scalar_t dt, const ModeSchedule& modeSchedule,
                                                    const std::vector<bool>& isStoEnabled = {},
                                                    scalar_t dt_min = 10.0 * numeric_traits::limitEpsilon<scalar_t>());

@@ -53,7 +53,6 @@ add_library(${PROJECT_NAME}
   src/riccati_recursion/BackwardRiccatiRecursion.cpp
   src/riccati_recursion/ForwardRiccatiRecursion.cpp
   src/riccati_recursion/RiccatiRecursion.cpp
-  src/DiscreteTimeModeSchedule.cpp
   src/TimeDiscretization.cpp
   src/STOC_Settings.cpp
   src/STOC.cpp

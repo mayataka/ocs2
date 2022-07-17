@@ -16,9 +16,7 @@ TEST(testTimeDiscretization, testTimeStepsWithoutSwitches) {
   const scalar_t finalTime = 5.0; 
   const scalar_t dt = 0.03;
   const scalar_array_t eventTimes = {};
-  const auto timeDiscretization = multiPhaseTimeDiscretization(initTime, 
-                                                               finalTime, dt,
-                                                               eventTimes);
+  const auto timeDiscretization = multiPhaseTimeDiscretization(initTime, finalTime, dt, eventTimes);
   // Verifies initial and final times.
   EXPECT_NEAR(timeDiscretization.front().time, initTime, 
               numeric_traits::weakEpsilon<scalar_t>());
@@ -32,9 +30,7 @@ TEST(testTimeDiscretization, testTimeStepsWithoutSwitches) {
                 numeric_traits::weakEpsilon<scalar_t>());
   }
   // Verifies that the size is the same as timeDiscretizationWithEvents.
-  const auto timeDiscretizationEvent = timeDiscretizationWithEvents(initTime, 
-                                                                    finalTime, dt,
-                                                                    eventTimes);
+  const auto timeDiscretizationEvent = timeDiscretizationWithEvents(initTime, finalTime, dt, eventTimes);
   EXPECT_EQ(timeDiscretizationEvent.size(), timeDiscretization.size());
 }
 
@@ -161,4 +157,28 @@ TEST(testTimeDiscretization, testMultiPhaseTimeDiscretizationGrid) {
     modePrev = grids[i].mode;
     EXPECT_EQ(grids[i].phase, phase);
   }
+}
+
+TEST(testTimeDiscretization, testMultiPhaseTimeDiscretizationGridWithSTO) {
+  const scalar_t initTime  = 1.1;
+  const scalar_t finalTime = 5.0; 
+  const scalar_t dt = 0.06;
+  const scalar_array_t eventTimesInput = {1.0, 1.1, 1.5, 4.0, 5.5};
+  const size_array_t modeScheduleInput = {1, 0, 1, 2, 0, 1};
+  const auto modeSchedule = ModeSchedule(eventTimesInput, modeScheduleInput);
+  const std::vector<bool> isStoEnabledInput = {true, false, false, true, true};
+  const auto grids = multiPhaseTimeDiscretizationGrid(initTime, finalTime, dt, modeSchedule, isStoEnabledInput);
+  const auto timeDiscretization = multiPhaseTimeDiscretization(initTime, finalTime, dt, modeSchedule.eventTimes);
+  size_t phase = 0;
+  size_t modePrev = modeSchedule.modeAtTime(grids[0].time);
+  for (size_t i=0; i<grids.size(); ++i) {
+    EXPECT_EQ(grids[i].time, timeDiscretization[i].time);
+    EXPECT_EQ(grids[i].event, castEvent(timeDiscretization[i].event));
+    EXPECT_EQ(grids[i].mode, modeSchedule.modeAtTime(grids[i].time));
+    if (grids[i].mode != modePrev) ++phase;
+    modePrev = grids[i].mode;
+    EXPECT_EQ(grids[i].phase, phase);
+  }
+
+  std::cout << grids << std::endl;
 }

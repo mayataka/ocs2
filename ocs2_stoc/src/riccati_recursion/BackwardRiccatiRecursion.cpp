@@ -24,9 +24,6 @@ BackwardRiccatiRecursion::BackwardRiccatiRecursion(const size_t nx,
   if (nx <= 0) {
     throw std::out_of_range("nx must be positive!");
   }
-  if (nu < 0) {
-    throw std::out_of_range("nu must be non-negative!");
-  }
   if (dts0_max < 0) {
     throw std::out_of_range("dts0_max must be non-negative!");
   }
