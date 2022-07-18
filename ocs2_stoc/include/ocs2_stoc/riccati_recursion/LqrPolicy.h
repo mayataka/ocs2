@@ -11,7 +11,7 @@ struct LqrPolicy {
   vector_t T;
   vector_t W;
 
-  void resize(const size_t nx, const size_t nu) {
+  void resize(size_t nx, size_t nu) {
     K.resize(nu, nx);
     k.resize(nu);
     T.resize(nu);

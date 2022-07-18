@@ -11,7 +11,7 @@ struct StoPolicy {
   scalar_t dtsdts;
   scalar_t dts0;
 
-  void resize(const size_t nx) {
+  void resize(size_t nx) {
     dtsdx.resize(nx);
   }
 

@@ -16,10 +16,9 @@ namespace stoc {
 
 class RiccatiRecursion {
 public:
-  RiccatiRecursion(const size_t nx, const size_t nu, const size_t N,
-                   const size_t maxNumEvents, const scalar_t dts0_max=0.1);
+  RiccatiRecursion(scalar_t dts0_max=0.1);
 
-  RiccatiRecursion();
+  void resize(size_t N);
 
   void backwardRecursion(const std::vector<Grid>& timeDiscretizationGrid, std::vector<ipm::ModelData>& modelData);
 
@@ -32,8 +31,7 @@ public:
   const std::vector<LqrPolicy>& getLQRPolicies() const { return lqrPolicy_; }
 
 private:
-  size_t N_;
-  std::vector<RiccatiRecursionData> riccati_, riccatiPreEvent_;
+  std::vector<RiccatiRecursionData> riccati_;
   std::vector<LqrPolicy> lqrPolicy_;
   std::vector<StoPolicy> stoPolicy_;
   BackwardRiccatiRecursion backwardRecursion_;

@@ -10,23 +10,17 @@ namespace ocs2 {
 namespace stoc {
 namespace ForwardRiccatiRecursion {
 
-void computeInput(const LqrPolicy& lqr_policy, const vector_t& dx, vector_t& du, 
-                  const scalar_t dts=0.0, const scalar_t dts_next=0.0, 
-                  const bool sto=false, const bool has_next_sto_phase=false);
+void computeInput(const LqrPolicy& lqrPolicy, const vector_t& dx, vector_t& du, 
+                  scalar_t dts=0.0, scalar_t dtsNext=0.0, bool sto=false, bool stoNext=false);
 
-void computeState(const VectorFunctionLinearApproximation& dynamics,
-                  const ipm::Hamiltonian& hamiltonian,
-                  const vector_t& dx, const vector_t& du, vector_t& dx_next, 
-                  const scalar_t dt=0.0, const scalar_t dts_next=0.0, 
-                  const bool sto=false);
+void computeState(const VectorFunctionLinearApproximation& dynamics, const ipm::Hamiltonian& hamiltonian,
+                  const vector_t& dx, const vector_t& du, vector_t& dxNext, 
+                  scalar_t dt=0.0, scalar_t dtsNext=0.0, bool sto=false);
 
-void computeCostate(const RiccatiRecursionData& riccati, const vector_t& dx, 
-                    vector_t& dlmd, const scalar_t dts=0.0, 
-                    const scalar_t dts_next=0.0, const bool sto=false, 
-                    const bool has_next_sto_phase=false);
+void computeCostate(const RiccatiRecursionData& riccati, const vector_t& dx, vector_t& dlmd, 
+                    scalar_t dts=0.0, scalar_t dtsNext=0.0, bool sto=false, bool stoNext=false);
 
-double computeSwitchingTime(const StoPolicy& sto_policy, const vector_t& dx, 
-                            const double dts_prev, const bool has_prev_sto_phase);
+scalar_t computeSwitchingTime(const StoPolicy& stoPolicy, const vector_t& dx, scalar_t dtsPrev, bool stoPrev);
 
 } // namespace ForwardRiccatiRecursion 
 } // namespace stoc

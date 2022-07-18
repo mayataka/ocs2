@@ -13,39 +13,30 @@ namespace stoc {
 
 class BackwardRiccatiRecursion {
 public:
-  BackwardRiccatiRecursion(const size_t nx, const size_t nu, 
-                           const scalar_t dts0_max=0.1);
+  BackwardRiccatiRecursion(scalar_t dts0_max=0.1);
 
-  BackwardRiccatiRecursion();
+  void resize(size_t nx, size_t nu);
 
-  void setRegularization(const scalar_t dts0_max);
+  void setRegularization(scalar_t dts0_max);
 
-  void compute(const ScalarFunctionQuadraticApproximation& cost,
-               RiccatiRecursionData& riccati);
+  static void compute(const ScalarFunctionQuadraticApproximation& cost, RiccatiRecursionData& riccati);
 
-  void compute(const RiccatiRecursionData& riccati_next,
-               const VectorFunctionLinearApproximation& dynamics,
-               ScalarFunctionQuadraticApproximation& cost,
-               RiccatiRecursionData& riccati, LqrPolicy& lqr_policy);
+  void compute(const RiccatiRecursionData& riccatiNext, const VectorFunctionLinearApproximation& dynamics,
+               ScalarFunctionQuadraticApproximation& cost, RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy);
 
-  void compute(const RiccatiRecursionData& riccati_next,
-               const VectorFunctionLinearApproximation& dynamics,
-               ScalarFunctionQuadraticApproximation& cost, ipm::Hamiltonian& hamiltonian,
-               RiccatiRecursionData& riccati, LqrPolicy& lqr_policy,
-               const bool sto, const bool has_next_sto_phase);
+  void compute(const RiccatiRecursionData& riccatiNext, const VectorFunctionLinearApproximation& dynamics,
+               ScalarFunctionQuadraticApproximation& cost, ipm::Hamiltonian& hamiltonian, 
+               RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy, const bool sto, const bool stoNext);
 
-  void phaseTransition(const RiccatiRecursionData& riccati, 
-                       RiccatiRecursionData& riccati_pre_event, 
-                       StoPolicy& sto_policy, 
-                       const bool has_next_sto_phase) const;
+  void compute(RiccatiRecursionData& riccati, StoPolicy& stoPolicy, const bool stoNext) const;
 
 private:
-  size_t nx_, nu_;
   scalar_t dts0_max_, sgm_eps_;
   matrix_t AtP_, BtP_, GK_, Ginv_3_, Ginv_2_;
   vector_t Pf_;
   scalar_t Ginv_1_;
   Eigen::LLT<matrix_t> llt_;
+  Eigen::LDLT<matrix_t> ldlt_;
 };
 
 } // namespace stoc

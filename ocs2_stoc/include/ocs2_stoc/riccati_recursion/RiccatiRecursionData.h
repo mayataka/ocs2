@@ -29,7 +29,7 @@ struct RiccatiRecursionData {
     return valueFunction;
   }
 
-  void resize(const size_t nx, const size_t nu) {
+  void resize(size_t nx, size_t nu) {
     P.resize(nx, nx);
     s.resize(nx);
     psi_x.resize(nx);
@@ -38,6 +38,11 @@ struct RiccatiRecursionData {
     phi_x.resize(nx);
     phi_u.resize(nu);
     Phi.resize(nx);
+  }
+
+  void resize(size_t nu) {
+    const size_t nx = s.size();
+    resize(nx, nu);
   }
 
   void setZero() {

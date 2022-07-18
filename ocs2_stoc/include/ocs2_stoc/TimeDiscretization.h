@@ -46,8 +46,8 @@ scalar_t getIntervalDuration(const Grid& start, const Grid& end);
  * @param finalTime : final time.
  * @param dt : desired discretization step.
  * @param modeSchedule : Mode schedule reference.
- * @param isStoEnabled : Falgs if the sto is enabled or not. If empty, sto is disabled for all switches. If not empty. size must be 
- * the same as modeSchedule.eventTimes.
+ * @param isStoEnabled : Falgs if the sto is enabled or not. If empty (default), sto is disabled for all switches. If not empty, size must 
+ * be the same as modeSchedule.eventTimes.  
  * @param dt_min : minimum discretization step. Smaller intervals will be merged. Needs to be bigger than limitEpsilon to avoid
  * interpolation problems
  * @return vector of discrete time grid
