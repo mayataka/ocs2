@@ -100,6 +100,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 catkin_add_gtest(test_${PROJECT_NAME}
   test/testTimeDiscretization.cpp
+  test/exp0_stoc_test.cpp
 )
 add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_${PROJECT_NAME}
