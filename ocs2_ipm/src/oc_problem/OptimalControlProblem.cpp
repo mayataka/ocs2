@@ -43,6 +43,42 @@ OptimalControlProblem::OptimalControlProblem()
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
+OptimalControlProblem::OptimalControlProblem(const ::ocs2::OptimalControlProblem& other)
+    : /* Cost */
+      costPtr(other.costPtr->clone()),
+      stateCostPtr(other.stateCostPtr->clone()),
+      preJumpCostPtr(other.preJumpCostPtr->clone()),
+      finalCostPtr(other.finalCostPtr->clone()),
+      /* Soft constraints */
+      softConstraintPtr(other.softConstraintPtr->clone()),
+      stateSoftConstraintPtr(other.stateSoftConstraintPtr->clone()),
+      preJumpSoftConstraintPtr(other.preJumpSoftConstraintPtr->clone()),
+      finalSoftConstraintPtr(other.finalSoftConstraintPtr->clone()),
+      /* Equality constraints */
+      equalityConstraintPtr(other.equalityConstraintPtr->clone()),
+      stateEqualityConstraintPtr(other.stateEqualityConstraintPtr->clone()),
+      preJumpEqualityConstraintPtr(other.preJumpEqualityConstraintPtr->clone()),
+      finalEqualityConstraintPtr(other.finalEqualityConstraintPtr->clone()),
+      /* Lagrangians */
+      equalityLagrangianPtr(other.equalityLagrangianPtr->clone()),
+      stateEqualityLagrangianPtr(other.stateEqualityLagrangianPtr->clone()),
+      inequalityLagrangianPtr(other.inequalityLagrangianPtr->clone()),
+      stateInequalityLagrangianPtr(other.stateInequalityLagrangianPtr->clone()),
+      preJumpEqualityLagrangianPtr(other.preJumpEqualityLagrangianPtr->clone()),
+      preJumpInequalityLagrangianPtr(other.preJumpInequalityLagrangianPtr->clone()),
+      finalEqualityLagrangianPtr(other.finalEqualityLagrangianPtr->clone()),
+      finalInequalityLagrangianPtr(other.finalInequalityLagrangianPtr->clone()),
+      /* Misc. */
+      preComputationPtr(other.preComputationPtr->clone()),
+      targetTrajectoriesPtr(other.targetTrajectoriesPtr) {
+  if (other.dynamicsPtr != nullptr) {
+    dynamicsPtr.reset(other.dynamicsPtr->clone());
+  }
+}
+
+/******************************************************************************************************/
+/******************************************************************************************************/
+/******************************************************************************************************/
 OptimalControlProblem::OptimalControlProblem(const OptimalControlProblem& other)
     : /* Cost */
       costPtr(other.costPtr->clone()),

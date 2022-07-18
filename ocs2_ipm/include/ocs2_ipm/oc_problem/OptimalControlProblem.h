@@ -12,6 +12,7 @@
 #include <ocs2_core/cost/StateInputCostCollection.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/reference/TargetTrajectories.h>
+#include <ocs2_oc/oc_problem/OptimalControlProblem.h>
 
 namespace ocs2 {
 namespace ipm {
@@ -87,8 +88,12 @@ struct OptimalControlProblem {
   /** The cost desired trajectories (will be substitute by ReferenceManager) */
   const TargetTrajectories* targetTrajectoriesPtr;
 
+
   /** Default constructor */
   OptimalControlProblem();
+
+  /** Constructor from ::ocs2::OptimalControlProblem */
+  OptimalControlProblem(const ::ocs2::OptimalControlProblem& optimalControlProblem);
 
   /** Default destructor */
   ~OptimalControlProblem() = default;
