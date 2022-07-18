@@ -54,6 +54,11 @@ OptimalControlProblem::OptimalControlProblem(const ::ocs2::OptimalControlProblem
       stateSoftConstraintPtr(other.stateSoftConstraintPtr->clone()),
       preJumpSoftConstraintPtr(other.preJumpSoftConstraintPtr->clone()),
       finalSoftConstraintPtr(other.finalSoftConstraintPtr->clone()),
+      /* Inequality constraints */
+      inequalityConstraintPtr(new StateInputConstraintCollection),
+      stateInequalityConstraintPtr(new StateConstraintCollection),
+      preJumpInequalityConstraintPtr(new StateConstraintCollection),
+      finalInequalityConstraintPtr(new StateConstraintCollection),
       /* Equality constraints */
       equalityConstraintPtr(other.equalityConstraintPtr->clone()),
       stateEqualityConstraintPtr(other.stateEqualityConstraintPtr->clone()),
