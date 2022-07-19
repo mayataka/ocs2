@@ -8,11 +8,13 @@
 namespace ocs2 {
 namespace ipm {
 
-void initSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
-                   SlackDual& slackDual, scalar_t barrier);
+void initSlackDual(const VectorFunctionLinearApproximation& ineqConstraint, SlackDual& slackDual, scalar_t barrier);
 
-void initInteriorPointMethodData(const VectorFunctionLinearApproximation& ineqConstraint,
-                                 InteriorPointMethodData& ipmData);
+SlackDual initSlackDual(const VectorFunctionLinearApproximation& ineqConstraint, scalar_t barrier);
+
+void initInteriorPointMethodData(const VectorFunctionLinearApproximation& ineqConstraint, InteriorPointMethodData& ipmData);
+
+InteriorPointMethodData initInteriorPointMethodData(const VectorFunctionLinearApproximation& ineqConstraint);
 
 void evalPerturbedResidual(const VectorFunctionLinearApproximation& ineqConstraint,
                            const SlackDual& slackDual, InteriorPointMethodData& ipmData,

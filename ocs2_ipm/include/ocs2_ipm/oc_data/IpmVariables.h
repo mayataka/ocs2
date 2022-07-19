@@ -3,6 +3,7 @@
 #include <ocs2_core/Types.h>
 #include <ocs2_ipm/core/SlackDual.h>
 #include <ocs2_ipm/core/SlackDualDirection.h>
+#include <ocs2_ipm/model_data/ModelData.h>
 
 namespace ocs2 {
 namespace ipm {
@@ -22,6 +23,10 @@ struct IpmVariablesDirection {
   SlackDualDirection slackDualDirectionStateIneqConstraint; 
   SlackDualDirection slackDualDirectionStateInputIneqConstraint; 
 };
+
+void initIpmVariables(const ModelData& modelData, IpmVariables& ipmVariables, scalar_t barrier);
+
+IpmVariables initIpmVariables(const ModelData& modelData, scalar_t barrier);
 
 void updateIpmVariables(IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection,
                         scalar_t primalStepSize, scalar_t dualStepSize);

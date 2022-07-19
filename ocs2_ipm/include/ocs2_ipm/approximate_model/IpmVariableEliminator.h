@@ -19,6 +19,8 @@ namespace ipm {
  */
 void eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData);
 
+IpmData eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, ModelData& modelData);
+
 /**
  * Calculates an LQ approximate of the constrained optimal control problem at a jump event time.
  *
@@ -29,6 +31,8 @@ void eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, Model
  */
 void eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData);
 
+IpmData eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData& modelData);
+
 /**
  * Calculates an LQ approximate of the constrained optimal control problem at final time.
  *
@@ -38,6 +42,8 @@ void eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData&
  * @param [out] modelData: The output data model.
  */
 void eliminateIpmVariablesFinalLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData);
+
+IpmData eliminateIpmVariablesFinalLQ(const IpmVariables& ipmVariables, ModelData& modelData);
 
 }  // namespace ipm
 }  // namespace ocs2

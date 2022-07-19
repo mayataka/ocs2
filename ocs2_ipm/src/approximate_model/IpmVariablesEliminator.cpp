@@ -17,6 +17,12 @@ void eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, Model
                     ipmData.dataStateInputIneqConstraint, modelData.cost, true, true);
 }
 
+IpmData eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, ModelData& modelData) {
+  auto ipmData = initIpmData(modelData);
+  eliminateIpmVariablesIntermediateLQ(ipmVariables, modelData, ipmData);
+  return ipmData;
+}
+
 void eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData) {
   // state inequality constraints
   evalPerturbedResidual(modelData.stateIneqConstraint, ipmVariables.slackDualStateIneqConstraint, 
@@ -25,8 +31,20 @@ void eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData&
                     ipmData.dataStateIneqConstraint, modelData.cost, true, false);
 }
 
+IpmData eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData& modelData) {
+  auto ipmData = initIpmData(modelData);
+  eliminateIpmVariablesPreJumpLQ(ipmVariables, modelData, ipmData);
+  return ipmData;
+}
+
 void eliminateIpmVariablesFinalLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData) {
   eliminateIpmVariablesPreJumpLQ(ipmVariables, modelData, ipmData);
+}
+
+IpmData eliminateIpmVariablesFinalLQ(const IpmVariables& ipmVariables, ModelData& modelData) {
+  auto ipmData = initIpmData(modelData);
+  eliminateIpmVariablesFinalLQ(ipmVariables, modelData, ipmData);
+  return ipmData;
 }
 
 }  // namespace ipm

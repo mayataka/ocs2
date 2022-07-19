@@ -6,8 +6,7 @@
 namespace ocs2 {
 namespace ipm {
 
-void initSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
-                   SlackDual& slackDual, scalar_t barrier) {
+void initSlackDual(const VectorFunctionLinearApproximation& ineqConstraint, SlackDual& slackDual, scalar_t barrier) {
   const auto nc = ineqConstraint.f.size();
   setBarrier(nc, barrier, slackDual);
   slackDual.slack = - ineqConstraint.f;
@@ -18,12 +17,25 @@ void initSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
 }
 
 
-void initInteriorPointMethodData(const VectorFunctionLinearApproximation& ineqConstraint,
-                                 InteriorPointMethodData& ipmData) {
+SlackDual initSlackDual(const VectorFunctionLinearApproximation& ineqConstraint, scalar_t barrier) {
+  SlackDual slackDual;
+  initSlackDual(ineqConstraint, slackDual, barrier);
+  return slackDual;
+}
+
+
+void initInteriorPointMethodData(const VectorFunctionLinearApproximation& ineqConstraint, InteriorPointMethodData& ipmData) {
   const auto nc = ineqConstraint.f.size();
   const auto nx = ineqConstraint.dfdx.cols();
   const auto nu = ineqConstraint.dfdu.cols();
   ipmData.setZero(nc, nx, nu);
+}
+
+
+InteriorPointMethodData initInteriorPointMethodData(const VectorFunctionLinearApproximation& ineqConstraint) {
+  InteriorPointMethodData ipmData;
+  initInteriorPointMethodData(ineqConstraint, ipmData);
+  return ipmData;
 }
 
 
