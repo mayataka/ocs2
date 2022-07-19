@@ -33,6 +33,11 @@ struct SlackDualDirection {
     dualDirection.swap(other.dualDirection);
   }
 
+  void resize(size_t size) {
+    slackDirection.resize(size);
+    dualDirection.resize(size);
+  }
+
   vector_t slackDirection;
   vector_t dualDirection;
 };

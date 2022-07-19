@@ -6,7 +6,6 @@
 namespace ocs2 {
 namespace ipm {
 
-
 void initIpmVariables(const ModelData& modelData, IpmVariables& ipmVariables, scalar_t barrier) {
   initSlackDual(modelData.stateIneqConstraint, ipmVariables.slackDualStateIneqConstraint, barrier);
   initSlackDual(modelData.stateInputEqConstraint, ipmVariables.slackDualStateInputIneqConstraint, barrier);
@@ -16,6 +15,17 @@ IpmVariables initIpmVariables(const ModelData& modelData, scalar_t barrier) {
   IpmVariables ipmVariables;
   initIpmVariables(modelData, ipmVariables, barrier);
   return ipmVariables;
+}
+
+void initIpmVariablesDirection(const ModelData& modelData, IpmVariablesDirection& ipmVariablesDirection) {
+  ipmVariablesDirection.slackDualDirectionStateIneqConstraint.resize(modelData.stateIneqConstraint.f.size());
+  ipmVariablesDirection.slackDualDirectionStateInputIneqConstraint.resize(modelData.stateInputIneqConstraint.f.size());
+}
+
+IpmVariablesDirection initIpmVariablesDirection(const ModelData& modelData) {
+  IpmVariablesDirection ipmVariablesDirection;
+  initIpmVariablesDirection(modelData, ipmVariablesDirection);
+  return ipmVariablesDirection;
 }
 
 void updateIpmVariables(IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection,

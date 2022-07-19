@@ -5,6 +5,7 @@ namespace ocs2 {
 namespace ipm {
 
 void eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData) {
+  initIpmData(modelData, ipmData);
   // state inequality constraints
   evalPerturbedResidual(modelData.stateIneqConstraint, ipmVariables.slackDualStateIneqConstraint, 
                         ipmData.dataStateIneqConstraint, modelData.cost, true, false);
@@ -18,12 +19,13 @@ void eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, Model
 }
 
 IpmData eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, ModelData& modelData) {
-  auto ipmData = initIpmData(modelData);
+  IpmData ipmData;
   eliminateIpmVariablesIntermediateLQ(ipmVariables, modelData, ipmData);
   return ipmData;
 }
 
 void eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData) {
+  initIpmData(modelData, ipmData);
   // state inequality constraints
   evalPerturbedResidual(modelData.stateIneqConstraint, ipmVariables.slackDualStateIneqConstraint, 
                         ipmData.dataStateIneqConstraint, modelData.cost, true, false);
@@ -32,7 +34,7 @@ void eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData&
 }
 
 IpmData eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData& modelData) {
-  auto ipmData = initIpmData(modelData);
+  IpmData ipmData;
   eliminateIpmVariablesPreJumpLQ(ipmVariables, modelData, ipmData);
   return ipmData;
 }
@@ -42,7 +44,7 @@ void eliminateIpmVariablesFinalLQ(const IpmVariables& ipmVariables, ModelData& m
 }
 
 IpmData eliminateIpmVariablesFinalLQ(const IpmVariables& ipmVariables, ModelData& modelData) {
-  auto ipmData = initIpmData(modelData);
+  IpmData ipmData;
   eliminateIpmVariablesFinalLQ(ipmVariables, modelData, ipmData);
   return ipmData;
 }

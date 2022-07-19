@@ -8,6 +8,7 @@ namespace ipm {
 
 void retriveIntermediateIpmVariablesDirection(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables,
                                               const vector_t& dx, const vector_t& du, IpmVariablesDirection& ipmVariablesDirection) {
+  initIpmVariablesDirection(modelData, ipmVariablesDirection);
   // state inequality constraints
   expandSlackDual(modelData.stateIneqConstraint, ipmVariables.slackDualStateIneqConstraint, 
                   ipmData.dataStateIneqConstraint, dx, 
@@ -18,16 +19,39 @@ void retriveIntermediateIpmVariablesDirection(const ModelData& modelData, const 
                   ipmVariablesDirection.slackDualDirectionStateInputIneqConstraint);
 }
 
+IpmVariablesDirection retriveIntermediateIpmVariablesDirection(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables,
+                                                               const vector_t& dx, const vector_t& du) {
+  IpmVariablesDirection ipmVariablesDirection;
+  retriveIntermediateIpmVariablesDirection(modelData, ipmData, ipmVariables, dx, du, ipmVariablesDirection);
+  return ipmVariablesDirection;
+}
+
 void retrivePreJumpIpmVariablesDirection(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables,
                                          const vector_t& dx, IpmVariablesDirection& ipmVariablesDirection) {
+  initIpmVariablesDirection(modelData, ipmVariablesDirection);
   expandSlackDual(modelData.stateIneqConstraint, ipmVariables.slackDualStateIneqConstraint, 
                   ipmData.dataStateIneqConstraint, dx, 
                   ipmVariablesDirection.slackDualDirectionStateIneqConstraint);
 }
 
+IpmVariablesDirection retrivePreJumpIpmVariablesDirection(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables,
+                                                          const vector_t& dx) {
+  IpmVariablesDirection ipmVariablesDirection;
+  retrivePreJumpIpmVariablesDirection(modelData, ipmData, ipmVariables, dx, ipmVariablesDirection);
+  return ipmVariablesDirection;
+}
+
 void retriveFinalIpmVariablesDirection(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables, 
                                        const vector_t& dx, IpmVariablesDirection& ipmVariablesDirection) {
+  initIpmVariablesDirection(modelData, ipmVariablesDirection);
   retrivePreJumpIpmVariablesDirection(modelData, ipmData, ipmVariables, dx, ipmVariablesDirection);
+}
+
+IpmVariablesDirection retriveFinalIpmVariablesDirection(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables,
+                                                        const vector_t& dx) {
+  IpmVariablesDirection ipmVariablesDirection;
+  retriveFinalIpmVariablesDirection(modelData, ipmData, ipmVariables, dx, ipmVariablesDirection);
+  return ipmVariablesDirection;
 }
 
 scalar_t intermediatePrimalStepSize(const IpmData& ipmData, const IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection, 
