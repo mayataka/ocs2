@@ -46,6 +46,7 @@ TEST(exp1_stoc_test, exp1_stoc_test) {
   stoc.setReferenceManager(referenceManagerPtr);
   stoc.run(startTime, initState, finalTime);
   std::cout << stoc.getBenchmarkingInformation() << std::endl;
+  std::cout << stoc.getPerformanceIndeces() << std::endl;
 }
 
 int main(int argc, char** argv) {

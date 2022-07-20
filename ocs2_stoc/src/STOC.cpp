@@ -1,5 +1,8 @@
 #include "ocs2_stoc/STOC.h"
-#include "ocs2_sqp/MultipleShootingInitialization.h"
+
+#include <ocs2_sqp/MultipleShootingInitialization.h>
+#include <ocs2_core/control/FeedforwardController.h>
+#include <ocs2_core/control/LinearController.h>
 
 #include <iostream>
 #include <numeric>
@@ -159,7 +162,6 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     if (settings_.printLinesearch) {
       std::cerr << "[Linesearch] Primal step size: " << primalStepSize << ", Dual step size: " << dualStepSize << "\n";
     }
-    break;
 
     updateIterate(stateTrajectory, inputTrajectory, costateTrajectory, ipmVariablesTrajectory, 
                   dx, du, dlmd, ipmVariablesDirectionTrajectory, primalStepSize, dualStepSize);
@@ -172,17 +174,18 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     ++totalNumIterations_;
   }
 
-//   computeControllerTimer_.startTimer();
-//   setPrimalSolution(timeDiscretization, std::move(x), std::move(u));
-//   computeControllerTimer_.endTimer();
-//   ++numProblems_;
+  computeControllerTimer_.startTimer();
+  const auto timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
+  setPrimalSolution(timeDiscretization, std::move(stateTrajectory), std::move(inputTrajectory));
+  computeControllerTimer_.endTimer();
+  ++numProblems_;
 
-//   if (settings_.printSolverStatus || settings_.printLinesearch) {
-//     std::cerr << "\nConvergence : " << toString(convergence) << "\n";
-//     std::cerr << "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-//     std::cerr << "\n+++++++++++++ STOC solver has terminated ++++++++++++++";
-//     std::cerr << "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
-//   }
+  if (settings_.printSolverStatus || settings_.printLinesearch) {
+    std::cerr << "\nConvergence : " << toString(convergence) << "\n";
+    std::cerr << "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+    std::cerr << "\n+++++++++++++ STOC solver has terminated ++++++++++++++";
+    std::cerr << "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+  }
 }
 
 void STOC::runParallel(std::function<void(int)> taskFunction) {
@@ -447,6 +450,72 @@ void STOC::updateIterate(vector_array_t& x, vector_array_t& u, vector_array_t& l
   for (size_t i=0; i<=N; ++i) {
     ipm::updateIpmVariables(ipmVariablesTrajectory[i], ipmVariablesDirectionTrajectory[i], primalStepSize, dualStepSize);
   }
+}
+
+void STOC::setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector_array_t&& stateTrajectory, vector_array_t&& inputTrajectory) {
+  const size_t N = static_cast<size_t>(timeDiscretization.size()) - 1;
+  // Clear old solution
+  auto& primalSolution = primalData_.primalSolution;
+  primalSolution.clear();
+
+  // Correct for missing inputs at PreEvents
+  for (size_t i = 0; i < N + 1; ++i) {
+    if (timeDiscretization[i].event == Grid::Event::PreEvent && i > 0) {
+      inputTrajectory[i] = inputTrajectory[i - 1];
+    }
+  }
+
+  // Compute feedback, before x and u are moved to primal solution
+  vector_array_t uff;
+  matrix_array_t controllerGain;
+  if (settings_.useFeedbackPolicy) {
+    // see doc/LQR_full.pdf for detailed derivation for feedback terms
+    uff = inputTrajectory;  // Copy and adapt in loop
+    controllerGain.reserve(N + 1);
+    const auto LQRPolicies = riccatiRecursion_.getLQRPolicies();
+    for (int i = 0; (i + 1) < timeDiscretization.size(); i++) {
+      const auto& KMatrix = LQRPolicies[i].K;
+      if (timeDiscretization[i].event == Grid::Event::PreEvent && i > 0) {
+        uff[i] = uff[i - 1];
+        controllerGain.push_back(controllerGain.back());
+      } else {
+        // Linear controller has convention u = uff + K * x;
+        // We computed u = u'(t) + K (x - x'(t));
+        // >> uff = u'(t) - K x'(t)
+        // if (constraintsProjection_[i].f.size() > 0) {
+        //   controllerGain.push_back(std::move(constraintsProjection_[i].dfdx));  // Steal! Don't use after this.
+        //   controllerGain.back().noalias() += constraintsProjection_[i].dfdu * KMatrix;
+        // } else {
+          controllerGain.push_back(KMatrix);
+        // }
+        uff[i].noalias() -= controllerGain.back() * stateTrajectory[i];
+      }
+    }
+    // Copy last one to get correct length
+    uff.push_back(uff.back());
+    controllerGain.push_back(controllerGain.back());
+  }
+
+  // Construct nominal time, state and input trajectories
+  primalSolution.stateTrajectory_ = std::move(stateTrajectory);
+  inputTrajectory.push_back(inputTrajectory.back());  // Repeat last input to make equal length vectors
+  primalSolution.inputTrajectory_ = std::move(inputTrajectory);
+  primalSolution.timeTrajectory_.reserve(timeDiscretization.size());
+  for (size_t i = 0; i < timeDiscretization.size(); i++) {
+    primalSolution.timeTrajectory_.push_back(timeDiscretization[i].time);
+    if (timeDiscretization[i].event == Grid::Event::PreEvent) {
+      primalSolution.postEventIndices_.push_back(i + 1);
+    }
+  }
+  primalSolution.modeSchedule_ = this->getReferenceManager().getModeSchedule();
+
+  // Assign controller
+  if (settings_.useFeedbackPolicy) {
+    primalSolution.controllerPtr_.reset(new LinearController(primalSolution.timeTrajectory_, std::move(uff), std::move(controllerGain)));
+  } else {
+    primalSolution.controllerPtr_.reset(new FeedforwardController(primalSolution.timeTrajectory_, primalSolution.inputTrajectory_));
+  }
+
 }
 
 STOC::Convergence STOC::checkConvergence(int iteration, const ipm::PerformanceIndex& performanceIndex,

@@ -110,7 +110,28 @@ class STOC : public SolverBase {
                             const std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory,
                             scalar_t primalStepSize, scalar_t dualStepSize);
 
+  void setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector_array_t&& stateTrajectory, vector_array_t&& inputTrajectory);
+
   enum class Convergence { FALSE, SUCCESS, MAXITERATIONS, STEPSIZE };
+  static std::string toString(Convergence convergence) {
+    switch (convergence) {
+    case Convergence::FALSE:
+      return "FALSE";
+      break;
+    case Convergence::SUCCESS:
+      return "SUCCESS";
+      break;
+    case Convergence::MAXITERATIONS:
+      return "MAXITERATIONS";
+      break;
+    case Convergence::STEPSIZE:
+      return "STEPSIZE";
+      break;
+    default:
+      return "";
+      break;
+    }
+  }
   Convergence checkConvergence(int iteration, const ipm::PerformanceIndex& performanceIndex, 
                                scalar_t primalStepSize, scalar_t dualStepSize) const;
 
