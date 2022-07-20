@@ -72,6 +72,16 @@ std::vector<AnnotatedTime> multiPhaseTimeDiscretization(scalar_t initTime, scala
                                                         const scalar_array_t& eventTimes,
                                                         scalar_t dt_min = 10.0 * numeric_traits::limitEpsilon<scalar_t>());
 
+template <typename TimePoint>
+scalar_array_t toTimeTrajectory(const std::vector<TimePoint>& timeDiscretization) {
+  scalar_array_t timeTrajectory;
+  timeTrajectory.reserve(timeDiscretization.size());
+  for (const auto& e : timeDiscretization) {
+    timeTrajectory.push_back(e.time);
+  }
+  return timeTrajectory;
+}
+
 inline Grid::Event castEvent(const AnnotatedTime::Event& event) {
   switch (event)
   {

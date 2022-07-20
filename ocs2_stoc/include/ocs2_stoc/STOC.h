@@ -83,15 +83,28 @@ class STOC : public SolverBase {
   /** Run a task in parallel with settings.nThreads */
   void runParallel(std::function<void(int)> taskFunction);
 
-  PerformanceIndex approximateOptimalControlProblem(const vector_t& initState, const std::vector<Grid>& timeDiscretization);
+  void initializeStateInputTrajectories(const std::vector<Grid>& timeDiscretization, const vector_t& initState,  
+                                        vector_array_t& stateTrajectory, vector_array_t& inputTrajectory);
 
-  struct IpmStepSizes {
+  void initializeCostateTrajectories(const std::vector<Grid>& timeDiscretization, const vector_array_t& stateTrajectory, 
+                                     const vector_array_t& inputTrajectory, vector_array_t& costateTrajectory);
+
+  void initializeIpmVariablesTrajectories(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
+                                          const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory, 
+                                          std::vector<ipm::IpmVariables>& ipmVariablesTrajectory, scalar_t barrier=1.0e-03);
+
+  PerformanceIndex approximateOptimalControlProblem(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
+                                                    const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
+                                                    const vector_array_t& costateTrajectory, 
+                                                    const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory);
+
+  struct StepSizes {
     scalar_t primalStepSize, dualStepSize;
   };
 
-  IpmStepSizes selectStepSizes(const std::vector<Grid>& timeDiscretization, const vector_array_t& dx, 
-                               const vector_array_t& du, const vector_array_t& dlmd, const scalar_array_t& dts,
-                               std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory); 
+  StepSizes selectStepSizes(const std::vector<Grid>& timeDiscretization, const vector_array_t& dx, 
+                            const vector_array_t& du, const vector_array_t& dlmd, const scalar_array_t& dts,
+                            std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory); 
 
   void updateIterate(const std::vector<Grid>& timeDiscretization,
                      const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts, const vector_array_t& dlmd,
