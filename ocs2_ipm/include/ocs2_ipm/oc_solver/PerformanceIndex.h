@@ -144,22 +144,22 @@ inline std::ostream& operator<<(std::ostream& stream, const PerformanceIndex& pe
   stream << std::left;  // fill from left
 
   stream << std::setw(indentation) << "";
-  stream << "Cost:                       " << std::setw(tabSpace) << performanceIndex.cost << '\n';
-  stream << "Cost Barrier:               " << std::setw(tabSpace) << performanceIndex.costBarrier << '\n';
+  stream << "Cost:                        " << std::setw(tabSpace) << performanceIndex.cost;
+  stream << "Cost Barrier:                " << std::setw(tabSpace) << performanceIndex.costBarrier << '\n';
 
   stream << std::setw(indentation) << "";
-  stream << "Dynamics violation SSE:     " << std::setw(tabSpace) << performanceIndex.dynamicsViolationSSE;
-  stream << "Equality constraints SSE:   " << std::setw(tabSpace) << performanceIndex.equalityConstraintsSSE << '\n';
-  stream << "Inequality constraints SSE:   " << std::setw(tabSpace) << performanceIndex.inequalityConstraintsSSE << '\n';
+  stream << "Dynamics violation SSE:      " << std::setw(tabSpace) << performanceIndex.dynamicsViolationSSE;
+  stream << "Equality constraints SSE:    " << std::setw(tabSpace) << performanceIndex.equalityConstraintsSSE;
+  stream << "Inequality constraints SSE:  " << std::setw(tabSpace) << performanceIndex.inequalityConstraintsSSE << '\n';
 
   stream << std::setw(indentation) << "";
-  stream << "Equality Lagrangian:        " << std::setw(tabSpace) << performanceIndex.equalityLagrangian;
-  stream << "Inequality Lagrangian:      " << std::setw(tabSpace) << performanceIndex.inequalityLagrangian;
+  stream << "Equality Lagrangian:         " << std::setw(tabSpace) << performanceIndex.equalityLagrangian;
+  stream << "Inequality Lagrangian:       " << std::setw(tabSpace) << performanceIndex.inequalityLagrangian << '\n';
 
   stream << std::setw(indentation) << "";
-  stream << "Dual dynamics violation SSE:" << std::setw(tabSpace) << performanceIndex.dualDynamicsViolationSSE;
-  stream << "Dual control violation SSE: " << std::setw(tabSpace) << performanceIndex.dualControlViolationSSE;
-  stream << "Complementary Slackness SSE:" << std::setw(tabSpace) << performanceIndex.complementarySlacknessSSE;
+  stream << "Dual dynamics violation SSE: " << std::setw(tabSpace) << performanceIndex.dualDynamicsViolationSSE;
+  stream << "Dual control violation SSE:  " << std::setw(tabSpace) << performanceIndex.dualControlViolationSSE;
+  stream << "Complementary Slackness SSE: " << std::setw(tabSpace) << performanceIndex.complementarySlacknessSSE;
 
   return stream;
 }
