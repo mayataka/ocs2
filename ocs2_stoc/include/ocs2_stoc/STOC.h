@@ -102,14 +102,14 @@ class STOC : public SolverBase {
     scalar_t primalStepSize, dualStepSize;
   };
 
-  StepSizes selectStepSizes(const std::vector<Grid>& timeDiscretization, const vector_array_t& dx, 
-                            const vector_array_t& du, const vector_array_t& dlmd, const scalar_array_t& dts,
+  StepSizes selectStepSizes(const std::vector<Grid>& timeDiscretization, const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
+                            const vector_array_t& dx, const vector_array_t& du, const vector_array_t& dlmd, const scalar_array_t& dts,
                             std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory); 
 
-  void updateIterate(const std::vector<Grid>& timeDiscretization,
-                     const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts, const vector_array_t& dlmd,
-                     const std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory,
-                     scalar_t primalStepSize, scalar_t dualStepSize);
+  static void updateIterate(vector_array_t& x, vector_array_t& u, vector_array_t& lmd, std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
+                            const vector_array_t& dx, const vector_array_t& du, const vector_array_t& dlmd, 
+                            const std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory,
+                            scalar_t primalStepSize, scalar_t dualStepSize);
 
   // Problem definition
   stoc::Settings settings_;

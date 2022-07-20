@@ -61,7 +61,7 @@ std::string STOC::getBenchmarkingInformation() const {
     const scalar_t inPercent = 100.0;
     infoStream << "\n########################################################################\n";
     infoStream << "The benchmarking is computed over " << totalNumIterations_ << " iterations. \n";
-    infoStream << "SQP Benchmarking\t   :\tAverage time [ms]   (% of total runtime)\n";
+    infoStream << "STOC Benchmarking\t   :\tAverage time [ms]   (% of total runtime)\n";
     infoStream << "\tLQ Approximation   :\t" << linearQuadraticApproximationTimer_.getAverageInMilliseconds() << " [ms] \t\t("
                << linearQuadraticApproximationTotal / benchmarkTotal * inPercent << "%)\n";
     infoStream << "\tRiccati recursion  :\t" << riccatiRecursionTimer_.getAverageInMilliseconds() << " [ms] \t\t("
@@ -97,41 +97,51 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
   // Determine time discretization, taking into account event times.
   const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
-  auto timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
-  const auto N = timeDiscretization.size();
-  const auto numPhases = timeDiscretization.back().phase;
+  const auto initTimeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
+  const auto numPhases = initTimeDiscretization.back().phase;
 
   // Initialize the state, input, and Ipm variables
   vector_array_t stateTrajectory, inputTrajectory;
-  initializeStateInputTrajectories(timeDiscretization, initState, stateTrajectory, inputTrajectory);
+  initializeStateInputTrajectories(initTimeDiscretization, initState, stateTrajectory, inputTrajectory);
   vector_array_t costateTrajectory;
-  initializeCostateTrajectories(timeDiscretization, stateTrajectory, inputTrajectory, costateTrajectory);
+  initializeCostateTrajectories(initTimeDiscretization, stateTrajectory, inputTrajectory, costateTrajectory);
   std::vector<ipm::IpmVariables> ipmVariablesTrajectory;
-  initializeIpmVariablesTrajectories(timeDiscretization, initState, stateTrajectory, inputTrajectory, ipmVariablesTrajectory);
+  initializeIpmVariablesTrajectories(initTimeDiscretization, initState, stateTrajectory, inputTrajectory, ipmVariablesTrajectory);
 
   // Bookkeeping
   performanceIndeces_.clear();
 
   // Directions
-  vector_array_t dx(N+1);
-  vector_array_t du(N+1);
-  vector_array_t dlmd(N+1);
-  scalar_array_t dts(numPhases);
-  std::vector<ipm::IpmVariablesDirection> ipmVariablesDirectionTrajectory(N+1);
+  vector_array_t dx, du, dlmd;
+  scalar_array_t dts(numPhases, 0.0);
+  std::vector<ipm::IpmVariablesDirection> ipmVariablesDirectionTrajectory;
 
   int iter = 0;
   bool convergence = false;
-  convergence = true;
   while (!convergence) {
     if (settings_.printSolverStatus || settings_.printLinesearch) {
       std::cerr << "\nSTOC iteration: " << iter << "\n";
     }
     // Make QP approximation of nonlinear primal-dual interior point method
+    const auto timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
     linearQuadraticApproximationTimer_.startTimer();
     const auto performanceIndex = approximateOptimalControlProblem(timeDiscretization, initState, stateTrajectory, inputTrajectory, 
                                                                    costateTrajectory, ipmVariablesTrajectory);
     performanceIndeces_.push_back(performanceIndex);
     linearQuadraticApproximationTimer_.endTimer();
+
+    // reserve and resize directions
+    const auto N = timeDiscretization.size();
+    dx.reserve(N + 1); du.reserve(N); dlmd.reserve(N + 1); 
+    while (dx.size() < N + 1) { 
+      dx.push_back(vector_t::Zero(stateTrajectory[0].size())); 
+    }
+    while (du.size() < N) { 
+      du.push_back(vector_t::Zero(inputTrajectory[0].size())); 
+    }
+    while (dlmd.size() < N + 1) { 
+      dlmd.push_back(vector_t::Zero(costateTrajectory[0].size())); 
+    }
 
     // Solve QP
     riccatiRecursionTimer_.startTimer();
@@ -140,13 +150,19 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     riccatiRecursionTimer_.endTimer();
 
     // // Select step sizes
-    // linesearchTimer_.startTimer();
-    // const auto stepSizes = selectStepSizes(timeDiscretization, dx, du, dlmd, dts, ipmDirectionTrajectory);
-    // const scalar_t primalStepSize = stepSizes.primalStepSize;
-    // const scalar_t dualStepSize = stepSizes.dualStepSize;
-    // linesearchTimer_.endTimer();
+    ipmVariablesDirectionTrajectory.reserve(N + 1);
+    linesearchTimer_.startTimer();
+    const auto stepSizes = selectStepSizes(timeDiscretization, ipmVariablesTrajectory, dx, du, dlmd, dts, ipmVariablesDirectionTrajectory);
+    const scalar_t primalStepSize = stepSizes.primalStepSize;
+    const scalar_t dualStepSize = stepSizes.dualStepSize;
+    linesearchTimer_.endTimer();
+    if (settings_.printLinesearch) {
+      std::cerr << "[Linesearch] Primal step size: " << primalStepSize << ", Dual step size: " << dualStepSize << "\n";
+    }
+    break;
 
-    // updateIterate(timeDiscretization, dx, du, dts, dlmd, ipmDirectionTrajectory, primalStepSize, dualStepSize);
+    updateIterate(stateTrajectory, inputTrajectory, costateTrajectory, ipmVariablesTrajectory, 
+                  dx, du, dlmd, ipmVariablesDirectionTrajectory, primalStepSize, dualStepSize);
 
     // Check convergence
     // convergence = checkConvergence(iter, baselinePerformance, stepInfo);
@@ -349,14 +365,14 @@ PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<Grid>&
   return totalPerformance;
 }
 
-STOC::StepSizes STOC::selectStepSizes(const std::vector<Grid>& timeDiscretization, const vector_array_t& dx, const vector_array_t& du, 
-                                      const vector_array_t& dlmd, const scalar_array_t& dts,
+STOC::StepSizes STOC::selectStepSizes(const std::vector<Grid>& timeDiscretization, 
+                                      const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory, const vector_array_t& dx, 
+                                      const vector_array_t& du, const vector_array_t& dlmd, const scalar_array_t& dts,
                                       std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory) {
   // Problem horizon
   const int N = static_cast<int>(timeDiscretization.size()) - 1;
   // create alias
   const auto& modelDataTrajectory = primalData_.modelDataTrajectory;
-  const auto& ipmVariablesTrajectory = ipmData_.ipmVariablesTrajectory;
   const auto& ipmDataTrajectory = ipmData_.ipmDataTrajectory;
 
   scalar_array_t primalStepSize(settings_.nThreads, 0.0);
@@ -412,18 +428,22 @@ STOC::StepSizes STOC::selectStepSizes(const std::vector<Grid>& timeDiscretizatio
 }
 
 
-void STOC::updateIterate(const std::vector<Grid>& timeDiscretization,
-                         const vector_array_t& dx, const vector_array_t& du, const scalar_array_t& dts, const vector_array_t& dlmd,
+void STOC::updateIterate(vector_array_t& x, vector_array_t& u, vector_array_t& lmd, std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
+                         const vector_array_t& dx, const vector_array_t& du, const vector_array_t& dlmd,
                          const std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory,
                          scalar_t primalStepSize, scalar_t dualStepSize) {
-  const size_t N = static_cast<size_t>(timeDiscretization.size()) - 1;
+  const size_t N = static_cast<size_t>(x.size()) - 1;
   for (size_t i=0; i<=N; ++i) {
-    primalData_.primalSolution.stateTrajectory_[i].noalias() += primalStepSize * dx[i];
-    if (primalData_.primalSolution.inputTrajectory_[i].size() > 0) {
-      primalData_.primalSolution.inputTrajectory_[i].noalias() += primalStepSize * du[i];
-    }
-    primalData_.costateTrajectory[i].noalias() += primalStepSize * dlmd[i];
-    ipm::updateIpmVariables(ipmData_.ipmVariablesTrajectory[i], ipmVariablesDirectionTrajectory[i], primalStepSize, dualStepSize);
+    x[i].noalias() += primalStepSize * dx[i];
+  }
+  for (size_t i=0; i<N; ++i) {
+    u[i].noalias() += primalStepSize * du[i];
+  }
+  for (size_t i=0; i<=N; ++i) {
+    lmd[i].noalias() += primalStepSize * dlmd[i];
+  }
+  for (size_t i=0; i<=N; ++i) {
+    ipm::updateIpmVariables(ipmVariablesTrajectory[i], ipmVariablesDirectionTrajectory[i], primalStepSize, dualStepSize);
   }
 }
 

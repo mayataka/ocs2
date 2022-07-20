@@ -15,7 +15,7 @@ RiccatiRecursion::RiccatiRecursion(scalar_t dts0_max)
 
 void RiccatiRecursion::resize(size_t N) {
   if (riccati_.size() < N) {
-    riccati_.resize(N);
+    riccati_.resize(N+1);
     lqrPolicy_.resize(N);
     stoPolicy_.resize(N);
   }
@@ -23,7 +23,7 @@ void RiccatiRecursion::resize(size_t N) {
 
 
 void RiccatiRecursion::backwardRecursion(const std::vector<Grid>& timeDiscretizationGrid, std::vector<ipm::ModelData>& modelData) {
-  const size_t N = timeDiscretizationGrid.size();
+  const size_t N = timeDiscretizationGrid.size() - 1;
   resize(N);
   backwardRecursion_.compute(modelData[N].cost, riccati_[N]);
   for (int i=N-1; i>=0; --i) {
@@ -36,9 +36,6 @@ void RiccatiRecursion::backwardRecursion(const std::vector<Grid>& timeDiscretiza
       assert(timeDiscretizationGrid[i+1].event == Grid::Event::PostEvent);
       backwardRecursion_.compute(riccati_[i], stoPolicy_[phase+1], stoNext);
     }
-    else {
-      assert(false); // never happen
-    }
   }
 }
 
@@ -46,7 +43,7 @@ void RiccatiRecursion::backwardRecursion(const std::vector<Grid>& timeDiscretiza
 void RiccatiRecursion::forwardRecursion(const std::vector<Grid>& timeDiscretizationGrid, const std::vector<ipm::ModelData>& modelData,
                                         vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, 
                                         vector_array_t& costateTrajectory, scalar_array_t& switchingTimes) {
-  const size_t N = timeDiscretizationGrid.size();
+  const size_t N = timeDiscretizationGrid.size() - 1;
   resize(N);
   const auto phase = timeDiscretizationGrid[0].phase;
   const bool sto   = timeDiscretizationGrid[0].sto;
