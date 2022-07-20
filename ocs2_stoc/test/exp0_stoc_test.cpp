@@ -11,7 +11,7 @@
 
 using namespace ocs2;
 
-TEST(exp0_stoc_test, exp0_stoc_test) {
+TEST(exp0_stoc_test, Unconstrained) {
   static constexpr size_t STATE_DIM = 2;
   static constexpr size_t INPUT_DIM = 1;
 
@@ -28,10 +28,10 @@ TEST(exp0_stoc_test, exp0_stoc_test) {
   settings.printSolverStatus = true;
   settings.printSolverStatistics = true;
   settings.printLinesearch = true;
-  settings.nThreads = 1;
+  settings.nThreads = 4;
 
-  std::vector<double> initEventTimes{1.0};
-  std::vector<size_t> modeSequence{0, 1};
+  const scalar_array_t initEventTimes{0.1897};
+  const std::vector<size_t> modeSequence{0, 1};
   auto referenceManagerPtr = getExp0ReferenceManager(initEventTimes, modeSequence);
   auto problem = createExp0Problem(referenceManagerPtr);
   auto ipmProblem = ipm::OptimalControlProblem(problem);
@@ -46,7 +46,7 @@ TEST(exp0_stoc_test, exp0_stoc_test) {
   stoc.setReferenceManager(referenceManagerPtr);
   stoc.run(startTime, initState, finalTime);
   std::cout << stoc.getBenchmarkingInformation() << std::endl;
-  std::cout << stoc.getPerformanceIndeces() << std::endl;
+  std::cout << stoc.getIpmPerformanceIndeces() << std::endl;
 }
 
 int main(int argc, char** argv) {

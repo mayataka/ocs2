@@ -85,6 +85,14 @@ const std::vector<PerformanceIndex>& STOC::getIterationsLog() const {
   }
 }
 
+const std::vector<ipm::PerformanceIndex>& STOC::getIpmIterationsLog() const {
+  if (ipmPerformanceIndeces_.empty()) {
+    throw std::runtime_error("[STOC]: No performance log yet, no problem solved yet?");
+  } else {
+    return ipmPerformanceIndeces_;
+  }
+}
+
 void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalTime) {
   if (settings_.printSolverStatus || settings_.printLinesearch) {
     std::cerr << "\n+++++++++++++++++++++++++++++++++++++++++++++++++++++++";
@@ -130,13 +138,15 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     linearQuadraticApproximationTimer_.startTimer();
     const auto performanceIndex = approximateOptimalControlProblem(timeDiscretization, initState, stateTrajectory, inputTrajectory, 
                                                                    costateTrajectory, ipmVariablesTrajectory);
+    ipmPerformanceIndeces_.push_back(performanceIndex);
     performanceIndeces_.push_back(convert(performanceIndex));
     linearQuadraticApproximationTimer_.endTimer();
 
     // reserve and resize directions
     const auto N = timeDiscretization.size();
     dx.reserve(N + 1); du.reserve(N); dlmd.reserve(N + 1); 
-    while (dx.size() < N + 1) { 
+    dx.push_back(initState - stateTrajectory[0]);
+    while (dx.size() < N) { 
       dx.push_back(vector_t::Zero(stateTrajectory[0].size())); 
     }
     while (du.size() < N) { 

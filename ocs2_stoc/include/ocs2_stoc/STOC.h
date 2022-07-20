@@ -46,6 +46,10 @@ class STOC : public SolverBase {
 
   const std::vector<PerformanceIndex>& getIterationsLog() const override;
 
+  const ipm::PerformanceIndex& getIpmPerformanceIndeces() const { return getIpmIterationsLog().back(); };
+
+  const std::vector<ipm::PerformanceIndex>& getIpmIterationsLog() const;
+
   scalar_t getFinalTime() const override { return primalData_.primalSolution.timeTrajectory_.back(); };
 
   void getPrimalSolution(scalar_t finalTime, PrimalSolution* primalSolutionPtr) const override { *primalSolutionPtr = primalData_.primalSolution; }
@@ -153,6 +157,7 @@ class STOC : public SolverBase {
 
   // Iteration performance log
   std::vector<PerformanceIndex> performanceIndeces_;
+  std::vector<ipm::PerformanceIndex> ipmPerformanceIndeces_;
 
   // Benchmarking
   size_t numProblems_{0};
