@@ -12,6 +12,9 @@ struct InteriorPointMethodData {
   // Dimension of the constraint
   int dim;
 
+  // Cost contribution from the barrier function on the slack variable
+  scalar_t costBarrier = 0.0;
+
   // Primal residual and complementary slackness
   vector_t primalResidual;
   vector_t complementarySlackness;

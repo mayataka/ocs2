@@ -11,8 +11,8 @@
 #include <ocs2_oc/oc_solver/SolverBase.h>
 
 #include <ocs2_ipm/oc_problem/OptimalControlProblem.h>
+#include <ocs2_ipm/oc_solver/PerformanceIndex.h>
 #include <ocs2_ipm/model_data/ModelData.h>
-// #include <ocs2_ipm/model_data/ModelDataLinearInterpolation.h> :TODO
 #include <ocs2_ipm/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_ipm/approximate_model/LinearQuadraticDiscretizer.h>
 #include <ocs2_ipm/approximate_model/IpmVariableEliminator.h>
@@ -93,15 +93,14 @@ class STOC : public SolverBase {
                                           const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory, 
                                           std::vector<ipm::IpmVariables>& ipmVariablesTrajectory, scalar_t barrier=1.0e-03);
 
-  PerformanceIndex approximateOptimalControlProblem(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
-                                                    const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                                    const vector_array_t& costateTrajectory, 
-                                                    const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory);
+  ipm::PerformanceIndex approximateOptimalControlProblem(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
+                                                         const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
+                                                         const vector_array_t& costateTrajectory, 
+                                                         const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory);
 
   struct StepSizes {
     scalar_t primalStepSize, dualStepSize;
   };
-
   StepSizes selectStepSizes(const std::vector<Grid>& timeDiscretization, const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
                             const vector_array_t& dx, const vector_array_t& du, const vector_array_t& dlmd, const scalar_array_t& dts,
                             std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory); 
@@ -110,6 +109,10 @@ class STOC : public SolverBase {
                             const vector_array_t& dx, const vector_array_t& du, const vector_array_t& dlmd, 
                             const std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory,
                             scalar_t primalStepSize, scalar_t dualStepSize);
+
+  enum class Convergence { FALSE, SUCCESS, MAXITERATIONS, STEPSIZE };
+  Convergence checkConvergence(int iteration, const ipm::PerformanceIndex& performanceIndex, 
+                               scalar_t primalStepSize, scalar_t dualStepSize) const;
 
   // Problem definition
   stoc::Settings settings_;

@@ -117,8 +117,8 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   std::vector<ipm::IpmVariablesDirection> ipmVariablesDirectionTrajectory;
 
   int iter = 0;
-  bool convergence = false;
-  while (!convergence) {
+  auto convergence = Convergence::FALSE;
+  while (convergence == Convergence::FALSE) {
     if (settings_.printSolverStatus || settings_.printLinesearch) {
       std::cerr << "\nSTOC iteration: " << iter << "\n";
     }
@@ -127,7 +127,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     linearQuadraticApproximationTimer_.startTimer();
     const auto performanceIndex = approximateOptimalControlProblem(timeDiscretization, initState, stateTrajectory, inputTrajectory, 
                                                                    costateTrajectory, ipmVariablesTrajectory);
-    performanceIndeces_.push_back(performanceIndex);
+    performanceIndeces_.push_back(convert(performanceIndex));
     linearQuadraticApproximationTimer_.endTimer();
 
     // reserve and resize directions
@@ -165,7 +165,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
                   dx, du, dlmd, ipmVariablesDirectionTrajectory, primalStepSize, dualStepSize);
 
     // Check convergence
-    // convergence = checkConvergence(iter, baselinePerformance, stepInfo);
+    convergence = checkConvergence(iter, performanceIndex, primalStepSize, dualStepSize);
 
     // Next iteration
     ++iter;
@@ -295,10 +295,10 @@ void STOC::initializeIpmVariablesTrajectories(const std::vector<Grid>& timeDiscr
   runParallel(std::move(parallelTask));
 }
 
-PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
-                                                        const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
-                                                        const vector_array_t& costateTrajectory, 
-                                                        const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory) {
+ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
+                                                             const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
+                                                             const vector_array_t& costateTrajectory, 
+                                                             const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory) {
   // Problem horizon
   const int N = static_cast<int>(timeDiscretization.size()) - 1;
   // create alias
@@ -310,13 +310,13 @@ PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<Grid>&
   ipmDataTrajectory.clear();
   ipmDataTrajectory.resize(timeDiscretization.size());
 
-  std::vector<PerformanceIndex> performance(settings_.nThreads, PerformanceIndex());
+  std::vector<ipm::PerformanceIndex> performance(settings_.nThreads, ipm::PerformanceIndex());
 
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {
     // Get worker specific resources
     auto& optimalControlProblem = optimalControlProblemStock_[workerId];
-    PerformanceIndex workerPerformance;  // Accumulate performance in local variable
+    ipm::PerformanceIndex workerPerformance;  // Accumulate performance in local variable
     // const bool projection = settings_.projectStateInputEqualityConstraints;
 
     int i = timeIndex++;
@@ -328,7 +328,8 @@ PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<Grid>&
         ipm::discretizePreJumpLQ(stateTrajectory[i], stateTrajectory[i+1], costateTrajectory[i], costateTrajectory[i+1], 
                                  modelDataTrajectory[i]);
         ipm::eliminateIpmVariablesPreJumpLQ(ipmVariablesTrajectory[i], modelDataTrajectory[i], ipmDataTrajectory[i]);
-        workerPerformance += modelDataTrajectory[i].performanceIndex;
+        workerPerformance += fromModelData(modelDataTrajectory[i]);
+        workerPerformance += fromIpmData(ipmDataTrajectory[i]);
       } else {
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(timeDiscretization[i]);
@@ -337,7 +338,8 @@ PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<Grid>&
         ipm::discretizeIntermediateLQ(dt, stateTrajectory[i], stateTrajectory[i+1], costateTrajectory[i], costateTrajectory[i+1], 
                                       modelDataTrajectory[i]);
         ipm::eliminateIpmVariablesIntermediateLQ(ipmVariablesTrajectory[i], modelDataTrajectory[i], ipmDataTrajectory[i]);
-        workerPerformance += modelDataTrajectory[i].performanceIndex;
+        workerPerformance += fromModelData(modelDataTrajectory[i]);
+        workerPerformance += fromIpmData(ipmDataTrajectory[i]);
       }
 
       i = timeIndex++;
@@ -348,7 +350,8 @@ PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<Grid>&
       ipm::approximateFinalLQ(optimalControlProblem, tN, stateTrajectory[N], modelDataTrajectory[N]);
       ipm::discretizeFinalLQ(costateTrajectory[N], modelDataTrajectory[N]);
       ipm::eliminateIpmVariablesFinalLQ(ipmVariablesTrajectory[N], modelDataTrajectory[N], ipmDataTrajectory[N]);
-      workerPerformance += modelDataTrajectory[N].performanceIndex;
+      workerPerformance += fromModelData(modelDataTrajectory[N]);
+      workerPerformance += fromIpmData(ipmDataTrajectory[N]);
     }
 
     // Accumulate! Same worker might run multiple tasks
@@ -360,8 +363,7 @@ PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<Grid>&
   performance.front().dynamicsViolationSSE += (initState - stateTrajectory.front()).squaredNorm();
 
   // Sum performance of the threads
-  PerformanceIndex totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
-  totalPerformance.merit = totalPerformance.cost + totalPerformance.equalityLagrangian + totalPerformance.inequalityLagrangian;
+  auto totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
   return totalPerformance;
 }
 
@@ -444,6 +446,29 @@ void STOC::updateIterate(vector_array_t& x, vector_array_t& u, vector_array_t& l
   }
   for (size_t i=0; i<=N; ++i) {
     ipm::updateIpmVariables(ipmVariablesTrajectory[i], ipmVariablesDirectionTrajectory[i], primalStepSize, dualStepSize);
+  }
+}
+
+STOC::Convergence STOC::checkConvergence(int iteration, const ipm::PerformanceIndex& performanceIndex,
+                                         scalar_t primalStepSize, scalar_t dualStepSize) const {
+  const auto primalFeas = performanceIndex.dynamicsViolationSSE 
+                          + performanceIndex.equalityConstraintsSSE
+                          + performanceIndex.inequalityConstraintsSSE;
+  const auto dualFeas = performanceIndex.dualDynamicsViolationSSE
+                          + performanceIndex.dualControlViolationSSE
+                          + performanceIndex.complementarySlacknessSSE;
+  if ((iteration + 1) >= settings_.numIteration) {
+    // Falied to converge because the next iteration would exceed the specified number of iterations
+    return Convergence::MAXITERATIONS;
+  } else if (primalStepSize < settings_.minPrimalStepSize || dualStepSize < settings_.minDualStepSize) {
+    // Failed to converge because step dual size is below the specified minimum
+    return Convergence::STEPSIZE;
+  } else if (primalFeas < settings_.primalFeasTol && dualFeas < settings_.dualFeasTol) {
+    // Converged because the KKT error is below the specified tolerance
+    return Convergence::SUCCESS;
+  } else {
+    // None of the above convergence criteria were met -> not converged.
+    return Convergence::FALSE;
   }
 }
 

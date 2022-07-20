@@ -12,6 +12,8 @@ struct Settings {
   size_t numIteration    = 10;  // Maximum number of Newton-type iterations
   scalar_t primalFeasTol = 1e-6; // Termination condition : Primal feasibility, i.e., constraint violations, below this value
   scalar_t dualFeasTol   = 1e-4; // Termination condition : Dual feasibility, i.e., KKT conditions, below this value
+  scalar_t minPrimalStepSize = 1.0e-03;
+  scalar_t minDualStepSize = 1.0e-03;
 
   // Barrier parameter for primal-dual interior point method
   scalar_t initialBarrierParameter = 1.0e-01;

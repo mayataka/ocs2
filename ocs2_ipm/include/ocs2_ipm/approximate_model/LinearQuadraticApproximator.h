@@ -3,7 +3,6 @@
 #include <ocs2_core/PreComputation.h>
 #include <ocs2_core/Types.h>
 #include <ocs2_ipm/model_data/ModelData.h>
-#include <ocs2_ipm/oc_data/Metrics.h>
 #include <ocs2_ipm/oc_problem/OptimalControlProblem.h>
 
 namespace ocs2 {
@@ -120,30 +119,6 @@ scalar_t computeFinalCost(const OptimalControlProblem& problem, const scalar_t& 
  */
 ScalarFunctionQuadraticApproximation approximateFinalCost(const OptimalControlProblem& problem, const scalar_t& time,
                                                           const vector_t& state);
-
-/**
- * Compute the intermediate-time metrics (i.e. cost, softConstraints, and constraints).
- *
- * @note It is assumed that the precomputation request is already made.
- * problem.preComputationPtr->request(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x, u)
- */
-Metrics computeIntermediateMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input);
-
-/**
- * Compute the event-time metrics based on pre-jump state value (i.e. cost, softConstraints, and constraints).
- *
- * @note It is assumed that the precomputation request is already made.
- * problem.preComputationPtr->requestPreJump(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x)
- */
-Metrics computePreJumpMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state);
-
-/**
- * Compute the final-time metrics (i.e. cost, softConstraints, and constraints).
- *
- * @note It is assumed that the precomputation request is already made.
- * problem.preComputationPtr->requestFinal(Request::Cost + Request::Constraint + Request::SoftConstraint, t, x)
- */
-Metrics computeFinalMetrics(OptimalControlProblem& problem, const scalar_t time, const vector_t& state);
 
 }  // namespace ipm
 }  // namespace ocs2

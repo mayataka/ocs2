@@ -5,8 +5,6 @@
 #include <vector>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_core/model_data/ModelData.h>
-#include <ocs2_oc/oc_solver/PerformanceIndex.h>
 #include <ocs2_ipm/model_data/Hamiltonian.h>
 #include <ocs2_ipm/core/InteriorPointMethodData.h>
 
@@ -39,9 +37,6 @@ struct ModelData {
 
   // Hamiltonian
   Hamiltonian hamiltonian;
-
-  // Performance index
-  PerformanceIndex performanceIndex;
 };
 
 /**

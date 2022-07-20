@@ -55,6 +55,13 @@ void evalPerturbedResidual(const VectorFunctionLinearApproximation& ineqConstrai
   if (inputConstraint) {
     cost.dfdu.noalias() += ineqConstraint.dfdu.transpose() * slackDual.dual;
   }
+  // cost barrier
+  if (slackDual.slack.size() > 0) {
+    ipmData.costBarrier = slackLogBarrier(slackDual);
+  }
+  else {
+    ipmData.costBarrier = 0.0;
+  }
 }
 
 
