@@ -2,6 +2,7 @@
 
 #include <ocs2_core/Types.h>
 #include <ocs2_ipm/core/InteriorPointMethodData.h>
+#include <ocs2_ipm/core/InteriorPointMethod.h>
 #include <ocs2_ipm/model_data/ModelData.h>
 
 namespace ocs2 {

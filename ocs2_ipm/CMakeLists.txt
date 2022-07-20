@@ -53,6 +53,7 @@ add_library(${PROJECT_NAME}
   src/model_data/ModelData.cpp
   src/oc_problem/OptimalControlProblem.cpp
   src/oc_data/IpmVariables.cpp
+  src/oc_data/IpmData.cpp
   src/approximate_model/LinearQuadraticApproximator.cpp
   src/approximate_model/LinearQuadraticDiscretizer.cpp
   src/approximate_model/IpmVariablesEliminator.cpp
