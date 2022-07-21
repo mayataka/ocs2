@@ -155,6 +155,7 @@ TEST(Exp0Test, Constrained_FixedSwitchingTimes) {
   auto problem = createExp0Problem(referenceManagerPtr);
   auto ipmProblem = ipm::OptimalControlProblem(problem);
 
+  // add inequality constraints
   const scalar_t umin = -7.5; const scalar_t umax = 7.5;
   std::unique_ptr<StateInputConstraint> stateInputIneqConstraint(new EXP0_StateInputIneqConstraints(umin, umax));
   ipmProblem.inequalityConstraintPtr->add("ubound", std::move(stateInputIneqConstraint));

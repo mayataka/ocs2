@@ -118,12 +118,12 @@ target_link_libraries(Exp0Test_${PROJECT_NAME}
   gtest_main
 )
 
-# catkin_add_gtest(Exp1Test_${PROJECT_NAME}
-#   test/Exp1Test.cpp
-# )
-# add_dependencies(Exp1Test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-# target_link_libraries(Exp1Test_${PROJECT_NAME} 
-#   ${PROJECT_NAME}
-#   ${catkin_LIBRARIES}
-#   gtest_main
-# )
+catkin_add_gtest(Exp1Test_${PROJECT_NAME}
+  test/Exp1Test.cpp
+)
+add_dependencies(Exp1Test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(Exp1Test_${PROJECT_NAME} 
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
