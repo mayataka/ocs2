@@ -8,7 +8,7 @@ namespace ipm {
 
 void retriveIntermediateIpmVariablesDirection(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables,
                                               const vector_t& dx, const vector_t& du, IpmVariablesDirection& ipmVariablesDirection) {
-  initIpmVariablesDirection(modelData, ipmVariablesDirection);
+  initIpmVariablesDirection(ipmVariables, ipmVariablesDirection);
   // state inequality constraints
   expandSlackDual(modelData.stateIneqConstraint, ipmVariables.slackDualStateIneqConstraint, 
                   ipmData.dataStateIneqConstraint, dx, 
@@ -28,7 +28,7 @@ IpmVariablesDirection retriveIntermediateIpmVariablesDirection(const ModelData& 
 
 void retrivePreJumpIpmVariablesDirection(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables,
                                          const vector_t& dx, IpmVariablesDirection& ipmVariablesDirection) {
-  initIpmVariablesDirection(modelData, ipmVariablesDirection);
+  initIpmVariablesDirection(ipmVariables, ipmVariablesDirection);
   expandSlackDual(modelData.stateIneqConstraint, ipmVariables.slackDualStateIneqConstraint, 
                   ipmData.dataStateIneqConstraint, dx, 
                   ipmVariablesDirection.slackDualDirectionStateIneqConstraint);
@@ -43,7 +43,7 @@ IpmVariablesDirection retrivePreJumpIpmVariablesDirection(const ModelData& model
 
 void retriveFinalIpmVariablesDirection(const ModelData& modelData, const IpmData& ipmData, const IpmVariables& ipmVariables, 
                                        const vector_t& dx, IpmVariablesDirection& ipmVariablesDirection) {
-  initIpmVariablesDirection(modelData, ipmVariablesDirection);
+  initIpmVariablesDirection(ipmVariables, ipmVariablesDirection);
   retrivePreJumpIpmVariablesDirection(modelData, ipmData, ipmVariables, dx, ipmVariablesDirection);
 }
 

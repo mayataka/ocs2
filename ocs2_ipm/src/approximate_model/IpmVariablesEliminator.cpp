@@ -1,6 +1,7 @@
 #include <ocs2_ipm/approximate_model/IpmVariableEliminator.h>
 #include <ocs2_ipm/core/InteriorPointMethod.h>
 
+
 namespace ocs2 {
 namespace ipm {
 

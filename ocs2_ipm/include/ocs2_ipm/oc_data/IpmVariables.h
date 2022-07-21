@@ -30,7 +30,11 @@ IpmVariables initIpmVariables(const ModelData& modelData, scalar_t barrier);
 
 void initIpmVariablesDirection(const ModelData& modelData, IpmVariablesDirection& ipmVariablesDirection);
 
+void initIpmVariablesDirection(const IpmVariables& ipmVariables, IpmVariablesDirection& ipmVariablesDirection);
+
 IpmVariablesDirection initIpmVariablesDirection(const ModelData& modelData);
+
+IpmVariablesDirection initIpmVariablesDirection(const IpmVariables& ipmVariables);
 
 void updateIpmVariables(IpmVariables& ipmVariables, const IpmVariablesDirection& ipmVariablesDirection,
                         scalar_t primalStepSize, scalar_t dualStepSize);
