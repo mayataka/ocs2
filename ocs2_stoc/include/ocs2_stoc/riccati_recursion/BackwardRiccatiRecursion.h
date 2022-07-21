@@ -22,23 +22,23 @@ public:
   static void computeFinal(const ipm::ModelData& modelData, RiccatiRecursionData& riccati);
 
   void computeIntermediate(const RiccatiRecursionData& riccatiNext, ipm::ModelData& modelData, 
-                           RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy);
-
-  void computeIntermediate(const RiccatiRecursionData& riccatiNext, ipm::ModelData& modelData, 
                            RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy, const bool sto, const bool stoNext);
 
   void computePreJump(const RiccatiRecursionData& riccatiNext, ipm::ModelData& modelData, 
                       RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy, StoPolicy& stoPolicy, const bool sto, const bool stoNext);
 
-  void modifyPreJump(RiccatiRecursionData& riccati, StoPolicy& stoPolicy, const bool stoNext) const;
-
 private:
   scalar_t dts0_max_, sgm_eps_;
-  matrix_t AtP_, BtP_, GK_, Ginv_3_, Ginv_2_;
+  matrix_t AtP_, BtP_, GK_, Ginv_4_, Ginv_3_, Ginv_2_;
   vector_t Pf_;
   scalar_t Ginv_1_;
   Eigen::LLT<matrix_t> llt_;
   Eigen::LDLT<matrix_t> ldlt_;
+
+  void computeIntermediate(const RiccatiRecursionData& riccatiNext, ipm::ModelData& modelData, 
+                           RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy);
+
+  void modifyPreJump(RiccatiRecursionData& riccati, StoPolicy& stoPolicy, const bool stoNext) const;
 };
 
 } // namespace stoc

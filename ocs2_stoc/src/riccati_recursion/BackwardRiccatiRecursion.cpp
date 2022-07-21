@@ -13,8 +13,9 @@ BackwardRiccatiRecursion::BackwardRiccatiRecursion(scalar_t dts0_max)
     BtP_(),
     GK_(),
     Pf_(),
-    Ginv_3_(),
-    Ginv_2_(),
+    Ginv_4_(matrix_t::Zero(4, 4)),
+    Ginv_3_(matrix_t::Zero(3, 3)),
+    Ginv_2_(matrix_t::Zero(2, 2)),
     Ginv_1_(0),
     llt_(),
     ldlt_() {
@@ -72,6 +73,11 @@ void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& r
   }
   switch (nu)
   {
+  case 4:
+    Ginv_4_ = cost.dfduu.inverse();
+    lqrPolicy.K.noalias() = - Ginv_4_ * cost.dfdux;
+    lqrPolicy.k.noalias() = - Ginv_4_ * cost.dfdu;
+    break;
   case 3:
     Ginv_3_ = cost.dfduu.inverse();
     lqrPolicy.K.noalias() = - Ginv_3_ * cost.dfdux;
@@ -270,38 +276,6 @@ void BackwardRiccatiRecursion::modifyPreJump(RiccatiRecursionData& riccati, StoP
   riccati.iota = riccati.eta;
   riccati.eta = 0.0;
 }
-
-
-// void BackwardRiccatiRecursion::postEventToPreEvent(const RiccatiRecursionData& riccatiPostEvent, 
-//                                                    RiccatiRecursionData& riccatiPreEvent, 
-//                                                    StoPolicy& stoPolicy, const bool stoNext) const {
-//   riccatiPreEvent.P = riccatiPostEvent.P;
-//   riccatiPreEvent.s = riccatiPostEvent.s;
-//   riccatiPreEvent.Psi.setZero();
-//   riccatiPreEvent.Phi = riccatiPostEvent.Psi;
-//   riccatiPreEvent.xi = 0.0;
-//   riccatiPreEvent.chi = 0.0;
-//   riccatiPreEvent.rho = riccatiPostEvent.xi;
-//   riccatiPreEvent.eta = 0.0;
-//   riccatiPreEvent.iota = riccatiPostEvent.eta;
-//   if (stoNext) {
-//     double sgm = riccatiPostEvent.xi - 2.0 * riccatiPostEvent.chi + riccatiPostEvent.rho;
-//     if ((sgm*dts0_max_) < std::abs(riccatiPostEvent.eta-riccatiPostEvent.iota) || sgm < sgm_eps_) {
-//       sgm = std::abs(sgm) + std::abs(riccatiPostEvent.eta-riccatiPostEvent.iota) / dts0_max_;
-//     }
-//     stoPolicy.dtsdx  = - (1.0/sgm) * (riccatiPostEvent.Psi-riccatiPostEvent.Phi);
-//     stoPolicy.dtsdts =   (1.0/sgm) * (riccatiPostEvent.xi-riccatiPostEvent.chi);
-//     stoPolicy.dts0   = - (1.0/sgm) * (riccatiPostEvent.eta-riccatiPostEvent.iota);
-//     riccatiPreEvent.s.noalias()   
-//         += (1.0/sgm) * (riccatiPostEvent.Psi-riccatiPostEvent.Phi) * (riccatiPostEvent.eta-riccatiPostEvent.iota);
-//     riccatiPreEvent.Phi.noalias() 
-//         -= (1.0/sgm) * (riccatiPostEvent.Psi-riccatiPostEvent.Phi) * (riccatiPostEvent.xi-riccatiPostEvent.chi);
-//     riccatiPreEvent.rho
-//         = riccatiPostEvent.xi - (1.0/sgm) * (riccatiPostEvent.xi-riccatiPostEvent.chi) * (riccatiPostEvent.xi-riccatiPostEvent.chi);
-//     riccatiPreEvent.iota
-//         = riccatiPostEvent.eta - (1.0/sgm) * (riccatiPostEvent.xi-riccatiPostEvent.chi)  * (riccatiPostEvent.eta-riccatiPostEvent.iota);
-//   }
-// }
 
 } // namespace stoc
 } // namespace ocs2
