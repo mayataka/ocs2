@@ -68,7 +68,7 @@ std::ostream& operator<<(std::ostream& out, const Hamiltonian& hamiltonian);
  * @param[in] hamiltonianName: The name of the hamiltonian data which appears in the output error message.
  * @return The description of the error. If there was no error it would be empty;
  */
-std::string checkSize(int stateDim, int inputDim, const Hamiltonian& data, const std::string& dataName);
+std::string checkSize(size_t stateDim, size_t inputDim, const Hamiltonian& data, const std::string& dataName);
 
 inline Hamiltonian operator*(Hamiltonian lhs, scalar_t scalar) {
   return lhs *= scalar;

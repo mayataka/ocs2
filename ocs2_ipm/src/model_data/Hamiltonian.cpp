@@ -65,7 +65,7 @@ std::ostream& operator<<(std::ostream& out, const Hamiltonian& hamiltonian) {
 }
 
 
-std::string checkSize(int stateDim, int inputDim, const Hamiltonian& data, const std::string& dataName) {
+std::string checkSize(size_t stateDim, size_t inputDim, const Hamiltonian& data, const std::string& dataName) {
   std::stringstream errorDescription;
 
   if (data.dhdx.size() != stateDim) {

@@ -4,6 +4,7 @@ project(ocs2_ipm)
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_oc
+  ocs2_sqp
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -58,6 +59,7 @@ add_library(${PROJECT_NAME}
   src/approximate_model/LinearQuadraticDiscretizer.cpp
   src/approximate_model/IpmVariablesEliminator.cpp
   src/approximate_model/IpmVariablesRetriver.cpp
+  src/approximate_model/ConstraintProjection.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
