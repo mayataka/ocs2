@@ -18,17 +18,23 @@ struct PrimalDataContainer {
   PrimalSolution primalSolution;
   vector_array_t costateTrajectory;
   std::vector<ipm::ModelData> modelDataTrajectory;
+  std::vector<ipm::ModelData> projectedModelDataTrajectory;
+  std::vector<VectorFunctionLinearApproximation> constraintProjection;
 
   void swap(PrimalDataContainer& other) {
     primalSolution.swap(other.primalSolution);
     costateTrajectory.swap(other.costateTrajectory);
     modelDataTrajectory.swap(other.modelDataTrajectory);
+    projectedModelDataTrajectory.swap(other.projectedModelDataTrajectory);
+    constraintProjection.swap(other.constraintProjection);
   }
 
   void clear() {
     primalSolution.clear();
     costateTrajectory.clear();
     modelDataTrajectory.clear();
+    projectedModelDataTrajectory.clear();
+    constraintProjection.clear();
   }
 };
 

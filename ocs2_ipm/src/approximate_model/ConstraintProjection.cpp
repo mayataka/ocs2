@@ -23,7 +23,7 @@ void projectIntermediateLQ(const ModelData& modelData, VectorFunctionLinearAppro
   projectedModelData.cost = modelData.cost;
 
   // Equality constraints
-  projectedModelData.stateInputEqConstraint = VectorFunctionLinearApproximation();
+  projectedModelData.stateInputEqConstraint = modelData.stateInputEqConstraint;
   projectedModelData.stateEqConstraint = modelData.stateEqConstraint;
 
   // inequality constraints

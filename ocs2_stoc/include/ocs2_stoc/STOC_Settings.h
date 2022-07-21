@@ -25,6 +25,8 @@ struct Settings {
   scalar_t barrierReductionPrimalFeasTol = 1.0e-03; 
   scalar_t barrierReductionDualFeasTol   = 1.0e-03; 
 
+  bool projectStateInputEqualityConstraints = true;  // Use a projection method to resolve the state-input constraint Cx+Du+e
+
   // Linesearch - step size rules
   scalar_t fractionToBoundaryMargin = 0.995;  // Margin of the fraction-to-boundary-rule for the step size selection 
 

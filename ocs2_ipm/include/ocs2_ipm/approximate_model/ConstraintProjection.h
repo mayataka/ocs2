@@ -9,5 +9,11 @@ namespace ipm {
 void projectIntermediateLQ(const ModelData& modelData, VectorFunctionLinearApproximation& constraintProjection, 
                            ModelData& projectedModelData);
 
+void projectPreJumpLQ(const ModelData& modelData, VectorFunctionLinearApproximation& constraintProjection, 
+                      ModelData& projectedModelData);
+
+void projectFinalLQ(const ModelData& modelData, VectorFunctionLinearApproximation& constraintProjection, 
+                    ModelData& projectedModelData);
+
 }  // namespace ipm
 }  // namespace ocs2

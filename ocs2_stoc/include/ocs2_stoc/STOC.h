@@ -17,6 +17,7 @@
 #include <ocs2_ipm/approximate_model/LinearQuadraticDiscretizer.h>
 #include <ocs2_ipm/approximate_model/IpmVariableEliminator.h>
 #include <ocs2_ipm/approximate_model/IpmVariablesRetriver.h>
+#include <ocs2_ipm/approximate_model/ConstraintProjection.h>
 
 #include "ocs2_stoc/riccati_recursion/RiccatiRecursion.h"
 #include "ocs2_stoc/TimeDiscretization.h"
@@ -96,6 +97,8 @@ class STOC : public SolverBase {
   void initializeIpmVariablesTrajectories(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
                                           const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory, 
                                           std::vector<ipm::IpmVariables>& ipmVariablesTrajectory, scalar_t barrier);
+  
+  void projectStateInputConstraints();
 
   ipm::PerformanceIndex approximateOptimalControlProblem(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
                                                          const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,

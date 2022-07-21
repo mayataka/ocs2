@@ -1,6 +1,7 @@
 #include "ocs2_stoc/STOC.h"
 
 #include <ocs2_sqp/MultipleShootingInitialization.h>
+#include <ocs2_sqp/ConstraintProjection.h>
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
 
@@ -25,9 +26,9 @@ STOC::STOC(stoc::Settings settings, const ipm::OptimalControlProblem& optimalCon
   // Operating points
   initializerPtr_.reset(initializer.clone());
 
-  // if (optimalControlProblem.equalityConstraintPtr->empty()) {
-  //   settings_.projectStateInputEqualityConstraints = false;  // True does not make sense if there are no constraints.
-  // }
+  if (optimalControlProblem.equalityConstraintPtr->empty()) {
+    settings_.projectStateInputEqualityConstraints = false;  // True does not make sense if there are no constraints.
+  }
 }
 
 STOC::~STOC() {
@@ -164,9 +165,24 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
     // Solve QP
     riccatiRecursionTimer_.startTimer();
-    riccatiRecursion_.backwardRecursion(timeDiscretization, primalData_.modelDataTrajectory);
-    dx[0] = initState - stateTrajectory[0];
-    riccatiRecursion_.forwardRecursion(timeDiscretization, primalData_.modelDataTrajectory, dx, du, dlmd, dts);
+    if (settings_.projectStateInputEqualityConstraints) {
+      riccatiRecursion_.backwardRecursion(timeDiscretization, primalData_.projectedModelDataTrajectory);
+      dx[0] = initState - stateTrajectory[0];
+      riccatiRecursion_.forwardRecursion(timeDiscretization, primalData_.projectedModelDataTrajectory, dx, du, dlmd, dts);
+      vector_t tmp;  // 1 temporary for re-use.
+      for (int i = 0; i < du.size(); i++) {
+        const auto& constraintProjection = primalData_.constraintProjection[i];
+        if (constraintProjection.f.size() > 0) {
+          tmp.noalias() = constraintProjection.dfdu * du[i];
+          du[i] = tmp + constraintProjection.f;
+          du[i].noalias() += constraintProjection.dfdx * dx[i];
+        }
+      }
+    } else {
+      riccatiRecursion_.backwardRecursion(timeDiscretization, primalData_.modelDataTrajectory);
+      dx[0] = initState - stateTrajectory[0];
+      riccatiRecursion_.forwardRecursion(timeDiscretization, primalData_.modelDataTrajectory, dx, du, dlmd, dts);
+    }
     riccatiRecursionTimer_.endTimer();
 
     // Debugging 
@@ -341,11 +357,19 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
   // create alias
   auto& modelDataTrajectory = primalData_.modelDataTrajectory;
   auto& ipmDataTrajectory = ipmData_.ipmDataTrajectory;
+  auto& projectedModelDataTrajectory = primalData_.projectedModelDataTrajectory;
+  auto& constraintProjection = primalData_.constraintProjection;
 
   modelDataTrajectory.clear();
   modelDataTrajectory.resize(timeDiscretization.size());
   ipmDataTrajectory.clear();
   ipmDataTrajectory.resize(timeDiscretization.size());
+  if (settings_.projectStateInputEqualityConstraints) {
+    projectedModelDataTrajectory.clear();
+    projectedModelDataTrajectory.resize(timeDiscretization.size());
+    constraintProjection.clear();
+    constraintProjection.resize(timeDiscretization.size());
+  }
 
   std::vector<ipm::PerformanceIndex> performance(settings_.nThreads, ipm::PerformanceIndex());
 
@@ -365,6 +389,9 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
         ipm::discretizePreJumpLQ(stateTrajectory[i], stateTrajectory[i+1], costateTrajectory[i], costateTrajectory[i+1], 
                                  modelDataTrajectory[i]);
         ipm::eliminateIpmVariablesPreJumpLQ(ipmVariablesTrajectory[i], modelDataTrajectory[i], ipmDataTrajectory[i], barrierParameter);
+        if (settings_.projectStateInputEqualityConstraints) {
+          projectedModelDataTrajectory[i] = modelDataTrajectory[i];
+        }
         workerPerformance += fromModelData(modelDataTrajectory[i]);
         workerPerformance += fromIpmData(ipmDataTrajectory[i]);
       } else {
@@ -375,6 +402,9 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
         ipm::discretizeIntermediateLQ(dt, stateTrajectory[i], stateTrajectory[i+1], costateTrajectory[i], costateTrajectory[i+1], 
                                       modelDataTrajectory[i]);
         ipm::eliminateIpmVariablesIntermediateLQ(ipmVariablesTrajectory[i], modelDataTrajectory[i], ipmDataTrajectory[i], barrierParameter);
+        if (settings_.projectStateInputEqualityConstraints) {
+          ipm::projectIntermediateLQ(modelDataTrajectory[i], constraintProjection[i], projectedModelDataTrajectory[i]);
+        }
         workerPerformance += fromModelData(modelDataTrajectory[i]);
         workerPerformance += fromIpmData(ipmDataTrajectory[i]);
       }
@@ -387,6 +417,9 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
       ipm::approximateFinalLQ(optimalControlProblem, tN, stateTrajectory[N], modelDataTrajectory[N]);
       ipm::discretizeFinalLQ(costateTrajectory[N], modelDataTrajectory[N]);
       ipm::eliminateIpmVariablesFinalLQ(ipmVariablesTrajectory[N], modelDataTrajectory[N], ipmDataTrajectory[N], barrierParameter);
+      if (settings_.projectStateInputEqualityConstraints) {
+        projectedModelDataTrajectory[i] = modelDataTrajectory[i];
+      }
       workerPerformance += fromModelData(modelDataTrajectory[N]);
       workerPerformance += fromIpmData(ipmDataTrajectory[N]);
     }
