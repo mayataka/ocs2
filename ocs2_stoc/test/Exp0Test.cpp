@@ -28,7 +28,7 @@ TEST(Exp0Test, Unconstrained_FixedSwitchingTimes) {
   settings.printSolverStatus = true;
   settings.printSolverStatistics = true;
   settings.printLinesearch = true;
-  settings.nThreads = 1;
+  settings.nThreads = 4;
 
   const scalar_array_t initEventTimes{0.1897};
   const std::vector<size_t> modeSequence{0, 1};
@@ -50,8 +50,9 @@ TEST(Exp0Test, Unconstrained_FixedSwitchingTimes) {
 
   const scalar_t expectedCost = 9.766;
   EXPECT_NEAR(stoc.getIpmPerformanceIndeces().cost, expectedCost, 0.05); 
-  EXPECT_EQ(stoc.getNumIterations(), 2); 
   // The error comes from the discretization 
+  EXPECT_EQ(stoc.getNumIterations(), 2); 
+  // Since the subsystems are linear subject to no constraints, converges only with a Gauss-Newton iteration for arbitrary initial state.
 
   const vector_t randomInitState = vector_t::Random(STATE_DIM);
   stoc.reset();

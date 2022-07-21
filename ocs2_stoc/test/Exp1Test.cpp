@@ -37,8 +37,8 @@ TEST(Exp1Test, Unconstrained_FixedSwitchingTimes) {
   auto ipmProblem = ipm::OptimalControlProblem(problem);
 
   const scalar_t startTime = 0.0;
-  const scalar_t finalTime = 2.0;
-  const vector_t initState = (vector_t(STATE_DIM) << 0.0, 2.0).finished();
+  const scalar_t finalTime = 3.0;
+  const vector_t initState = (vector_t(STATE_DIM) << 2.0, 3.0).finished();
 
   auto initializerPtr = std::unique_ptr<Initializer>(new DefaultInitializer(INPUT_DIM));
 
@@ -47,6 +47,10 @@ TEST(Exp1Test, Unconstrained_FixedSwitchingTimes) {
   stoc.run(startTime, initState, finalTime);
   std::cout << stoc.getBenchmarkingInformation() << std::endl;
   std::cout << stoc.getIpmPerformanceIndeces() << std::endl;
+
+  const scalar_t expectedCost = 5.4399;
+  EXPECT_NEAR(stoc.getIpmPerformanceIndeces().cost, expectedCost, 0.05); 
+  // The error comes from the discretization 
 }
 
 int main(int argc, char** argv) {
