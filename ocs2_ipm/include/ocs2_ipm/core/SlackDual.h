@@ -35,7 +35,6 @@ struct SlackDual {
     dual.swap(other.dual);
   }
 
-  scalar_t barrier;
   vector_t slack;
   vector_t dual;
 };

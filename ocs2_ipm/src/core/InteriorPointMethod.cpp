@@ -6,20 +6,21 @@
 namespace ocs2 {
 namespace ipm {
 
-void initSlackDual(const VectorFunctionLinearApproximation& ineqConstraint, SlackDual& slackDual, scalar_t barrier) {
+void initSlackDual(const VectorFunctionLinearApproximation& ineqConstraint, SlackDual& slackDual, scalar_t barrierParam) {
+  assert(barrierParam > 0.0);
   const auto nc = ineqConstraint.f.size();
-  setBarrier(nc, barrier, slackDual);
+  setBarrier(nc, barrierParam, slackDual);
   slackDual.slack = - ineqConstraint.f;
   for (size_t i=0; i<nc; ++i) {
-    slackDual.slack[i] = std::max(slackDual.slack[i], std::sqrt(barrier));
+    slackDual.slack[i] = std::max(slackDual.slack[i], std::sqrt(barrierParam));
   }
-  slackDual.dual.array() = barrier / slackDual.slack.array();
+  slackDual.dual.array() = barrierParam / slackDual.slack.array();
 }
 
 
-SlackDual initSlackDual(const VectorFunctionLinearApproximation& ineqConstraint, scalar_t barrier) {
+SlackDual initSlackDual(const VectorFunctionLinearApproximation& ineqConstraint, scalar_t barrierParam) {
   SlackDual slackDual;
-  initSlackDual(ineqConstraint, slackDual, barrier);
+  initSlackDual(ineqConstraint, slackDual, barrierParam);
   return slackDual;
 }
 
@@ -39,15 +40,14 @@ InteriorPointMethodData initInteriorPointMethodData(const VectorFunctionLinearAp
 }
 
 
-void evalPerturbedResidual(const VectorFunctionLinearApproximation& ineqConstraint,
-                           const SlackDual& slackDual, 
-                           InteriorPointMethodData& ipmData,
-                           ScalarFunctionQuadraticApproximation& cost,
+void evalPerturbedResidual(const VectorFunctionLinearApproximation& ineqConstraint, const SlackDual& slackDual, 
+                           InteriorPointMethodData& ipmData, ScalarFunctionQuadraticApproximation& cost, scalar_t barrierParam,
                            bool stateConstraint, bool inputConstraint) {
+  assert(barrierParam > 0);
   // primal feasibility
   ipmData.primalResidual = ineqConstraint.f + slackDual.slack;
   // complementary slackness
-  ipmData.complementarySlackness.array() = slackDual.slack.array() * slackDual.dual.array() - slackDual.barrier;
+  ipmData.complementarySlackness.array() = slackDual.slack.array() * slackDual.dual.array() - barrierParam;
   // dual feasibility
   if (stateConstraint) {
     cost.dfdx.noalias() += ineqConstraint.dfdx.transpose() * slackDual.dual;
@@ -57,7 +57,7 @@ void evalPerturbedResidual(const VectorFunctionLinearApproximation& ineqConstrai
   }
   // cost barrier
   if (slackDual.slack.size() > 0) {
-    ipmData.costBarrier = slackLogBarrier(slackDual);
+    ipmData.costBarrier = - barrierParam * slackDual.slack.array().log().sum();
   }
   else {
     ipmData.costBarrier = 0.0;
@@ -65,9 +65,8 @@ void evalPerturbedResidual(const VectorFunctionLinearApproximation& ineqConstrai
 }
 
 
-void condenseSlackDual(const VectorFunctionLinearApproximation& ineqConstraint,
-                       const SlackDual& slackDual, InteriorPointMethodData& ipmData, 
-                       ScalarFunctionQuadraticApproximation& cost,
+void condenseSlackDual(const VectorFunctionLinearApproximation& ineqConstraint, const SlackDual& slackDual, 
+                       InteriorPointMethodData& ipmData, ScalarFunctionQuadraticApproximation& cost,
                        bool stateConstraint, bool inputConstraint) {
   // some coefficients for condensing
   ipmData.cond.array() = (slackDual.dual.array()*ipmData.primalResidual.array()-ipmData.complementarySlackness.array()) 
@@ -146,11 +145,6 @@ scalar_t fractionToBoundaryPrimalStepSize(const SlackDual& slackDual, const Slac
 scalar_t fractionToBoundaryDualStepSize(const SlackDual& slackDual, const SlackDualDirection& slackDualDirection,
                                         const InteriorPointMethodData& ipmData, scalar_t marginRate) {
   return fractionToBoundaryStepSize(ipmData.dim, slackDual.dual, slackDualDirection.dualDirection, marginRate);
-}
-
-
-scalar_t slackLogBarrier(const SlackDual& slackDual) {
-  return - slackDual.barrier * slackDual.slack.array().log().sum();
 }
 
 }  // namespace ipm

@@ -75,12 +75,6 @@ TEST(Exp0Test, Unconstrained_FixedSwitchingTimes) {
 
   stoc::Settings settings;
   settings.numIteration  = 10;
-  settings.primalFeasTol = 1e-6;
-  settings.dualFeasTol   = 1e-6;
-  settings.initialBarrierParameter = 1.0e-01;
-  settings.targetBarrierParameter = 1.0e-03;
-  settings.barrierReductionRate = 0.5;
-  settings.fractionToBoundaryMargin = 0.995;
   settings.useFeedbackPolicy = true;
   settings.dt = 0.01;
   settings.printSolverStatus = true;
@@ -136,11 +130,12 @@ TEST(Exp0Test, Constrained_FixedSwitchingTimes) {
 
   stoc::Settings settings;
   settings.numIteration  = 100;
-  settings.primalFeasTol = 1e-6;
-  settings.dualFeasTol   = 1e-6;
-  settings.initialBarrierParameter = 1.0e-01;
-  settings.targetBarrierParameter = 1.0e-03;
-  settings.barrierReductionRate = 0.5;
+  settings.primalFeasTol = 1.0e-06;
+  settings.dualFeasTol   = 1.0e-06;
+  settings.initialBarrierParameter = 1.0e-02;
+  settings.targetBarrierParameter = 1.0e-04;
+  settings.barrierLinearDecreaseFactor = 0.2;
+  settings.barrierSuperlinearDecreasePower = 1.5;
   settings.fractionToBoundaryMargin = 0.995;
   settings.useFeedbackPolicy = true;
   settings.dt = 0.01;
@@ -159,8 +154,8 @@ TEST(Exp0Test, Constrained_FixedSwitchingTimes) {
   const scalar_t umin = -7.5; const scalar_t umax = 7.5;
   std::unique_ptr<StateInputConstraint> stateInputIneqConstraint(new EXP0_StateInputIneqConstraints(umin, umax));
   ipmProblem.inequalityConstraintPtr->add("ubound", std::move(stateInputIneqConstraint));
-  const vector_t xmin = (vector_t(2) << -5.0, -5.0).finished(); 
-  const vector_t xmax = (vector_t(2) <<  5.0,  5.0).finished(); 
+  const vector_t xmin = (vector_t(2) << -7.5, -7.5).finished(); 
+  const vector_t xmax = (vector_t(2) <<  7.5,  7.5).finished(); 
   std::unique_ptr<EXP0_StateIneqConstraints> stateIneqConstraint(new EXP0_StateIneqConstraints(xmin, xmax));
   std::unique_ptr<EXP0_StateIneqConstraints> finalStateIneqConstraint(new EXP0_StateIneqConstraints(xmin, xmax));
   ipmProblem.stateInequalityConstraintPtr->add("xbound", std::move(stateIneqConstraint));
@@ -182,7 +177,7 @@ TEST(Exp0Test, Constrained_FixedSwitchingTimes) {
   stoc.getPrimalSolution(finalTime, &primalSolution);
   std::cout << "Optimal trajectory subject to constraints: " << std::endl;
   for (const auto& e : primalSolution.stateTrajectory_) {
-    std::cout << "x: " << e.transpose() << std::endl;
+    std::cout << "x: " << e.transpose() << ",  xmin: " << xmin.transpose() << ",  xmax: " << xmax.transpose() << std::endl;
     if (e.size() > 0) {
       EXPECT_TRUE(e.coeff(0) >= xmin.coeff(0));
       EXPECT_TRUE(e.coeff(1) >= xmin.coeff(1));
@@ -191,7 +186,7 @@ TEST(Exp0Test, Constrained_FixedSwitchingTimes) {
     }
   }
   for (const auto& e : primalSolution.inputTrajectory_) {
-    std::cout << "u: " << e.transpose() << std::endl;
+    std::cout << "u: " << e << ",  umin: " << umin << ",  umax: " << umax << std::endl;
     if (e.size() > 0) {
       EXPECT_TRUE(e.coeff(0) >= umin);
       EXPECT_TRUE(e.coeff(0) <= umax);

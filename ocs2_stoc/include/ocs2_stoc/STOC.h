@@ -95,19 +95,20 @@ class STOC : public SolverBase {
 
   void initializeIpmVariablesTrajectories(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
                                           const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory, 
-                                          std::vector<ipm::IpmVariables>& ipmVariablesTrajectory, scalar_t barrier=1.0e-03);
+                                          std::vector<ipm::IpmVariables>& ipmVariablesTrajectory, scalar_t barrier);
 
   ipm::PerformanceIndex approximateOptimalControlProblem(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
                                                          const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
                                                          const vector_array_t& costateTrajectory, 
-                                                         const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory);
+                                                         const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
+                                                         scalar_t barrierParameter);
 
   struct StepSizes {
     scalar_t primalStepSize, dualStepSize;
   };
   StepSizes selectStepSizes(const std::vector<Grid>& timeDiscretization, const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
                             const vector_array_t& dx, const vector_array_t& du, const vector_array_t& dlmd, const scalar_array_t& dts,
-                            std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory); 
+                            std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory, scalar_t fractionToBoundaryMargin); 
 
   static void updateIterate(vector_array_t& x, vector_array_t& u, vector_array_t& lmd, std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
                             const vector_array_t& dx, const vector_array_t& du, const vector_array_t& dlmd, 
@@ -136,14 +137,16 @@ class STOC : public SolverBase {
       break;
     }
   }
-  Convergence checkConvergence(int iteration, const ipm::PerformanceIndex& performanceIndex, 
+  Convergence checkConvergence(size_t iteration, scalar_t barrierParameter, const ipm::PerformanceIndex& performanceIndex, 
                                scalar_t primalStepSize, scalar_t dualStepSize) const;
+
+  scalar_t updateBarrierParameter(scalar_t currentBarrierParameter,
+                                  const ipm::PerformanceIndex& performanceIndex) const;
 
   // Problem definition
   stoc::Settings settings_;
   std::vector<ipm::OptimalControlProblem> optimalControlProblemStock_;
   std::unique_ptr<Initializer> initializerPtr_;
-  scalar_t barrierParam_;
 
   // Data
   stoc::PrimalDataContainer primalData_;

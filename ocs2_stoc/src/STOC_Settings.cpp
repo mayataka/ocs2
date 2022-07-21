@@ -24,7 +24,10 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.dualFeasTol, fieldName + ".dualFeasTol", verbose);
   loadData::loadPtreeValue(pt, settings.initialBarrierParameter, fieldName + ".initialBarrierParameter", verbose);
   loadData::loadPtreeValue(pt, settings.targetBarrierParameter, fieldName + ".targetBarrierParameter", verbose);
-  loadData::loadPtreeValue(pt, settings.barrierReductionRate, fieldName + ".barrierReductionRate", verbose);
+  loadData::loadPtreeValue(pt, settings.barrierLinearDecreaseFactor, fieldName + ".barrierLinearDecreaseFactor", verbose);
+  loadData::loadPtreeValue(pt, settings.barrierSuperlinearDecreasePower, fieldName + ".barrierSuperlinearDecreasePower", verbose);
+  loadData::loadPtreeValue(pt, settings.barrierReductionPrimalFeasTol, fieldName + ".barrierReductionPrimalFeasTol", verbose);
+  loadData::loadPtreeValue(pt, settings.barrierReductionDualFeasTol, fieldName + ".barrierReductionDualFeasTol", verbose);
   loadData::loadPtreeValue(pt, settings.fractionToBoundaryMargin, fieldName + ".fractionToBoundaryMargin", verbose);
   loadData::loadPtreeValue(pt, settings.useFeedbackPolicy, fieldName + ".useFeedbackPolicy", verbose);
   loadData::loadPtreeValue(pt, settings.dt, fieldName + ".dt", verbose);

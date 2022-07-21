@@ -17,9 +17,9 @@ namespace ipm {
  * @param [in] input: The current input.
  * @param [out] modelData: The output data model.
  */
-void eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData);
+void eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData, scalar_t barrierParam);
 
-IpmData eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, ModelData& modelData);
+IpmData eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, ModelData& modelData, scalar_t barrierParam);
 
 /**
  * Calculates an LQ approximate of the constrained optimal control problem at a jump event time.
@@ -29,9 +29,9 @@ IpmData eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, Mo
  * @param [in] state: The current state.
  * @param [out] modelData: The output data model.
  */
-void eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData);
+void eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData, scalar_t barrierParam);
 
-IpmData eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData& modelData);
+IpmData eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData& modelData, scalar_t barrierParam);
 
 /**
  * Calculates an LQ approximate of the constrained optimal control problem at final time.
@@ -41,9 +41,9 @@ IpmData eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelDa
  * @param [in] state: The current state.
  * @param [out] modelData: The output data model.
  */
-void eliminateIpmVariablesFinalLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData);
+void eliminateIpmVariablesFinalLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData, scalar_t barrierParam);
 
-IpmData eliminateIpmVariablesFinalLQ(const IpmVariables& ipmVariables, ModelData& modelData);
+IpmData eliminateIpmVariablesFinalLQ(const IpmVariables& ipmVariables, ModelData& modelData, scalar_t barrierParam);
 
 }  // namespace ipm
 }  // namespace ocs2

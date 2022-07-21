@@ -11,7 +11,6 @@ void setBarrier(size_t nc, scalar_t barrier, SlackDual& slackDual) {
 
 
 void setBarrier(scalar_t barrier, SlackDual& slackDual) {
-  slackDual.barrier = barrier;
   slackDual.slack.fill(std::sqrt(barrier));
   slackDual.dual.fill(std::sqrt(barrier));
 }
@@ -32,9 +31,6 @@ std::string checkSize(int constraintDim, const SlackDual& slackDual, const std::
 
 std::string checkPositive(const SlackDual& slackDual, const std::string& dataName) {
   std::stringstream errorDescription;
-  if (slackDual.barrier <= 0.0) {
-    errorDescription << dataName << ".barrier = " << slackDual.barrier << "\n";
-  }
   if (slackDual.slack.size() > 0) {
     if (slackDual.slack.minCoeff() <= 0.0) {
       errorDescription << dataName << ".slack = " << slackDual.slack.transpose() << "\n";
