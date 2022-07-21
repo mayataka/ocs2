@@ -45,6 +45,7 @@ void RiccatiRecursion::forwardRecursion(const std::vector<Grid>& timeDiscretizat
                                         vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, 
                                         vector_array_t& costateTrajectory, scalar_array_t& switchingTimes) {
   const size_t N = timeDiscretizationGrid.size() - 1;
+  const size_t numPhases = timeDiscretizationGrid.back().phase;
   const auto phase = timeDiscretizationGrid[0].phase;
   const bool sto   = timeDiscretizationGrid[0].sto;
   switchingTimes[phase] = 0.0;

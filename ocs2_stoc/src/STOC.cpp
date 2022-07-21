@@ -29,6 +29,13 @@ STOC::STOC(stoc::Settings settings, const ipm::OptimalControlProblem& optimalCon
   if (optimalControlProblem.equalityConstraintPtr->empty()) {
     settings_.projectStateInputEqualityConstraints = false;  // True does not make sense if there are no constraints.
   }
+
+  if (optimalControlProblem.inequalityConstraintPtr->empty() 
+      && optimalControlProblem.stateInequalityConstraintPtr->empty()
+      && optimalControlProblem.preJumpInequalityConstraintPtr->empty()
+      && optimalControlProblem.finalInequalityConstraintPtr->empty()) {
+    settings_.targetBarrierParameter = settings_.initialBarrierParameter; // Turn off the barrier strategy if there are no inequality constraints.
+  }
 }
 
 STOC::~STOC() {
@@ -112,7 +119,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   // Determine time discretization, taking into account event times.
   const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
   const auto initTimeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
-  const auto numPhases = initTimeDiscretization.back().phase;
+  const auto numPhases = initTimeDiscretization.back().phase + 1;
 
   // initialize Barrier param
   scalar_t barrierParameter = settings_.initialBarrierParameter;
@@ -132,7 +139,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
   // Directions
   vector_array_t dx, du, dlmd;
-  scalar_array_t dts(numPhases, 0.0);
+  scalar_array_t dts(numPhases+1, 0.0);
   std::vector<ipm::IpmVariablesDirection> ipmVariablesDirectionTrajectory;
 
   size_t iter = 0;
@@ -152,15 +159,19 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
     // Reserve and resize directions
     const auto N = timeDiscretization.size() - 1;
-    dx.reserve(N + 1); du.reserve(N); dlmd.reserve(N + 1); 
-    while (dx.size() < N + 1) { 
-      dx.push_back(vector_t::Zero(stateTrajectory[0].size())); 
+    dx.resize(N + 1); du.resize(N); dlmd.resize(N + 1); 
+    for (size_t i = 0; i < N + 1; ++i) {
+      dx[i].resize(primalData_.modelDataTrajectory[i].stateDim);
     }
-    while (du.size() < N) { 
-      du.push_back(vector_t::Zero(inputTrajectory[0].size())); 
+    for (size_t i = 0; i < N; ++i) {
+      if (settings_.projectStateInputEqualityConstraints) {
+        du[i].resize(primalData_.projectedModelDataTrajectory[i].inputDim);
+      } else {
+        du[i].resize(primalData_.modelDataTrajectory[i].inputDim);
+      }
     }
-    while (dlmd.size() < N + 1) { 
-      dlmd.push_back(vector_t::Zero(costateTrajectory[0].size())); 
+    for (size_t i = 0; i < N + 1; ++i) {
+      dlmd[i].resize(primalData_.modelDataTrajectory[i].stateDim);
     }
 
     // Solve QP
@@ -185,7 +196,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     }
     riccatiRecursionTimer_.endTimer();
 
-    // Debugging 
+    // // Debugging 
     // for (size_t i=0; i<N; ++i) {
     //   std::cout << "dx[" << i << "]: " << dx[i].transpose() << "\n";
     //   std::cout << "du[" << i << "]: " << du[i].transpose() << "\n";
@@ -364,12 +375,10 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
   modelDataTrajectory.resize(timeDiscretization.size());
   ipmDataTrajectory.clear();
   ipmDataTrajectory.resize(timeDiscretization.size());
-  if (settings_.projectStateInputEqualityConstraints) {
-    projectedModelDataTrajectory.clear();
-    projectedModelDataTrajectory.resize(timeDiscretization.size());
-    constraintProjection.clear();
-    constraintProjection.resize(timeDiscretization.size());
-  }
+  projectedModelDataTrajectory.clear();
+  projectedModelDataTrajectory.resize(timeDiscretization.size());
+  constraintProjection.clear();
+  constraintProjection.resize(timeDiscretization.size());
 
   std::vector<ipm::PerformanceIndex> performance(settings_.nThreads, ipm::PerformanceIndex());
 
@@ -556,12 +565,12 @@ void STOC::setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector
         // Linear controller has convention u = uff + K * x;
         // We computed u = u'(t) + K (x - x'(t));
         // >> uff = u'(t) - K x'(t)
-        // if (constraintsProjection_[i].f.size() > 0) {
-        //   controllerGain.push_back(std::move(constraintsProjection_[i].dfdx));  // Steal! Don't use after this.
-        //   controllerGain.back().noalias() += constraintsProjection_[i].dfdu * KMatrix;
-        // } else {
+        if (primalData_.constraintProjection[i].f.size() > 0) {
+          controllerGain.push_back(std::move(primalData_.constraintProjection[i].dfdx));  // Steal! Don't use after this.
+          controllerGain.back().noalias() += primalData_.constraintProjection[i].dfdu * KMatrix;
+        } else {
           controllerGain.push_back(KMatrix);
-        // }
+        }
         uff[i].noalias() -= controllerGain.back() * stateTrajectory[i];
       }
     }
