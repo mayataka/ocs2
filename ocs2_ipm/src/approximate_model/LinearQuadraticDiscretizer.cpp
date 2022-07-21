@@ -22,6 +22,7 @@ void discretizeIntermediateLQ(const scalar_t dt, const vector_t& state, const ve
   modelData.dynamics *= dt; 
   modelData.dynamics.f.noalias() += state;
   modelData.dynamics.f.noalias() -= stateNext;
+  modelData.dynamics.dfdx.diagonal().array() += 1.0;
 
   // cost
   modelData.cost *= dt;
@@ -41,11 +42,9 @@ void discretizePreJumpLQ(const vector_t& state, const vector_t& stateNext, const
   modelData.hamiltonian.dfdt = modelData.dynamics.f;
 
   // dynamics 
-  modelData.dynamics.f.noalias() += state;
   modelData.dynamics.f.noalias() -= stateNext;
 
   // cost
-  modelData.cost.dfdx.noalias() += costateNext;
   modelData.cost.dfdx.noalias() -= costate;
 }
 

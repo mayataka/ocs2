@@ -104,6 +104,7 @@ catkin_add_gtest(test_${PROJECT_NAME}
   test/core/testSlackDual.cpp
   test/core/testInteriorPointMethod.cpp
   test/model_data/testModelData.cpp
+  test/approximate_model/Exp0Test.cpp
 )
 add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_${PROJECT_NAME}
