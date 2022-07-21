@@ -41,10 +41,12 @@ void STOC::reset() {
   primalData_.clear();
   ipmData_.clear();
   performanceIndeces_.clear();
+  ipmPerformanceIndeces_.clear();
 
   // reset timers
   numProblems_ = 0;
   totalNumIterations_ = 0;
+  initializationTimer_.reset();
   linearQuadraticApproximationTimer_.reset();
   riccatiRecursionTimer_.reset();
   linesearchTimer_.reset();
@@ -111,8 +113,6 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   const auto initTimeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
   const auto numPhases = initTimeDiscretization.back().phase;
 
-  std::cout << "initTimeDiscretization" << initTimeDiscretization << std::endl; 
-
   // Initialize the state, input, and Ipm variables
   vector_array_t stateTrajectory, inputTrajectory;
   initializeStateInputTrajectories(initTimeDiscretization, initState, stateTrajectory, inputTrajectory);
@@ -176,6 +176,9 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
     // Select step sizes
     ipmVariablesDirectionTrajectory.reserve(N + 1);
+    while (ipmVariablesDirectionTrajectory.size() < N + 1) {
+      ipmVariablesDirectionTrajectory.push_back(ipm::IpmVariablesDirection());
+    }
     linesearchTimer_.startTimer();
     const auto stepSizes = selectStepSizes(timeDiscretization, ipmVariablesTrajectory, dx, du, dlmd, dts, ipmVariablesDirectionTrajectory);
     const scalar_t primalStepSize = stepSizes.primalStepSize;
@@ -283,9 +286,6 @@ void STOC::initializeIpmVariablesTrajectories(const std::vector<Grid>& timeDiscr
                                               const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory, 
                                               std::vector<ipm::IpmVariables>& ipmVariablesTrajectory, scalar_t barrier) {
   const size_t N = static_cast<int>(timeDiscretization.size()) - 1;
-  auto& modelDataTrajectory = primalData_.modelDataTrajectory;
-  modelDataTrajectory.clear();
-  modelDataTrajectory.reserve(N + 1);
   ipmVariablesTrajectory.clear();
   ipmVariablesTrajectory.resize(N + 1);
 
@@ -293,20 +293,22 @@ void STOC::initializeIpmVariablesTrajectories(const std::vector<Grid>& timeDiscr
   auto parallelTask = [&](int workerId) {
     // Get worker specific resources
     auto& optimalControlProblem = optimalControlProblemStock_[workerId];
+    // Local model data of this worker
+    ipm::ModelData modelData;
 
     int i = timeIndex++;
     while (i < N) {
       if (timeDiscretization[i].event == Grid::Event::PreEvent) {
         // Event node
         const scalar_t ti = getIntervalStart(timeDiscretization[i]);
-        ipm::approximatePreJumpLQ(optimalControlProblem, ti, stateTrajectory[i], modelDataTrajectory[i]);
-        ipm::initIpmVariables(modelDataTrajectory[i], ipmVariablesTrajectory[i], barrier);
+        ipm::approximatePreJumpLQ(optimalControlProblem, ti, stateTrajectory[i], modelData);
+        ipm::initIpmVariables(modelData, ipmVariablesTrajectory[i], barrier);
       } else {
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(timeDiscretization[i]);
         const scalar_t dt = getIntervalDuration(timeDiscretization[i], timeDiscretization[i + 1]);
-        ipm::approximateIntermediateLQ(optimalControlProblem, ti, stateTrajectory[i], inputTrajectory[i], modelDataTrajectory[i]);
-        ipm::initIpmVariables(modelDataTrajectory[i], ipmVariablesTrajectory[i], barrier);
+        ipm::approximateIntermediateLQ(optimalControlProblem, ti, stateTrajectory[i], inputTrajectory[i], modelData);
+        ipm::initIpmVariables(modelData, ipmVariablesTrajectory[i], barrier);
       }
 
       i = timeIndex++;
@@ -314,8 +316,8 @@ void STOC::initializeIpmVariablesTrajectories(const std::vector<Grid>& timeDiscr
 
     if (i == N) {  // Only one worker will execute this
       const scalar_t tN = getIntervalStart(timeDiscretization[N]);
-      ipm::approximateFinalLQ(optimalControlProblem, tN, stateTrajectory[N], modelDataTrajectory[N]);
-      ipm::initIpmVariables(modelDataTrajectory[i], ipmVariablesTrajectory[i], barrier);
+      ipm::approximateFinalLQ(optimalControlProblem, tN, stateTrajectory[N], modelData);
+      ipm::initIpmVariables(modelData, ipmVariablesTrajectory[N], barrier);
     }
   };
   runParallel(std::move(parallelTask));
@@ -549,15 +551,15 @@ STOC::Convergence STOC::checkConvergence(int iteration, const ipm::PerformanceIn
   const auto dualFeas = performanceIndex.dualDynamicsViolationSSE
                           + performanceIndex.dualControlViolationSSE
                           + performanceIndex.complementarySlacknessSSE;
-  if ((iteration + 1) >= settings_.numIteration) {
-    // Falied to converge because the next iteration would exceed the specified number of iterations
-    return Convergence::MAXITERATIONS;
+  if (primalFeas < settings_.primalFeasTol && dualFeas < settings_.dualFeasTol) {
+    // Converged because the KKT error is below the specified tolerance
+    return Convergence::SUCCESS;
   } else if (primalStepSize < settings_.minPrimalStepSize || dualStepSize < settings_.minDualStepSize) {
     // Failed to converge because step dual size is below the specified minimum
     return Convergence::STEPSIZE;
-  } else if (primalFeas < settings_.primalFeasTol && dualFeas < settings_.dualFeasTol) {
-    // Converged because the KKT error is below the specified tolerance
-    return Convergence::SUCCESS;
+  } else if ((iteration + 1) >= settings_.numIteration) {
+    // Falied to converge because the next iteration would exceed the specified number of iterations
+    return Convergence::MAXITERATIONS;
   } else {
     // None of the above convergence criteria were met -> not converged.
     return Convergence::FALSE;

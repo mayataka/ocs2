@@ -11,14 +11,14 @@
 
 using namespace ocs2;
 
-TEST(Exp1Test, Unconstrained) {
+TEST(Exp1Test, Unconstrained_FixedSwitchingTimes) {
   static constexpr size_t STATE_DIM = 2;
   static constexpr size_t INPUT_DIM = 1;
 
   stoc::Settings settings;
   settings.numIteration  = 10;
   settings.primalFeasTol = 1e-6;
-  settings.dualFeasTol   = 1e-4;
+  settings.dualFeasTol   = 1e-6;
   settings.initialBarrierParameter = 1.0e-01;
   settings.targetBarrierParameter = 1.0e-03;
   settings.barrierReductionRate = 0.5;
