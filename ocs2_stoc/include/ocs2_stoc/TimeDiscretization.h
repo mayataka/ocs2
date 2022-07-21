@@ -100,6 +100,8 @@ inline Grid::Event castEvent(const AnnotatedTime::Event& event) {
   }
 }
 
+std::string toString(const Grid::Event& event);
+
 std::ostream& operator<<(std::ostream& stream, const std::vector<AnnotatedTime>& timeDiscretization);
 
 std::ostream& operator<<(std::ostream& stream, const std::vector<Grid>& timeDiscretizationGrid);

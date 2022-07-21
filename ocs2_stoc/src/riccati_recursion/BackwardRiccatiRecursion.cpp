@@ -38,19 +38,20 @@ void BackwardRiccatiRecursion::resize(size_t nx, size_t nu) {
 }
 
 
-void BackwardRiccatiRecursion::compute(const ScalarFunctionQuadraticApproximation& cost, RiccatiRecursionData& riccati) {
-  const size_t nx = cost.dfdx.size();
-  const size_t nu = cost.dfdu.size();
-  riccati.resize(nx, nu);
+void BackwardRiccatiRecursion::computeFinal(const ipm::ModelData& modelData, RiccatiRecursionData& riccati) {
+  riccati.resize(modelData.stateDim, 0);
+  const auto& cost = modelData.cost;
   riccati.P = cost.dfdxx;
   riccati.s = - cost.dfdx;
 }
 
 
-void BackwardRiccatiRecursion::compute(const RiccatiRecursionData& riccatiNext, const VectorFunctionLinearApproximation& dynamics, 
-                                       ScalarFunctionQuadraticApproximation& cost, RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy) {
-  const size_t nx = cost.dfdx.size();
-  const size_t nu = cost.dfdu.size();
+void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& riccatiNext, ipm::ModelData& modelData, 
+                                                   RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy) {
+  auto& cost = modelData.cost;
+  const auto& dynamics = modelData.dynamics;
+  const size_t nx = modelData.stateDim;
+  const size_t nu = modelData.inputDim;;
   riccati.resize(nx, nu);
   lqrPolicy.resize(nx, nu);
   this->resize(nx, nu);
@@ -94,15 +95,27 @@ void BackwardRiccatiRecursion::compute(const RiccatiRecursionData& riccatiNext, 
     lqrPolicy.k.noalias() = - ldlt_.solve(cost.dfdu);
     break;
   }
+  if (nu > 0) {
+    GK_.noalias() = cost.dfduu * lqrPolicy.K; 
+    cost.dfdxx.noalias() -= lqrPolicy.K.transpose() * GK_;
+  }
+  // Riccati factorization matrix with preserving the symmetry
+  riccati.P = 0.5 * (cost.dfdxx + cost.dfdxx.transpose());
+  // Riccati factorization vector
+  riccati.s.noalias()  = dynamics.dfdx.transpose() * riccatiNext.s;
+  riccati.s.noalias() -= AtP_ * dynamics.f;
+  riccati.s.noalias() -= cost.dfdx;
+  riccati.s.noalias() -= cost.dfdux.transpose() * lqrPolicy.k;
 }
 
 
-void BackwardRiccatiRecursion::compute(const RiccatiRecursionData& riccatiNext, const VectorFunctionLinearApproximation& dynamics, 
-                                       ScalarFunctionQuadraticApproximation& cost, ipm::Hamiltonian& hamiltonian, 
-                                       RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy, const bool sto, const bool stoNext) {
-  compute(riccatiNext, dynamics, cost, riccati, lqrPolicy);
+void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& riccatiNext, ipm::ModelData& modelData,
+                                                   RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy, const bool sto, const bool stoNext) {
+  computeIntermediate(riccatiNext, modelData, riccati, lqrPolicy);
+  const auto& dynamics = modelData.dynamics;
+  const auto& hamiltonian = modelData.hamiltonian;
   if (sto) {
-    const size_t nu = cost.dfdu.size();
+    const size_t nu = modelData.inputDim;
     riccati.psi_x.noalias()  = AtP_ * hamiltonian.dfdt;
     riccati.psi_x.noalias() += hamiltonian.dhdx;
     riccati.psi_x.noalias() += dynamics.dfdx.transpose() * riccatiNext.Psi;
@@ -226,8 +239,14 @@ void BackwardRiccatiRecursion::compute(const RiccatiRecursionData& riccatiNext, 
   }
 }
 
+void BackwardRiccatiRecursion::computePreJump(const RiccatiRecursionData& riccatiNext, ipm::ModelData& modelData,
+                                              RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy, StoPolicy& stoPolicy, 
+                                              const bool sto, const bool stoNext) {
+  computeIntermediate(riccatiNext, modelData, riccati, lqrPolicy, sto, stoNext);
+  modifyPreJump(riccati, stoPolicy, stoNext);
+}
 
-void BackwardRiccatiRecursion::compute(RiccatiRecursionData& riccati, StoPolicy& stoPolicy, const bool stoNext) const {
+void BackwardRiccatiRecursion::modifyPreJump(RiccatiRecursionData& riccati, StoPolicy& stoPolicy, const bool stoNext) const {
   const size_t nx = riccati.s.size();
   stoPolicy.resize(nx);
   if (stoNext) {

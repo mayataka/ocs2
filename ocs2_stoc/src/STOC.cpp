@@ -111,6 +111,8 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   const auto initTimeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
   const auto numPhases = initTimeDiscretization.back().phase;
 
+  std::cout << "initTimeDiscretization" << initTimeDiscretization << std::endl; 
+
   // Initialize the state, input, and Ipm variables
   vector_array_t stateTrajectory, inputTrajectory;
   initializeStateInputTrajectories(initTimeDiscretization, initState, stateTrajectory, inputTrajectory);
@@ -121,6 +123,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
   // Bookkeeping
   performanceIndeces_.clear();
+  ipmPerformanceIndeces_.clear();
 
   // Directions
   vector_array_t dx, du, dlmd;
@@ -142,11 +145,10 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     performanceIndeces_.push_back(convert(performanceIndex));
     linearQuadraticApproximationTimer_.endTimer();
 
-    // reserve and resize directions
-    const auto N = timeDiscretization.size();
+    // Reserve and resize directions
+    const auto N = timeDiscretization.size() - 1;
     dx.reserve(N + 1); du.reserve(N); dlmd.reserve(N + 1); 
-    dx.push_back(initState - stateTrajectory[0]);
-    while (dx.size() < N) { 
+    while (dx.size() < N + 1) { 
       dx.push_back(vector_t::Zero(stateTrajectory[0].size())); 
     }
     while (du.size() < N) { 
@@ -159,10 +161,20 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     // Solve QP
     riccatiRecursionTimer_.startTimer();
     riccatiRecursion_.backwardRecursion(timeDiscretization, primalData_.modelDataTrajectory);
+    dx[0] = initState - stateTrajectory[0];
     riccatiRecursion_.forwardRecursion(timeDiscretization, primalData_.modelDataTrajectory, dx, du, dlmd, dts);
     riccatiRecursionTimer_.endTimer();
 
-    // // Select step sizes
+    // Debugging 
+    // for (int i=0; i<N; ++i) {
+    //   std::cout << "dx[" << i << "]: " << dx[i].transpose() << "\n";
+    //   std::cout << "du[" << i << "]: " << du[i].transpose() << "\n";
+    //   std::cout << "dlmd[" << i << "]: " << dlmd[i].transpose() << "\n";
+    // }
+    // std::cout << "dx[" << N << "]: " << dx[N].transpose() << "\n";
+    // std::cout << "dlmd[" << N << "]: " << dlmd[N].transpose() << "\n";
+
+    // Select step sizes
     ipmVariablesDirectionTrajectory.reserve(N + 1);
     linesearchTimer_.startTimer();
     const auto stepSizes = selectStepSizes(timeDiscretization, ipmVariablesTrajectory, dx, du, dlmd, dts, ipmVariablesDirectionTrajectory);
@@ -173,6 +185,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
       std::cerr << "[Linesearch] Primal step size: " << primalStepSize << ", Dual step size: " << dualStepSize << "\n";
     }
 
+    // Update iterate
     updateIterate(stateTrajectory, inputTrajectory, costateTrajectory, ipmVariablesTrajectory, 
                   dx, du, dlmd, ipmVariablesDirectionTrajectory, primalStepSize, dualStepSize);
 
@@ -274,7 +287,7 @@ void STOC::initializeIpmVariablesTrajectories(const std::vector<Grid>& timeDiscr
   modelDataTrajectory.clear();
   modelDataTrajectory.reserve(N + 1);
   ipmVariablesTrajectory.clear();
-  ipmVariablesTrajectory.reserve(N + 1);
+  ipmVariablesTrajectory.resize(N + 1);
 
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {

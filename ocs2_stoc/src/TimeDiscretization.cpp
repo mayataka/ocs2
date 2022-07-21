@@ -115,7 +115,7 @@ std::vector<AnnotatedTime> multiPhaseTimeDiscretization(scalar_t initTime, scala
   return timeDiscretization;
 }
 
-std::string EventName(const Grid::Event& event) {
+std::string toString(const Grid::Event& event) {
   switch (event) {
     case Grid::Event::None:
       return "None";
@@ -134,7 +134,7 @@ std::string EventName(const Grid::Event& event) {
 
 std::ostream& operator<<(std::ostream& stream, const std::vector<AnnotatedTime>& timeDiscretization) {
   for (const auto& e : timeDiscretization) {
-    stream << "time: " << e.time << ",  event type: " << EventName(castEvent(e.event)) << "\n";
+    stream << "time: " << e.time << ",  event type: " << toString(castEvent(e.event)) << "\n";
   }
   return stream;
 }
@@ -144,7 +144,7 @@ std::ostream& operator<<(std::ostream& stream, const std::vector<Grid>& timeDisc
     stream << "time: " << e.time 
            << ", mode: " << e.mode 
            << ", phase: " << e.phase 
-           << ", event: " << EventName(e.event) 
+           << ", event: " << toString(e.event) 
            << ", sto: " << std::boolalpha << e.sto
            << ", stoNext: " << std::boolalpha << e.stoNext
            << ", stoNextNext: " << std::boolalpha << e.stoNextNext << "\n";

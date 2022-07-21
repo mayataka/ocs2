@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ocs2_core/Types.h>
-#include <ocs2_ipm/model_data/Hamiltonian.h>
+#include <ocs2_ipm/model_data/ModelData.h>
 #include <ocs2_stoc/riccati_recursion/RiccatiRecursionData.h>
 #include <ocs2_stoc/riccati_recursion/LqrPolicy.h>
 #include <ocs2_stoc/riccati_recursion/StoPolicy.h>
@@ -19,16 +19,18 @@ public:
 
   void setRegularization(scalar_t dts0_max);
 
-  static void compute(const ScalarFunctionQuadraticApproximation& cost, RiccatiRecursionData& riccati);
+  static void computeFinal(const ipm::ModelData& modelData, RiccatiRecursionData& riccati);
 
-  void compute(const RiccatiRecursionData& riccatiNext, const VectorFunctionLinearApproximation& dynamics,
-               ScalarFunctionQuadraticApproximation& cost, RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy);
+  void computeIntermediate(const RiccatiRecursionData& riccatiNext, ipm::ModelData& modelData, 
+                           RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy);
 
-  void compute(const RiccatiRecursionData& riccatiNext, const VectorFunctionLinearApproximation& dynamics,
-               ScalarFunctionQuadraticApproximation& cost, ipm::Hamiltonian& hamiltonian, 
-               RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy, const bool sto, const bool stoNext);
+  void computeIntermediate(const RiccatiRecursionData& riccatiNext, ipm::ModelData& modelData, 
+                           RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy, const bool sto, const bool stoNext);
 
-  void compute(RiccatiRecursionData& riccati, StoPolicy& stoPolicy, const bool stoNext) const;
+  void computePreJump(const RiccatiRecursionData& riccatiNext, ipm::ModelData& modelData, 
+                      RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy, StoPolicy& stoPolicy, const bool sto, const bool stoNext);
+
+  void modifyPreJump(RiccatiRecursionData& riccati, StoPolicy& stoPolicy, const bool stoNext) const;
 
 private:
   scalar_t dts0_max_, sgm_eps_;

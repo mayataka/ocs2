@@ -7,24 +7,32 @@ namespace ForwardRiccatiRecursion {
 
 void computeInput(const LqrPolicy& lqrPolicy, const vector_t& dx, vector_t& du, 
                   scalar_t dts, scalar_t dtsNext, bool sto, bool stoNext) {
-  du.noalias()  = lqrPolicy.K * dx;
-  du.noalias() += lqrPolicy.k;
-  if (sto) {
-    du.noalias() += lqrPolicy.T * (dtsNext-dts);
-    if (stoNext) {
-      du.noalias() -= lqrPolicy.W * dts;
+  if (lqrPolicy.k.size() > 0) {
+    du.noalias()  = lqrPolicy.K * dx;
+    du.noalias() += lqrPolicy.k;
+    if (sto) {
+      du.noalias() += lqrPolicy.T * (dtsNext-dts);
+      if (stoNext) {
+        du.noalias() -= lqrPolicy.W * dts;
+      }
     }
+  }
+  else {
+    du.resize(0);
   }
 }
 
 
-void computeState(const VectorFunctionLinearApproximation& dynamics, const ipm::Hamiltonian& hamiltonian,
+void computeState(const ipm::ModelData& modelData, 
                   const vector_t& dx, const vector_t& du, vector_t& dxNext, scalar_t dts, scalar_t dtsNext, bool sto) {
+  const auto& dynamics = modelData.dynamics;
   dxNext = dynamics.f;
   dxNext.noalias() += dynamics.dfdx * dx;
-  dxNext.noalias() += dynamics.dfdu * du;
+  if (du.size() > 0) {
+    dxNext.noalias() += dynamics.dfdu * du;
+  }
   if (sto) {
-    dxNext.noalias() += hamiltonian.dfdt * (dtsNext-dts);
+    dxNext.noalias() += modelData.hamiltonian.dfdt * (dtsNext-dts);
   }
 }
 

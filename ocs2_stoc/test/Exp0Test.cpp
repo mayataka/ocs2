@@ -5,13 +5,13 @@
 #include <memory>
 
 #include <ocs2_core/initialization/DefaultInitializer.h>
-#include <ocs2_oc/test/EXP1.h>
+#include <ocs2_oc/test/EXP0.h>
 
 #include <ocs2_stoc/STOC.h>
 
 using namespace ocs2;
 
-TEST(exp1_stoc_test, Unconstrained) {
+TEST(Exp0Test, Unconstrained) {
   static constexpr size_t STATE_DIM = 2;
   static constexpr size_t INPUT_DIM = 1;
 
@@ -24,16 +24,16 @@ TEST(exp1_stoc_test, Unconstrained) {
   settings.barrierReductionRate = 0.5;
   settings.fractionToBoundaryMargin = 0.995;
   settings.useFeedbackPolicy = true;
-  settings.dt = 0.01;
+  settings.dt = 0.2;
   settings.printSolverStatus = true;
   settings.printSolverStatistics = true;
   settings.printLinesearch = true;
   settings.nThreads = 4;
 
-  const scalar_array_t initEventTimes{0.2262, 1.0176};
-  const std::vector<size_t> modeSequence{0, 1, 2};
-  auto referenceManagerPtr = getExp1ReferenceManager(initEventTimes, modeSequence);
-  auto problem = createExp1Problem(referenceManagerPtr);
+  const scalar_array_t initEventTimes{0.1897};
+  const std::vector<size_t> modeSequence{0, 1};
+  auto referenceManagerPtr = getExp0ReferenceManager(initEventTimes, modeSequence);
+  auto problem = createExp0Problem(referenceManagerPtr);
   auto ipmProblem = ipm::OptimalControlProblem(problem);
 
   const scalar_t startTime = 0.0;
