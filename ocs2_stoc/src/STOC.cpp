@@ -4,6 +4,7 @@
 #include <ocs2_sqp/ConstraintProjection.h>
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
+#include <ocs2_core/misc/LinearInterpolation.h>
 
 #include <iostream>
 #include <numeric>
@@ -237,7 +238,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
   computeControllerTimer_.startTimer();
   const auto timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
-  setPrimalSolution(timeDiscretization, std::move(stateTrajectory), std::move(inputTrajectory));
+  setPrimalSolution(timeDiscretization, std::move(stateTrajectory), std::move(inputTrajectory), std::move(costateTrajectory));
   computeControllerTimer_.endTimer();
   ++numProblems_;
 
@@ -306,14 +307,24 @@ void STOC::initializeCostateTrajectories(const std::vector<Grid>& timeDiscretiza
   const size_t N = static_cast<int>(timeDiscretization.size()) - 1;  // // size of the input trajectory
   costateTrajectory.clear();
   costateTrajectory.reserve(N + 1);
-  // Final costate
-  auto& optimalControlProblem = optimalControlProblemStock_[0];
-  const scalar_t tN = getIntervalStart(timeDiscretization[N]);
-  ipm::ModelData modelData;
-  ipm::approximateFinalLQ(optimalControlProblem, tN, stateTrajectory[N], modelData);
-  const vector_t finalCostate = - modelData.cost.dfdx;
-  for (int i = 0; i <= N; i++) {
-    costateTrajectory.push_back(finalCostate);
+  const auto& primalSolution = primalData_.primalSolution;
+
+  if (primalSolution.timeTrajectory_.size() >= 2) {
+    // Linear interpolation if the previous solution is available
+    for (size_t i = 0; i < N + 1; ++i) {
+      costateTrajectory.push_back(
+        LinearInterpolation::interpolate(timeDiscretization[i].time, primalSolution.timeTrajectory_, primalData_.costateTrajectory));
+    }
+  } else {
+    // Fill with the final costate
+    auto& optimalControlProblem = optimalControlProblemStock_[0];
+    const scalar_t tN = getIntervalStart(timeDiscretization[N]);
+    ipm::ModelData modelData;
+    ipm::approximateFinalLQ(optimalControlProblem, tN, stateTrajectory[N], modelData);
+    const vector_t finalCostate = - modelData.cost.dfdx;
+    for (int i = 0; i <= N; i++) {
+      costateTrajectory.push_back(finalCostate);
+    }
   }
 }
 
@@ -535,7 +546,8 @@ void STOC::updateIterate(vector_array_t& x, vector_array_t& u, vector_array_t& l
   }
 }
 
-void STOC::setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector_array_t&& stateTrajectory, vector_array_t&& inputTrajectory) {
+void STOC::setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector_array_t&& stateTrajectory, vector_array_t&& inputTrajectory,
+                             vector_array_t&& costateTrajectory) {
   const size_t N = static_cast<size_t>(timeDiscretization.size()) - 1;
   // Clear old solution
   auto& primalSolution = primalData_.primalSolution;
@@ -599,6 +611,8 @@ void STOC::setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector
     primalSolution.controllerPtr_.reset(new FeedforwardController(primalSolution.timeTrajectory_, primalSolution.inputTrajectory_));
   }
 
+  // Construct costate trajectory
+  primalData_.costateTrajectory = std::move(costateTrajectory);
 }
 
 STOC::Convergence STOC::checkConvergence(size_t iteration, scalar_t barrierParameter, const ipm::PerformanceIndex& performanceIndex,

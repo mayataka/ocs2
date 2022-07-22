@@ -97,8 +97,6 @@ class STOC : public SolverBase {
   void initializeIpmVariablesTrajectories(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
                                           const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory, 
                                           std::vector<ipm::IpmVariables>& ipmVariablesTrajectory, scalar_t barrier);
-  
-  void projectStateInputConstraints();
 
   ipm::PerformanceIndex approximateOptimalControlProblem(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
                                                          const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
@@ -118,7 +116,8 @@ class STOC : public SolverBase {
                             const std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory,
                             scalar_t primalStepSize, scalar_t dualStepSize);
 
-  void setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector_array_t&& stateTrajectory, vector_array_t&& inputTrajectory);
+  void setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector_array_t&& stateTrajectory, vector_array_t&& inputTrajectory,
+                         vector_array_t&& costateTrajectory);
 
   enum class Convergence { FALSE, SUCCESS, MAXITERATIONS, STEPSIZE };
   static std::string toString(Convergence convergence) {
