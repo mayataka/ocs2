@@ -59,6 +59,7 @@ add_library(${PROJECT_NAME}
   src/approximate_model/LinearQuadraticDiscretizer.cpp
   src/approximate_model/IpmVariablesEliminator.cpp
   src/approximate_model/IpmVariablesRetriver.cpp
+  src/approximate_model/ChangeOfInputVariables.cpp
   src/approximate_model/ConstraintProjection.cpp
 )
 add_dependencies(${PROJECT_NAME}
@@ -105,7 +106,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 catkin_add_gtest(test_${PROJECT_NAME}
   test/core/testSlackDual.cpp
   test/core/testInteriorPointMethod.cpp
-  test/model_data/testModelData.cpp
   test/approximate_model/Exp0Test.cpp
 )
 add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})

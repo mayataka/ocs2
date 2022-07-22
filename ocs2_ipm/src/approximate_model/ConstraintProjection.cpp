@@ -1,6 +1,7 @@
 #include <ocs2_ipm/approximate_model/ConstraintProjection.h>
 #include <ocs2_sqp/ConstraintProjection.h>
 #include <ocs2_oc/approximate_model/ChangeOfInputVariables.h>
+#include <ocs2_ipm/approximate_model/ChangeOfInputVariables.h>
 
 namespace ocs2 {
 namespace ipm {
@@ -39,6 +40,7 @@ void projectIntermediateLQ(const ModelData& modelData, VectorFunctionLinearAppro
     // Adapt dynamics and cost
     changeOfInputVariables(projectedModelData.dynamics, constraintProjection.dfdu, constraintProjection.dfdx, constraintProjection.f);
     changeOfInputVariables(projectedModelData.cost, constraintProjection.dfdu, constraintProjection.dfdx, constraintProjection.f);
+    changeOfInputVariables(projectedModelData.hamiltonian, constraintProjection.dfdu, constraintProjection.dfdx, constraintProjection.f);
   }
 }
 
