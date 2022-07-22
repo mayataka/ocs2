@@ -42,29 +42,36 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   std::cout << stoc.getBenchmarkingInformation() << std::endl;
   std::cout << stoc.getIpmPerformanceIndeces() << std::endl;
 
-  // // Inspect solution
-  // const auto primalSolution = solver.primalSolution(finalTime);
-  // for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
-  //   std::cout << "time: " << primalSolution.timeTrajectory_[i] << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
-  //             << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
-  // }
+  // Inspect solution
+  const auto primalSolution = stoc.primalSolution(finalTime);
+  for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
+    std::cout << "time: " << std::setprecision(4) << primalSolution.timeTrajectory_[i] << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
+              << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
+  }
 
-  // // Check initial condition
-  // ASSERT_TRUE(primalSolution.stateTrajectory_.front().isApprox(initState));
-  // ASSERT_DOUBLE_EQ(primalSolution.timeTrajectory_.front(), startTime);
-  // ASSERT_DOUBLE_EQ(primalSolution.timeTrajectory_.back(), finalTime);
+  // check constraint satisfaction
+  for (int i = 0; i < primalSolution.timeTrajectory_.size()-1; i++) {
+    if (primalSolution.inputTrajectory_[i].size() > 0) {
+      EXPECT_NEAR(primalSolution.stateTrajectory_[i].dot(primalSolution.inputTrajectory_[i]), 0.0, 1.0e-06);
+    }
+  }
 
-  // // Check constraint satisfaction.
-  // const auto performance = solver.getPerformanceIndeces();
-  // ASSERT_LT(performance.dynamicsViolationSSE, 1e-6);
-  // ASSERT_LT(performance.equalityConstraintsSSE, 1e-6);
+  // Check initial condition
+  ASSERT_TRUE(primalSolution.stateTrajectory_.front().isApprox(initState));
+  ASSERT_DOUBLE_EQ(primalSolution.timeTrajectory_.front(), startTime);
+  ASSERT_DOUBLE_EQ(primalSolution.timeTrajectory_.back(), finalTime);
 
-  // // Check feedback controller
-  // for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {
-  //   const auto t = primalSolution.timeTrajectory_[i];
-  //   const auto& x = primalSolution.stateTrajectory_[i];
-  //   const auto& u = primalSolution.inputTrajectory_[i];
-  //   // Feed forward part
-  //   ASSERT_TRUE(u.isApprox(primalSolution.controllerPtr_->computeInput(t, x)));
-  // }
+  // Check constraint satisfaction.
+  const auto performance = stoc.getPerformanceIndeces();
+  ASSERT_LT(performance.dynamicsViolationSSE, 1e-6);
+  ASSERT_LT(performance.equalityConstraintsSSE, 1e-6);
+
+  // Check feedback controller
+  for (int i = 0; i < primalSolution.timeTrajectory_.size() - 1; i++) {
+    const auto t = primalSolution.timeTrajectory_[i];
+    const auto& x = primalSolution.stateTrajectory_[i];
+    const auto& u = primalSolution.inputTrajectory_[i];
+    // Feed forward part
+    ASSERT_TRUE(u.isApprox(primalSolution.controllerPtr_->computeInput(t, x)));
+  }
 }

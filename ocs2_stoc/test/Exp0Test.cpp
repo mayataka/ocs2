@@ -106,14 +106,11 @@ TEST(Exp0Test, Unconstrained_FixedSwitchingTimes) {
   EXPECT_EQ(stoc.getNumIterations(), 2); 
   // Since the subsystems are linear subject to no constraints, converges only with a Gauss-Newton iteration for arbitrary initial state.
 
-  PrimalSolution primalSolution;
-  stoc.getPrimalSolution(finalTime, &primalSolution);
-  std::cout << "Optimal unconstrained trajectory: " << std::endl;
-  for (const auto& e : primalSolution.stateTrajectory_) {
-    std::cout << "x: " << e.transpose() << std::endl;
-  }
-  for (const auto& e : primalSolution.inputTrajectory_) {
-    std::cout << "u: " << e.transpose() << std::endl;
+  const auto primalSolution = stoc.primalSolution(finalTime);
+  std::cout << "Optimal unconstrained trajectory" << std::endl; 
+  for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
+    std::cout << "time: " << std::setprecision(4) << primalSolution.timeTrajectory_[i] << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
+              << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
   }
 
   const vector_t randomInitState = vector_t::Random(STATE_DIM);
@@ -173,11 +170,15 @@ TEST(Exp0Test, Constrained_FixedSwitchingTimes) {
   std::cout << stoc.getBenchmarkingInformation() << std::endl;
   std::cout << stoc.getIpmPerformanceIndeces() << std::endl;
 
-  PrimalSolution primalSolution;
-  stoc.getPrimalSolution(finalTime, &primalSolution);
-  std::cout << "Optimal trajectory subject to constraints: " << std::endl;
+  const auto primalSolution = stoc.primalSolution(finalTime);
+  std::cout << "Optimal trajectory subject to constraints" << std::endl; 
+  std::cout << "xmin: [" << xmin.transpose() << "],  xmax: [" << xmax.transpose() << "],  umin: " << umin << ",  umax: " << umax << std::endl;
+  for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
+    std::cout << "time: " << std::setprecision(4) << primalSolution.timeTrajectory_[i] << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
+              << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
+  }
+  // check constraint satisfaction
   for (const auto& e : primalSolution.stateTrajectory_) {
-    std::cout << "x: " << e.transpose() << ",  xmin: " << xmin.transpose() << ",  xmax: " << xmax.transpose() << std::endl;
     if (e.size() > 0) {
       EXPECT_TRUE(e.coeff(0) >= xmin.coeff(0));
       EXPECT_TRUE(e.coeff(1) >= xmin.coeff(1));
@@ -186,7 +187,6 @@ TEST(Exp0Test, Constrained_FixedSwitchingTimes) {
     }
   }
   for (const auto& e : primalSolution.inputTrajectory_) {
-    std::cout << "u: " << e << ",  umin: " << umin << ",  umax: " << umax << std::endl;
     if (e.size() > 0) {
       EXPECT_TRUE(e.coeff(0) >= umin);
       EXPECT_TRUE(e.coeff(0) <= umax);
