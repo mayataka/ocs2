@@ -107,8 +107,8 @@ stoc
   minPrimalStepSize                    0.0 
   minDualStepSize                      0.0
 
-  initialBarrierParameter              1.0e-03
-  targetBarrierParameter               1.0e-03
+  initialBarrierParameter              1.0e-02
+  targetBarrierParameter               1.0e-02
   barrierLinearDecreaseFactor          0.2
   barrierSuperlinearDecreasePower      1.5
 
@@ -121,7 +121,7 @@ stoc
 
   useFeedbackPolicy                    true
 
-  dt                                   0.01
+  dt                                   0.015
 
   printSolverStatus                    false
   printSolverStatistics                false
