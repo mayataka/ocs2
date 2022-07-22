@@ -51,6 +51,7 @@ include_directories(
 # ocs2_stoc library
 add_library(${PROJECT_NAME}
   src/sto/StoCostCollection.cpp
+  src/sto/QuadraticStoCost.cpp
   src/sto/StoConstraintCollection.cpp
   src/riccati_recursion/BackwardRiccatiRecursion.cpp
   src/riccati_recursion/ForwardRiccatiRecursion.cpp
