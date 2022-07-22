@@ -22,18 +22,29 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.numIteration, fieldName + ".numIteration", verbose);
   loadData::loadPtreeValue(pt, settings.primalFeasTol, fieldName + ".primalFeasTol", verbose);
   loadData::loadPtreeValue(pt, settings.dualFeasTol, fieldName + ".dualFeasTol", verbose);
+  loadData::loadPtreeValue(pt, settings.minPrimalStepSize, fieldName + ".minPrimalStepSize", verbose);
+  loadData::loadPtreeValue(pt, settings.minDualStepSize, fieldName + ".minDualStepSize", verbose);
+
   loadData::loadPtreeValue(pt, settings.initialBarrierParameter, fieldName + ".initialBarrierParameter", verbose);
   loadData::loadPtreeValue(pt, settings.targetBarrierParameter, fieldName + ".targetBarrierParameter", verbose);
   loadData::loadPtreeValue(pt, settings.barrierLinearDecreaseFactor, fieldName + ".barrierLinearDecreaseFactor", verbose);
   loadData::loadPtreeValue(pt, settings.barrierSuperlinearDecreasePower, fieldName + ".barrierSuperlinearDecreasePower", verbose);
+
   loadData::loadPtreeValue(pt, settings.barrierReductionPrimalFeasTol, fieldName + ".barrierReductionPrimalFeasTol", verbose);
   loadData::loadPtreeValue(pt, settings.barrierReductionDualFeasTol, fieldName + ".barrierReductionDualFeasTol", verbose);
+
+  loadData::loadPtreeValue(pt, settings.projectStateInputEqualityConstraints, fieldName + ".projectStateInputEqualityConstraints", verbose);
+
   loadData::loadPtreeValue(pt, settings.fractionToBoundaryMargin, fieldName + ".fractionToBoundaryMargin", verbose);
+
   loadData::loadPtreeValue(pt, settings.useFeedbackPolicy, fieldName + ".useFeedbackPolicy", verbose);
+
   loadData::loadPtreeValue(pt, settings.dt, fieldName + ".dt", verbose);
+
   loadData::loadPtreeValue(pt, settings.printSolverStatus, fieldName + ".printSolverStatus", verbose);
   loadData::loadPtreeValue(pt, settings.printSolverStatistics, fieldName + ".printSolverStatistics", verbose);
   loadData::loadPtreeValue(pt, settings.printLinesearch, fieldName + ".printLinesearch", verbose);
+
   loadData::loadPtreeValue(pt, settings.nThreads, fieldName + ".nThreads", verbose);
   loadData::loadPtreeValue(pt, settings.threadPriority, fieldName + ".threadPriority", verbose);
 
