@@ -145,8 +145,8 @@ TEST(Exp1Test, Constrained_FixedSwitchingTimes) {
   ipmProblem.inequalityConstraintPtr->add("ubound", std::move(stateInputIneqConstraint));
   const vector_t xmin = (vector_t(2) << -0.0, -0.0).finished(); 
   const vector_t xmax = (vector_t(2) <<  3.0,  4.0).finished(); 
-  std::unique_ptr<EXP1_StateIneqConstraints> stateIneqConstraint(new EXP1_StateIneqConstraints(xmin, xmax));
-  std::unique_ptr<EXP1_StateIneqConstraints> finalStateIneqConstraint(new EXP1_StateIneqConstraints(xmin, xmax));
+  std::unique_ptr<StateConstraint> stateIneqConstraint(new EXP1_StateIneqConstraints(xmin, xmax));
+  std::unique_ptr<StateConstraint> finalStateIneqConstraint(new EXP1_StateIneqConstraints(xmin, xmax));
   ipmProblem.stateInequalityConstraintPtr->add("xbound", std::move(stateIneqConstraint));
   ipmProblem.finalInequalityConstraintPtr->add("xbound", std::move(finalStateIneqConstraint));
 
