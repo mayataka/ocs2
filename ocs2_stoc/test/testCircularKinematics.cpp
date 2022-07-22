@@ -84,7 +84,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
 
   // Solver settings
   stoc::Settings settings;
-  settings.numIteration  = 10;
+  settings.numIteration  = 100;
   settings.useFeedbackPolicy = true;
   settings.projectStateInputEqualityConstraints = true;
   settings.dt = 0.01;
@@ -160,7 +160,7 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_WithIneqConstraints
 
   // Solver settings
   stoc::Settings settings;
-  settings.numIteration  = 10;
+  settings.numIteration  = 100;
   settings.primalFeasTol = 1.0e-06;
   settings.dualFeasTol   = 1.0e-06;
   settings.initialBarrierParameter = 1.0e-02;

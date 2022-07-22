@@ -94,15 +94,11 @@ class STOC : public SolverBase {
   void initializeCostateTrajectories(const std::vector<Grid>& timeDiscretization, const vector_array_t& stateTrajectory, 
                                      const vector_array_t& inputTrajectory, vector_array_t& costateTrajectory);
 
-  void initializeIpmVariablesTrajectories(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
-                                          const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory, 
-                                          std::vector<ipm::IpmVariables>& ipmVariablesTrajectory, scalar_t barrier);
-
   ipm::PerformanceIndex approximateOptimalControlProblem(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
                                                          const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
                                                          const vector_array_t& costateTrajectory, 
-                                                         const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
-                                                         scalar_t barrierParameter);
+                                                         std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
+                                                         scalar_t barrierParameter, bool initIpmVariablesTrajectory);
 
   struct StepSizes {
     scalar_t primalStepSize, dualStepSize;

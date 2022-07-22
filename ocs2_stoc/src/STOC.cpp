@@ -125,14 +125,14 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   // initialize Barrier param
   scalar_t barrierParameter = settings_.initialBarrierParameter;
 
-  // Initialize the state, input, and Ipm variables
+  // Initialize the state, input, and costate
   vector_array_t stateTrajectory, inputTrajectory;
   initializeStateInputTrajectories(initTimeDiscretization, initState, stateTrajectory, inputTrajectory);
   vector_array_t costateTrajectory;
   initializeCostateTrajectories(initTimeDiscretization, stateTrajectory, inputTrajectory, costateTrajectory);
+
+  // Ipm variables are initialized in approximateOptimalControlProblem()
   std::vector<ipm::IpmVariables> ipmVariablesTrajectory;
-  initializeIpmVariablesTrajectories(initTimeDiscretization, initState, stateTrajectory, inputTrajectory, ipmVariablesTrajectory, 
-                                     barrierParameter);
 
   // Bookkeeping
   performanceIndeces_.clear();
@@ -152,8 +152,10 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     // Make QP approximation of nonlinear primal-dual interior point method
     const auto timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
     linearQuadraticApproximationTimer_.startTimer();
+    const bool initIpmVariablesTrajectory = (iter == 0);
     const auto performanceIndex = approximateOptimalControlProblem(timeDiscretization, initState, stateTrajectory, inputTrajectory, 
-                                                                   costateTrajectory, ipmVariablesTrajectory, barrierParameter);
+                                                                   costateTrajectory, ipmVariablesTrajectory, barrierParameter, 
+                                                                   initIpmVariablesTrajectory);
     ipmPerformanceIndeces_.push_back(performanceIndex);
     performanceIndeces_.push_back(convert(performanceIndex));
     linearQuadraticApproximationTimer_.endTimer();
@@ -328,52 +330,11 @@ void STOC::initializeCostateTrajectories(const std::vector<Grid>& timeDiscretiza
   }
 }
 
-void STOC::initializeIpmVariablesTrajectories(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
-                                              const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory, 
-                                              std::vector<ipm::IpmVariables>& ipmVariablesTrajectory, scalar_t barrierParameter) {
-  const size_t N = static_cast<int>(timeDiscretization.size()) - 1;
-  ipmVariablesTrajectory.clear();
-  ipmVariablesTrajectory.resize(N + 1);
-
-  std::atomic_int timeIndex{0};
-  auto parallelTask = [&](int workerId) {
-    // Get worker specific resources
-    auto& optimalControlProblem = optimalControlProblemStock_[workerId];
-    // Local model data of this worker
-    ipm::ModelData modelData;
-
-    int i = timeIndex++;
-    while (i < N) {
-      if (timeDiscretization[i].event == Grid::Event::PreEvent) {
-        // Event node
-        const scalar_t ti = getIntervalStart(timeDiscretization[i]);
-        ipm::approximatePreJumpLQ(optimalControlProblem, ti, stateTrajectory[i], modelData);
-        ipm::initIpmVariables(modelData, ipmVariablesTrajectory[i], barrierParameter);
-      } else {
-        // Normal, intermediate node
-        const scalar_t ti = getIntervalStart(timeDiscretization[i]);
-        const scalar_t dt = getIntervalDuration(timeDiscretization[i], timeDiscretization[i + 1]);
-        ipm::approximateIntermediateLQ(optimalControlProblem, ti, stateTrajectory[i], inputTrajectory[i], modelData);
-        ipm::initIpmVariables(modelData, ipmVariablesTrajectory[i], barrierParameter);
-      }
-
-      i = timeIndex++;
-    }
-
-    if (i == N) {  // Only one worker will execute this
-      const scalar_t tN = getIntervalStart(timeDiscretization[N]);
-      ipm::approximateFinalLQ(optimalControlProblem, tN, stateTrajectory[N], modelData);
-      ipm::initIpmVariables(modelData, ipmVariablesTrajectory[N], barrierParameter);
-    }
-  };
-  runParallel(std::move(parallelTask));
-}
-
 ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
                                                              const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
                                                              const vector_array_t& costateTrajectory, 
-                                                             const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory, 
-                                                             scalar_t barrierParameter) {
+                                                             std::vector<ipm::IpmVariables>& ipmVariablesTrajectory, 
+                                                             scalar_t barrierParameter, bool initIpmVariablesTrajectory) {
   // Problem horizon
   const int N = static_cast<int>(timeDiscretization.size()) - 1;
   // create alias
@@ -390,6 +351,11 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
   projectedModelDataTrajectory.resize(timeDiscretization.size());
   constraintProjection.clear();
   constraintProjection.resize(timeDiscretization.size());
+
+  if (initIpmVariablesTrajectory) {
+    ipmVariablesTrajectory.clear();
+    ipmVariablesTrajectory.resize(N + 1);
+  }
 
   std::vector<ipm::PerformanceIndex> performance(settings_.nThreads, ipm::PerformanceIndex());
 
@@ -408,6 +374,9 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
         ipm::approximatePreJumpLQ(optimalControlProblem, ti, stateTrajectory[i], modelDataTrajectory[i]);
         ipm::discretizePreJumpLQ(stateTrajectory[i], stateTrajectory[i+1], costateTrajectory[i], costateTrajectory[i+1], 
                                  modelDataTrajectory[i]);
+        if (initIpmVariablesTrajectory) {
+          ipm::initIpmVariables(modelDataTrajectory[i], ipmVariablesTrajectory[i], barrierParameter);
+        }
         ipm::eliminateIpmVariablesPreJumpLQ(ipmVariablesTrajectory[i], modelDataTrajectory[i], ipmDataTrajectory[i], barrierParameter);
         if (settings_.projectStateInputEqualityConstraints) {
           projectedModelDataTrajectory[i] = modelDataTrajectory[i];
@@ -421,11 +390,16 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
         ipm::approximateIntermediateLQ(optimalControlProblem, ti, stateTrajectory[i], inputTrajectory[i], modelDataTrajectory[i]);
         ipm::discretizeIntermediateLQ(dt, stateTrajectory[i], stateTrajectory[i+1], costateTrajectory[i], costateTrajectory[i+1], 
                                       modelDataTrajectory[i]);
+        if (initIpmVariablesTrajectory) {
+          ipm::initIpmVariables(modelDataTrajectory[i], ipmVariablesTrajectory[i], barrierParameter);
+        }
         ipm::eliminateIpmVariablesIntermediateLQ(ipmVariablesTrajectory[i], modelDataTrajectory[i], ipmDataTrajectory[i], barrierParameter);
         if (settings_.projectStateInputEqualityConstraints) {
           ipm::projectIntermediateLQ(modelDataTrajectory[i], constraintProjection[i], projectedModelDataTrajectory[i]);
+          workerPerformance += fromModelData(projectedModelDataTrajectory[i]);
+        } else {
+          workerPerformance += fromModelData(modelDataTrajectory[i]);
         }
-        workerPerformance += fromModelData(modelDataTrajectory[i]);
         workerPerformance += fromIpmData(ipmDataTrajectory[i]);
       }
 
@@ -436,6 +410,9 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
       const scalar_t tN = getIntervalStart(timeDiscretization[N]);
       ipm::approximateFinalLQ(optimalControlProblem, tN, stateTrajectory[N], modelDataTrajectory[N]);
       ipm::discretizeFinalLQ(costateTrajectory[N], modelDataTrajectory[N]);
+      if (initIpmVariablesTrajectory) {
+        ipm::initIpmVariables(modelDataTrajectory[N], ipmVariablesTrajectory[N], barrierParameter);
+      }
       ipm::eliminateIpmVariablesFinalLQ(ipmVariablesTrajectory[N], modelDataTrajectory[N], ipmDataTrajectory[N], barrierParameter);
       if (settings_.projectStateInputEqualityConstraints) {
         projectedModelDataTrajectory[i] = modelDataTrajectory[i];
@@ -623,6 +600,9 @@ STOC::Convergence STOC::checkConvergence(size_t iteration, scalar_t barrierParam
   const auto dualFeas = performanceIndex.dualDynamicsViolationSSE
                           + performanceIndex.dualControlViolationSSE
                           + performanceIndex.complementarySlacknessSSE;
+  if (settings_.printSolverStatus) {
+    std::cerr << "\nPrimal feasibility : " << primalFeas << ",  Dual feasibility : " << dualFeas << "\n";
+  }
   if (primalFeas < settings_.primalFeasTol && dualFeas < settings_.dualFeasTol && barrierParameter <= settings_.targetBarrierParameter) {
     // Converged because the KKT error is below the specified tolerance and barrier parameter is below the target value
     return Convergence::SUCCESS;

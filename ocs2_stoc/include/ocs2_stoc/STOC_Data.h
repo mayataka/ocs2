@@ -17,6 +17,7 @@ namespace stoc {
 struct PrimalDataContainer {
   PrimalSolution primalSolution;
   vector_array_t costateTrajectory;
+  // vector_array_t projectionMultiplierTrajectory;  
   std::vector<ipm::ModelData> modelDataTrajectory;
   std::vector<ipm::ModelData> projectedModelDataTrajectory;
   std::vector<VectorFunctionLinearApproximation> constraintProjection;
@@ -24,6 +25,7 @@ struct PrimalDataContainer {
   void swap(PrimalDataContainer& other) {
     primalSolution.swap(other.primalSolution);
     costateTrajectory.swap(other.costateTrajectory);
+    // projectionMultiplierTrajectory.swap(other.projectionMultiplierTrajectory);
     modelDataTrajectory.swap(other.modelDataTrajectory);
     projectedModelDataTrajectory.swap(other.projectedModelDataTrajectory);
     constraintProjection.swap(other.constraintProjection);
@@ -32,6 +34,7 @@ struct PrimalDataContainer {
   void clear() {
     primalSolution.clear();
     costateTrajectory.clear();
+    // projectionMultiplierTrajectory.clear();
     modelDataTrajectory.clear();
     projectedModelDataTrajectory.clear();
     constraintProjection.clear();
