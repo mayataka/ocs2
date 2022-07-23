@@ -22,45 +22,67 @@ MinimumDwellTimeConstraint* MinimumDwellTimeConstraint::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t MinimumDwellTimeConstraint::getNumConstraints(scalar_t initTime, const vector_t& switchingTimes, scalar_t finalTime, 
-                                                     const ModeSchedule& /* modeSchedule */) const {
-  const int firstActiveIndex = findFirstActiveIndex(initTime, switchingTimes, finalTime);
-  const int lastActiveIndex = findLastActiveIndex(initTime, switchingTimes, finalTime);
-  if (firstActiveIndex < 0 || lastActiveIndex < 0) {
+size_t MinimumDwellTimeConstraint::getNumConstraints(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule,  
+                                                     const ModeSchedule& /* referenceModeSchedule */) const { 
+  const auto validSwitchingTimes = extractValidSwitchingTimes(initTime, finalTime, stoModeSchedule);
+  if (validSwitchingTimes.empty()) {
     return 0;
-  } else {
-    assert(lastActiveIndex >= firstActiveIndex);
-    return lastActiveIndex - firstActiveIndex + 2;
+  }
+  else {
+    return validSwitchingTimes.size() + 1;
   }
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t MinimumDwellTimeConstraint::getValue(scalar_t initTime, const vector_t& switchingTimes, scalar_t finalTime, 
-                                              const ModeSchedule& modeSchedule, const PreComputation& preComp) const {
-  vector_t constraintValue(getNumConstraints(initTime, switchingTimes, finalTime, modeSchedule));
-  const int firstActiveIndex = findFirstActiveIndex(initTime, switchingTimes, finalTime);
-  const int lastActiveIndex = findLastActiveIndex(initTime, switchingTimes, finalTime);
-  if (firstActiveIndex < 0 || lastActiveIndex < 0) {
-    return constraintValue;
-  } else {
-    constraintValue.coeffRef(0) = switchingTimes.coeff(0) - 
-    for (int i=firstActiveIndex; i <lastActiveIndex; ++i) {
-      constraintValue.coeffRef(i)
+vector_t MinimumDwellTimeConstraint::getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
+                                              const ModeSchedule& referenceModeSchedule, const PreComputation& preComp) const {
+  const auto validModeSchedule = extractValidModeSchedule(initTime, finalTime, stoModeSchedule);
+  if (validModeSchedule.eventTimes.empty()) {
+    return vector_t();
+  }
+  const auto numConstraints = validModeSchedule.eventTimes.size() + 1;
+  vector_t minimumDwellTimes(numConstraints);
+  for (size_t i = 0; i < numConstraints; ++i) {
+    const auto mode = validModeSchedule.modeSequence[i];
+    const auto minDt = minimumDwellTimesMap_.find(mode);
+    if (minDt != minimumDwellTimesMap_.end()) {
+      minimumDwellTimes.coeffRef(i) = minDt->second;
+    } else {
+      minimumDwellTimes.coeffRef(i) = minimumDwellTime_;
     }
   }
+  vector_t dwellTimes(numConstraints);
+  dwellTimes.coeffRef(0) = validModeSchedule.eventTimes[0] - initTime;
+  for (size_t i = 0; i < numConstraints - 2; ++i) {
+    dwellTimes.coeffRef(i+1) = validModeSchedule.eventTimes[i+1] - validModeSchedule.eventTimes[i];
+  }
+  dwellTimes.coeffRef(numConstraints-1) = finalTime - validModeSchedule.eventTimes[numConstraints - 2];
+  const vector_t constraintValue = minimumDwellTimes - dwellTimes;
+  return constraintValue;
 }
 
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation MinimumDwellTimeConstraint::getLinearApproximation(scalar_t initTime, const vector_t& switchingTimes, 
-                                                                                     scalar_t finalTime, const ModeSchedule& modeSchedule,
+VectorFunctionLinearApproximation MinimumDwellTimeConstraint::getLinearApproximation(scalar_t initTime, scalar_t finalTime, 
+                                                                                     const ModeSchedule& stoModeSchedule, 
+                                                                                     const ModeSchedule& referenceModeSchedule, 
                                                                                      const PreComputation& preComp) const {
-  const int firstActiveIndex = findFirstActiveIndex(initTime, switchingTimes, finalTime);
-  const int lastActiveIndex = findLastActiveIndex(initTime, switchingTimes, finalTime);
-  return 
+  VectorFunctionLinearApproximation linearApproximation;
+  linearApproximation.f = getValue(initTime, finalTime, stoModeSchedule, referenceModeSchedule, preComp);
+  const auto numConstraints = linearApproximation.f.size();
+  if (numConstraints > 0) {
+    linearApproximation.dfdx.setZero(numConstraints, numConstraints-1);
+    linearApproximation.dfdx.coeffRef(0, 0) = -1.0;
+    for (size_t i = 0; i < numConstraints - 2; ++i) {
+      linearApproximation.dfdx.coeffRef(i+1, i)   =  1.0;
+      linearApproximation.dfdx.coeffRef(i+1, i+1) = -1.0;
+    }
+    linearApproximation.dfdx.coeffRef(numConstraints-1, numConstraints-2) = 1.0;
+  }
+  return linearApproximation;
 }
 
 } // namespace ocs2

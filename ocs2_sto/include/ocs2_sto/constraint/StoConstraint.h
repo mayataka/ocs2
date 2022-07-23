@@ -15,20 +15,21 @@ class StoConstraint {
   virtual StoConstraint* clone() const = 0;
 
   /** Check if constraint term is active */
-  virtual bool isActive(scalar_t initTime, const vector_t& switchingTimes, scalar_t finalTime, 
-                        const ModeSchedule& modeSchedule) const { return true; }
+  virtual bool isActive(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
+                        const ModeSchedule& referenceModeSchedule) const { return true; }
 
   /** Get the size of the constraint vector at given times */
-  virtual size_t getNumConstraints(scalar_t initTime, const vector_t& switchingTimes, scalar_t finalTime, 
-                                   const ModeSchedule& modeSchedule) const = 0;
+  virtual size_t getNumConstraints(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
+                                   const ModeSchedule& referenceModeSchedule) const = 0;
 
   /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t initTime, const vector_t& switchingTimes, scalar_t finalTime, const ModeSchedule& modeSchedule, 
-                            const PreComputation& preComp) const = 0;
+  virtual vector_t getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
+                            const ModeSchedule& referenceModeSchedule, const PreComputation& preComp) const = 0;
 
   /** Get the constraint linear approximation */
-  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t initTime, const vector_t& switchingTimes, 
-                                                                   scalar_t finalTime, const ModeSchedule& modeSchedule,
+  virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t initTime, scalar_t finalTime, 
+                                                                   const ModeSchedule& stoModeSchedule, 
+                                                                   const ModeSchedule& referenceModeSchedule,
                                                                    const PreComputation& preComp) const = 0;
 
  protected:

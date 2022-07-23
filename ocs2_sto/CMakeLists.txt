@@ -43,11 +43,13 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
-# ocs2_ipm library
+# ocs2_sto library
 add_library(${PROJECT_NAME}
+  src/ModeSchedule.cpp
   src/cost/StoCostCollection.cpp
   src/cost/QuadraticStoCost.cpp
   src/constraint/StoConstraintCollection.cpp
+  src/constraint/MinimumDwellTimeConstraint.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}

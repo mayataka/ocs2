@@ -17,14 +17,14 @@ StoConstraintCollection* StoConstraintCollection::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t StoConstraintCollection::getNumConstraints(scalar_t initTime, const vector_t& switchingTimes, scalar_t finalTime, 
-                                                  const ModeSchedule& modeSchedule) const {
+size_t StoConstraintCollection::getNumConstraints(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
+                                                  const ModeSchedule& referenceModeSchedule) const {
   size_t numConstraints = 0;
 
   // accumulate number of constraints for each constraintTerm
   for (const auto& constraintTerm : this->terms_) {
-    if (constraintTerm->isActive(initTime, switchingTimes, finalTime, modeSchedule)) {
-      numConstraints += constraintTerm->getNumConstraints(initTime, switchingTimes, finalTime, modeSchedule);
+    if (constraintTerm->isActive(initTime, finalTime, stoModeSchedule, referenceModeSchedule)) {
+      numConstraints += constraintTerm->getNumConstraints(initTime, finalTime, stoModeSchedule, referenceModeSchedule);
     }
   }
 
@@ -34,16 +34,16 @@ size_t StoConstraintCollection::getNumConstraints(scalar_t initTime, const vecto
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t StoConstraintCollection::getValue(scalar_t initTime, const vector_t& switchingTimes, scalar_t finalTime, 
-                                           const ModeSchedule& modeSchedule, const PreComputation& preComp) const {
+vector_t StoConstraintCollection::getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
+                                           const ModeSchedule& referenceModeSchedule, const PreComputation& preComp) const {
   vector_t constraintValues;
-  constraintValues.resize(getNumConstraints(initTime, switchingTimes, finalTime, modeSchedule));
+  constraintValues.resize(getNumConstraints(initTime, finalTime, stoModeSchedule, referenceModeSchedule));
 
   // append vectors of constraint values from each constraintTerm
   size_t i = 0;
   for (const auto& constraintTerm : this->terms_) {
-    if (constraintTerm->isActive(initTime, switchingTimes, finalTime, modeSchedule)) {
-      const auto constraintTermValues = constraintTerm->getValue(initTime, switchingTimes, finalTime, modeSchedule, preComp);
+    if (constraintTerm->isActive(initTime, finalTime, stoModeSchedule, referenceModeSchedule)) {
+      const auto constraintTermValues = constraintTerm->getValue(initTime, finalTime, stoModeSchedule, referenceModeSchedule, preComp);
       constraintValues.segment(i, constraintTermValues.rows()) = constraintTermValues;
       i += constraintTermValues.rows();
     }
@@ -55,17 +55,19 @@ vector_t StoConstraintCollection::getValue(scalar_t initTime, const vector_t& sw
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-VectorFunctionLinearApproximation StoConstraintCollection::getLinearApproximation(scalar_t initTime, const vector_t& switchingTimes, 
-                                                                                  scalar_t finalTime, const ModeSchedule& modeSchedule,
+VectorFunctionLinearApproximation StoConstraintCollection::getLinearApproximation(scalar_t initTime, scalar_t finalTime, 
+                                                                                  const ModeSchedule& stoModeSchedule, 
+                                                                                  const ModeSchedule& referenceModeSchedule,
                                                                                   const PreComputation& preComp) const {
-  VectorFunctionLinearApproximation linearApproximation(getNumConstraints(initTime, switchingTimes, finalTime, modeSchedule), 
-                                                        switchingTimes.size(), 0);
-
+  const auto numSwitchingTimes = extractValidSwitchingTimes(initTime, finalTime, stoModeSchedule).size();
+  VectorFunctionLinearApproximation linearApproximation(getNumConstraints(initTime, finalTime, stoModeSchedule, referenceModeSchedule), 
+                                                        numSwitchingTimes, 0);
   // append linearApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintTerm : this->terms_) {
-    if (constraintTerm->isActive(initTime, switchingTimes, finalTime, modeSchedule)) {
-      const auto constraintTermApproximation = constraintTerm->getLinearApproximation(initTime, switchingTimes, finalTime, modeSchedule, preComp);
+    if (constraintTerm->isActive(initTime, finalTime, stoModeSchedule, referenceModeSchedule)) {
+      const auto constraintTermApproximation = constraintTerm->getLinearApproximation(initTime, finalTime, stoModeSchedule, 
+                                                                                      referenceModeSchedule, preComp);
       const size_t nc = constraintTermApproximation.f.rows();
       linearApproximation.f.segment(i, nc) = constraintTermApproximation.f;
       linearApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;

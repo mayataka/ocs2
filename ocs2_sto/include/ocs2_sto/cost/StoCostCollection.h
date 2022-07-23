@@ -5,6 +5,7 @@
 #include <ocs2_core/reference/ModeSchedule.h>
 
 #include "ocs2_sto/cost/StoCost.h"
+#include "ocs2_sto/ModeSchedule.h"
 
 namespace ocs2 {
 
@@ -22,12 +23,13 @@ class StoCostCollection : public Collection<StoCost> {
   virtual StoCostCollection* clone() const;
 
   /** Get state-only cost value */
-  virtual scalar_t getValue(scalar_t initTime, const vector_t& switchingTimes, scalar_t finalTime, const ModeSchedule& modeSchedule, 
-                            const PreComputation& preComp) const;
+  virtual scalar_t getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
+                            const ModeSchedule& referenceModeSchedule, const PreComputation& preComp) const;
 
   /** Get state-only cost quadratic approximation */
-  virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t initTime, const vector_t& switchingTimes, 
-                                                                         scalar_t finalTime, const ModeSchedule& modeSchedule, 
+  virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t initTime, scalar_t finalTime,  
+                                                                         const ModeSchedule& stoModeSchedule, 
+                                                                         const ModeSchedule& referenceModeSchedule, 
                                                                          const PreComputation& preComp) const;
 
  protected:

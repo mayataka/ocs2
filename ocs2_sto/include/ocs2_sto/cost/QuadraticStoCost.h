@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ocs2_sto/cost/StoCost.h"
+#include "ocs2_sto/ModeSchedule.h"
 
 namespace ocs2 {
 
@@ -17,20 +18,21 @@ class QuadraticStoCost : public StoCost {
   QuadraticStoCost* clone() const override;
 
   /** Get cost term value */
-  scalar_t getValue(scalar_t initTime, const vector_t& switchingTimes, scalar_t finalTime, const ModeSchedule& modeSchedule, 
-                    const PreComputation&) const override;
+  scalar_t getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
+                    const ModeSchedule& referenceModeSchedule, const PreComputation& preComp) const override;
 
   /** Get cost term quadratic approximation */
-  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t initTime, const vector_t& switchingTimes, scalar_t finalTime,  
-                                                                 const ModeSchedule& modeSchedule, const PreComputation&) const override;
+  ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
+                                                                 const ModeSchedule& referenceModeSchedule, 
+                                                                 const PreComputation& preComp) const override;
 
  protected:
   QuadraticStoCost(const QuadraticStoCost& rhs) = default;
 
   /** Computes the state deviation for the nominal switching times.
    * This method can be overwritten if desired mode schedule has a different dimensions. */
-  virtual vector_t getSwitchingTimeDeviation(scalar_t initTime, const vector_t& switchingTimes, scalar_t finalTime,  
-                                             const ModeSchedule& modeSchedule) const;
+  virtual vector_t getSwitchingTimeDeviation(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
+                                             const ModeSchedule& referenceModeSchedule) const;
 
  private:
   matrix_t Q_;
