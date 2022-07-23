@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ocs2_stoc/sto/StoCost.h"
+#include "ocs2_sto/cost/StoCost.h"
 
 namespace ocs2 {
 

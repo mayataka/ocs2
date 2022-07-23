@@ -1,13 +1,8 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(ocs2_stoc)
+project(ocs2_sto)
 
 set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
-  ocs2_oc
-  ocs2_sqp
-  ocs2_ddp
-  ocs2_ipm
-  ocs2_mpc
 )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -48,14 +43,11 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
-# ocs2_stoc library
+# ocs2_ipm library
 add_library(${PROJECT_NAME}
-  src/riccati_recursion/BackwardRiccatiRecursion.cpp
-  src/riccati_recursion/ForwardRiccatiRecursion.cpp
-  src/riccati_recursion/RiccatiRecursion.cpp
-  src/TimeDiscretization.cpp
-  src/STOC_Settings.cpp
-  src/STOC.cpp
+  src/cost/StoCostCollection.cpp
+  src/cost/QuadraticStoCost.cpp
+  src/constraint/StoConstraintCollection.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}
@@ -98,42 +90,11 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## Testing ##
 #############
 
-catkin_add_gtest(test_${PROJECT_NAME}
-  test/testTimeDiscretization.cpp
-)
-add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(test_${PROJECT_NAME}
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(Exp0Test_${PROJECT_NAME}
-  test/Exp0Test.cpp
-)
-add_dependencies(Exp0Test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(Exp0Test_${PROJECT_NAME} 
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(Exp1Test_${PROJECT_NAME}
-  test/Exp1Test.cpp
-)
-add_dependencies(Exp1Test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(Exp1Test_${PROJECT_NAME} 
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
-
-catkin_add_gtest(testCircularKinematics_${PROJECT_NAME}
-  test/testCircularKinematics.cpp
-)
-add_dependencies(testCircularKinematics_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(testCircularKinematics_${PROJECT_NAME} 
-  ${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  gtest_main
-)
+# catkin_add_gtest(test_${PROJECT_NAME}
+# )
+# add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(test_${PROJECT_NAME}
+#   ${PROJECT_NAME}
+#   ${catkin_LIBRARIES}
+#   gtest_main
+# )

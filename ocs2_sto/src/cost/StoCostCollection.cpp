@@ -1,4 +1,4 @@
-#include <ocs2_stoc/sto/StoCostCollection.h>
+#include <ocs2_sto/cost/StoCostCollection.h>
 
 namespace ocs2 {
 

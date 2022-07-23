@@ -4,7 +4,7 @@
 #include <ocs2_core/Types.h>
 #include <ocs2_core/misc/Collection.h>
 
-#include "ocs2_stoc/sto/StoConstraint.h"
+#include "ocs2_sto/constraint/StoConstraint.h"
 
 namespace ocs2 {
 

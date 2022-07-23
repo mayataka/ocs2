@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ocs2_ipm</name>
+  <name>ocs2_sto</name>
   <version>0.0.1</version>
-  <description>The ocs2_ipm package.</description>
+  <description>The ocs2_sto package.</description>
 
   <maintainer email="sotaro.katayama@gmail.com">Sotaro Katayama</maintainer>
 
@@ -11,9 +11,6 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>cmake_modules</build_depend>
   <depend>ocs2_core</depend>
-  <depend>ocs2_oc</depend>
-  <depend>ocs2_sqp</depend>
-  <depend>ocs2_sto</depend>
 
 </package>
 

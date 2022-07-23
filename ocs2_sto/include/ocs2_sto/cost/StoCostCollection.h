@@ -4,7 +4,7 @@
 #include <ocs2_core/misc/Collection.h>
 #include <ocs2_core/reference/ModeSchedule.h>
 
-#include "ocs2_stoc/sto/StoCost.h"
+#include "ocs2_sto/cost/StoCost.h"
 
 namespace ocs2 {
 

@@ -1,4 +1,4 @@
-#include <ocs2_stoc/sto/StoConstraintCollection.h>
+#include <ocs2_sto/constraint/StoConstraintCollection.h>
 
 namespace ocs2 {
 

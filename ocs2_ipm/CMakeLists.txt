@@ -5,6 +5,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_core
   ocs2_oc
   ocs2_sqp
+  ocs2_sto
 )
 
 find_package(catkin REQUIRED COMPONENTS

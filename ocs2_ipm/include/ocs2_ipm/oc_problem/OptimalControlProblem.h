@@ -12,7 +12,10 @@
 #include <ocs2_core/cost/StateInputCostCollection.h>
 #include <ocs2_core/dynamics/SystemDynamicsBase.h>
 #include <ocs2_core/reference/TargetTrajectories.h>
+#include <ocs2_core/reference/ModeSchedule.h>
 #include <ocs2_oc/oc_problem/OptimalControlProblem.h>
+#include <ocs2_sto/cost/StoCostCollection.h>
+#include <ocs2_sto/constraint/StoConstraintCollection.h>
 
 namespace ocs2 {
 namespace ipm {
@@ -81,6 +84,12 @@ struct OptimalControlProblem {
   /** System dynamics pointer */
   std::unique_ptr<SystemDynamicsBase> dynamicsPtr;
 
+  /* STO cost */
+  std::unique_ptr<StoCostCollection> stoCostPtr;
+
+  /* STO constraints */
+  std::unique_ptr<StoConstraintCollection> stoConstraintPtr;
+
   /* Misc. */
   /** The pre-computation module */
   std::unique_ptr<PreComputation> preComputationPtr;
@@ -88,6 +97,8 @@ struct OptimalControlProblem {
   /** The cost desired trajectories (will be substitute by ReferenceManager) */
   const TargetTrajectories* targetTrajectoriesPtr;
 
+  /** The STO-cost desired mode schedule (will be substitute by ReferenceManager) */
+  const ModeSchedule* modeSchedulePtr;
 
   /** Default constructor */
   OptimalControlProblem();
