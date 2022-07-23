@@ -1,10 +1,11 @@
 #pragma once
 
-// ocs2
+// OCS2
 #include <ocs2_core/Types.h>
+#include <ocs2_legged_robot/LeggedRobotInterface.h>
+
 #include <ocs2_ipm/oc_problem/OptimalControlProblem.h>
 #include <ocs2_stoc/STOC_Settings.h>
-#include <ocs2_legged_robot/LeggedRobotInterface.h>
 #include <ocs2_stoc_legged_robot/constraint/FrictionConeIneqConstraint.h>
 
 /**
