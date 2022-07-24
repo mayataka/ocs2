@@ -104,6 +104,9 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   std::cout << stoc.getBenchmarkingInformation() << std::endl;
   std::cout << stoc.getIpmPerformanceIndeces() << std::endl;
 
+  const scalar_t expectedCost = 0.004926934;
+  EXPECT_NEAR(stoc.getIpmPerformanceIndeces().cost, expectedCost, expectedCost*0.05); 
+
   // Inspect solution
   const auto primalSolution = stoc.primalSolution(finalTime);
   for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {

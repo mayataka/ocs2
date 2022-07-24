@@ -10,7 +10,7 @@ namespace ipm {
 /******************************************************************************************************/
 /******************************************************************************************************/
 void approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input,
-                               ModelData& modelData) {
+                               ModelData& modelData, bool enableStateOnlyIneqConstraint) {
   const auto& targetTrajectories = *problem.targetTrajectoriesPtr;
   auto& preComputation = *problem.preComputationPtr;
   constexpr auto request = Request::Cost + Request::SoftConstraint + Request::Constraint + Request::Dynamics + Request::Approximation;
@@ -28,8 +28,10 @@ void approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t ti
   // Cost
   modelData.cost = approximateCost(problem, time, state, input);
 
-  // Inequality constraints
-  modelData.stateIneqConstraint = problem.stateInequalityConstraintPtr->getLinearApproximation(time, state, preComputation);
+  // Inequality constraints. State-only inequality constraints should be disabled at the initial time of the horizon.
+  if (enableStateOnlyIneqConstraint) {
+    modelData.stateIneqConstraint = problem.stateInequalityConstraintPtr->getLinearApproximation(time, state, preComputation);
+  }
   modelData.stateInputIneqConstraint = problem.inequalityConstraintPtr->getLinearApproximation(time, state, input, preComputation);
 
   // Equality constraints

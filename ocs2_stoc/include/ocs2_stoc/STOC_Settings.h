@@ -36,6 +36,9 @@ struct Settings {
   // Discretization method
   scalar_t dt = 0.01;  // user-defined time discretization
 
+  // STO strategy
+  scalar_t minimumDwellTime = 0.02; // Minimum dwell time. Should be larger than dt.
+
   // Printing
   bool printSolverStatus = false;      // Print HPIPM status after solving the QP subproblem
   bool printSolverStatistics = false;  // Print benchmarking of the multiple shooting method

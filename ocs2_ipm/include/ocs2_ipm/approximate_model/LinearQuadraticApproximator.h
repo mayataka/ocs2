@@ -18,7 +18,7 @@ namespace ipm {
  * @param [out] modelData: The output data model.
  */
 void approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input,
-                               ModelData& modelData);
+                               ModelData& modelData, bool enableStateOnlyIneqConstraint=true);
 
 /**
  * Calculates an LQ approximate of the constrained optimal control problem at a given time, state, and input.
@@ -30,9 +30,9 @@ void approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t ti
  * @return The output data model.
  */
 inline ModelData approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,
-                                           const vector_t& input) {
+                                           const vector_t& input, bool enableStateOnlyIneqConstraint=true) {
   ModelData md;
-  approximateIntermediateLQ(problem, time, state, input, md);
+  approximateIntermediateLQ(problem, time, state, input, md, enableStateOnlyIneqConstraint);
   return md;
 }
 

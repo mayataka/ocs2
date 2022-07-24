@@ -387,7 +387,9 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(timeDiscretization[i]);
         const scalar_t dt = getIntervalDuration(timeDiscretization[i], timeDiscretization[i + 1]);
-        ipm::approximateIntermediateLQ(optimalControlProblem, ti, stateTrajectory[i], inputTrajectory[i], modelDataTrajectory[i]);
+        const bool enableStateOnlyIneqConstraint = (i > 0); // State-only inequality constraints should be disabled at the initial time of the horizon.
+        ipm::approximateIntermediateLQ(optimalControlProblem, ti, stateTrajectory[i], inputTrajectory[i], modelDataTrajectory[i],
+                                       enableStateOnlyIneqConstraint);
         ipm::discretizeIntermediateLQ(dt, stateTrajectory[i], stateTrajectory[i+1], costateTrajectory[i], costateTrajectory[i+1], 
                                       modelDataTrajectory[i]);
         if (initIpmVariablesTrajectory) {

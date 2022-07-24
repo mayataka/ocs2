@@ -140,7 +140,7 @@ class STOC : public SolverBase {
 
   scalar_t updateBarrierParameter(scalar_t currentBarrierParameter,
                                   const ipm::PerformanceIndex& performanceIndex) const;
-
+  
   // Problem definition
   stoc::Settings settings_;
   std::vector<ipm::OptimalControlProblem> optimalControlProblemStock_;
@@ -149,6 +149,7 @@ class STOC : public SolverBase {
   // Data
   stoc::PrimalDataContainer primalData_;
   stoc::IpmDataContainer ipmData_;
+  std::unique_ptr<ModeSchedule> stoModeSchedulePtr_;
 
   // riccati Recurision
   stoc::RiccatiRecursion riccatiRecursion_;
