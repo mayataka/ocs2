@@ -23,11 +23,13 @@ class STOC_MobileManipulatorInterface {
    * @note Creates directory for generated library into if it does not exist.
    * @throw Invalid argument error if input task file or urdf file does not exist.
    *
+   * @param [in] stocFile: The absolute path to the configuration file for the STOC solver.
    * @param [in] taskFile: The absolute path to the configuration file for the MPC.
    * @param [in] libraryFolder: The absolute path to the directory to generate CppAD library into.
    * @param [in] urdfFile: The absolute path to the URDF file for the robot.
    */
-  STOC_MobileManipulatorInterface(const std::string& taskFile, const std::string& libraryFolder, const std::string& urdfFile);
+  STOC_MobileManipulatorInterface(const std::string& stocFile, const std::string& taskFile, const std::string& libraryFolder, 
+                                  const std::string& urdfFile);
 
   const vector_t& getInitialState() { return baseInterface_.getInitialState(); }
 

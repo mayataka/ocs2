@@ -19,11 +19,11 @@ namespace mobile_manipulator {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-STOC_MobileManipulatorInterface::STOC_MobileManipulatorInterface(const std::string& taskFile, const std::string& libraryFolder,
-                                                                 const std::string& urdfFile) 
+STOC_MobileManipulatorInterface::STOC_MobileManipulatorInterface(const std::string& stocFile, const std::string& taskFile, 
+                                                                 const std::string& libraryFolder, const std::string& urdfFile) 
  : baseInterface_(taskFile, libraryFolder, urdfFile) { 
 
-  stocSettings_ = stoc::loadSettings(taskFile, "stoc");
+  stocSettings_ = stoc::loadSettings(stocFile, "stoc");
 
   problem_ = ipm::OptimalControlProblem(baseInterface_.getOptimalControlProblem());
   const bool activateJointPositionLimit = problem_.softConstraintPtr->erase("jointPositionLimits");

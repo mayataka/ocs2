@@ -17,15 +17,17 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, robotName + "_mpc");
   ros::NodeHandle nodeHandle;
   // Get node parameters
-  std::string taskFile, libFolder, urdfFile;
+  std::string stocFile, taskFile, libFolder, urdfFile;
+  nodeHandle.getParam("/stocFile", stocFile);
   nodeHandle.getParam("/taskFile", taskFile);
   nodeHandle.getParam("/libFolder", libFolder);
   nodeHandle.getParam("/urdfFile", urdfFile);
+  std::cerr << "Loading stoc file: " << stocFile << std::endl;
   std::cerr << "Loading task file: " << taskFile << std::endl;
   std::cerr << "Loading library folder: " << libFolder << std::endl;
   std::cerr << "Loading urdf file: " << urdfFile << std::endl;
   // Robot interface
-  STOC_MobileManipulatorInterface interface(taskFile, libFolder, urdfFile);
+  STOC_MobileManipulatorInterface interface(stocFile, taskFile, libFolder, urdfFile);
 
   // ROS ReferenceManager
   std::shared_ptr<ocs2::RosReferenceManager> rosReferenceManagerPtr(
