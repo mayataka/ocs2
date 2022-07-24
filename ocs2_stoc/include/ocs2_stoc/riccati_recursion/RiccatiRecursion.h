@@ -16,7 +16,7 @@ namespace stoc {
 
 class RiccatiRecursion {
 public:
-  RiccatiRecursion(scalar_t dts0_max=0.1);
+  RiccatiRecursion(RiccatiSolverMode riccatiSolverMode=RiccatiSolverMode::Robust, scalar_t dts0_max=0.1);
 
   void resize(size_t N);
 

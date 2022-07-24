@@ -6,8 +6,9 @@
 namespace ocs2 {
 namespace stoc {
 
-BackwardRiccatiRecursion::BackwardRiccatiRecursion(scalar_t dts0_max) 
-  : dts0_max_(),
+BackwardRiccatiRecursion::BackwardRiccatiRecursion(RiccatiSolverMode riccatiSolverMode, scalar_t dts0_max) 
+  : riccatiSolverMode_(riccatiSolverMode),
+    dts0_max_(),
     sgm_eps_(std::sqrt(std::numeric_limits<double>::epsilon())),
     AtP_(),
     BtP_(),
@@ -96,9 +97,15 @@ void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& r
   case 0:
     break;
   default:
-    ldlt_.compute(cost.dfduu);
-    lqrPolicy.K.noalias() = - ldlt_.solve(cost.dfdux);
-    lqrPolicy.k.noalias() = - ldlt_.solve(cost.dfdu);
+    if (riccatiSolverMode_ == RiccatiSolverMode::Speed) {
+      llt_.compute(cost.dfduu);
+      lqrPolicy.K.noalias() = - llt_.solve(cost.dfdux);
+      lqrPolicy.k.noalias() = - llt_.solve(cost.dfdu);
+    } else {
+      ldlt_.compute(cost.dfduu);
+      lqrPolicy.K.noalias() = - ldlt_.solve(cost.dfdux);
+      lqrPolicy.k.noalias() = - ldlt_.solve(cost.dfdu);
+    }
     break;
   }
   if (nu > 0) {
@@ -135,8 +142,7 @@ void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& r
       if (nu > 0) {
         riccati.phi_u.noalias() = dynamics.dfdu.transpose() * riccatiNext.Phi;
       }
-    }
-    else {
+    } else {
       riccati.phi_x.setZero();
       if (nu > 0) {
         riccati.phi_u.setZero();
@@ -148,8 +154,7 @@ void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& r
       lqrPolicy.T.noalias() = - Ginv_3_ * riccati.psi_u;
       if (stoNext) {
         lqrPolicy.W.noalias() = - Ginv_3_ * riccati.phi_u;
-      }
-      else {
+      } else {
         lqrPolicy.W.setZero();
       }
       break;
@@ -157,8 +162,7 @@ void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& r
       lqrPolicy.T.noalias() = - Ginv_2_ * riccati.psi_u;
       if (stoNext) {
         lqrPolicy.W.noalias() = - Ginv_2_ * riccati.phi_u;
-      }
-      else {
+      } else {
         lqrPolicy.W.setZero();
       }
       break;
@@ -166,20 +170,27 @@ void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& r
       lqrPolicy.T.noalias() = - Ginv_1_ * riccati.psi_u;
       if (stoNext) {
         lqrPolicy.W.noalias() = - Ginv_1_ * riccati.phi_u;
-      }
-      else {
+      } else {
         lqrPolicy.W.setZero();
       }
       break;
     case 0:
       break;
     default:
-      lqrPolicy.T.noalias() = - ldlt_.solve(riccati.psi_u);
-      if (stoNext) {
-        lqrPolicy.W.noalias() = - ldlt_.solve(riccati.phi_u);
-      }
-      else {
-        lqrPolicy.W.setZero();
+      if (riccatiSolverMode_ == RiccatiSolverMode::Speed) {
+        lqrPolicy.T.noalias() = - llt_.solve(riccati.psi_u);
+        if (stoNext) {
+          lqrPolicy.W.noalias() = - llt_.solve(riccati.phi_u);
+        } else {
+          lqrPolicy.W.setZero();
+        }
+      } else {
+        lqrPolicy.T.noalias() = - ldlt_.solve(riccati.psi_u);
+        if (stoNext) {
+          lqrPolicy.W.noalias() = - ldlt_.solve(riccati.phi_u);
+        } else {
+          lqrPolicy.W.setZero();
+        }
       }
       break;
     }
@@ -194,8 +205,7 @@ void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& r
       if (nu > 0) {
         riccati.Phi.noalias() += lqrPolicy.K.transpose() * riccati.phi_u;
       }
-    }
-    else {
+    } else {
       riccati.Phi.setZero();
     }
     // Vtt
@@ -216,8 +226,7 @@ void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& r
       riccati.chi += riccatiNext.chi;
       riccati.rho  = lqrPolicy.W.dot(riccati.phi_u);
       riccati.rho += riccatiNext.rho;
-    }
-    else {
+    } else {
       riccati.chi = 0.0;
       riccati.rho = 0.0;
     }
@@ -232,12 +241,10 @@ void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& r
       riccati.iota  = riccatiNext.Phi.dot(dynamics.f);
       riccati.iota += riccati.phi_u.dot(lqrPolicy.k);
       riccati.iota += riccatiNext.iota;
-    }
-    else {
+    } else {
       riccati.iota = 0.0;
     }
-  }
-  else {
+  } else {
     riccati.Psi.setZero();
     riccati.xi = 0.;
     riccati.chi = 0.;

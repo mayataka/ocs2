@@ -8,6 +8,22 @@
 namespace ocs2 {
 namespace stoc {
 
+std::string riccatiSolverModeToString(RiccatiSolverMode riccatiSolverMode) {
+  if (riccatiSolverMode == RiccatiSolverMode::Speed) {
+    return "Speed";
+  } else {
+    return "Robust";
+  }
+}
+
+RiccatiSolverMode stringToriccatiSolverMode(const std::string& solverModeName) {
+  if (solverModeName == "Speed") {
+    return RiccatiSolverMode::Speed;
+  } else {
+    return RiccatiSolverMode::Robust;
+  }
+}
+
 Settings loadSettings(const std::string& filename, const std::string& fieldName, bool verbose) {
   boost::property_tree::ptree pt;
   boost::property_tree::read_info(filename, pt);
@@ -40,6 +56,10 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.useFeedbackPolicy, fieldName + ".useFeedbackPolicy", verbose);
 
   loadData::loadPtreeValue(pt, settings.dt, fieldName + ".dt", verbose);
+
+  auto riccatiSolverModeName = riccatiSolverModeToString(settings.riccatiSolverMode);  // keep default
+  loadData::loadPtreeValue(pt, riccatiSolverModeName, fieldName + ".riccatiSolverMode", verbose);
+  settings.riccatiSolverMode = stringToriccatiSolverMode(riccatiSolverModeName);
 
   loadData::loadPtreeValue(pt, settings.printSolverStatus, fieldName + ".printSolverStatus", verbose);
   loadData::loadPtreeValue(pt, settings.printSolverStatistics, fieldName + ".printSolverStatistics", verbose);

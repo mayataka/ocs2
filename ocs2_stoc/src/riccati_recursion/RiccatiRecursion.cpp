@@ -5,11 +5,11 @@
 namespace ocs2 {
 namespace stoc {
 
-RiccatiRecursion::RiccatiRecursion(scalar_t dts0_max)
+RiccatiRecursion::RiccatiRecursion(RiccatiSolverMode riccatiSolverMode, scalar_t dts0_max)
   : riccati_(),
     lqrPolicy_(),
     stoPolicy_(),
-    backwardRecursion_(dts0_max) {
+    backwardRecursion_(riccatiSolverMode, dts0_max) {
 }
 
 
@@ -32,8 +32,7 @@ void RiccatiRecursion::backwardRecursion(const std::vector<Grid>& timeDiscretiza
     if (timeDiscretizationGrid[i].event == Grid::Event::PreEvent) {
       assert(timeDiscretizationGrid[i+1].event == Grid::Event::PostEvent);
       backwardRecursion_.computeIntermediate(riccati_[i+1], modelData[i], riccati_[i], lqrPolicy_[i], sto, stoNext);
-    }
-    else {
+    } else {
       const auto phase = timeDiscretizationGrid[i].phase;
       backwardRecursion_.computePreJump(riccati_[i+1], modelData[i], riccati_[i], lqrPolicy_[i], stoPolicy_[phase+1], sto, stoNext);
     }

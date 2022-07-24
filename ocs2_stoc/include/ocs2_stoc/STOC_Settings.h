@@ -3,6 +3,7 @@
 #include <string>
 
 #include <ocs2_core/Types.h>
+#include <ocs2_stoc/riccati_recursion/RiccatiSolverMode.h>
 
 namespace ocs2 {
 namespace stoc {
@@ -38,6 +39,9 @@ struct Settings {
 
   // STO strategy
   scalar_t minimumDwellTime = 0.02; // Minimum dwell time. Should be larger than dt.
+
+  // Riccati option
+  RiccatiSolverMode riccatiSolverMode = RiccatiSolverMode::Robust;
 
   // Printing
   bool printSolverStatus = false;      // Print HPIPM status after solving the QP subproblem
