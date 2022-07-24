@@ -19,14 +19,15 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, robotName + "_mpc");
   ros::NodeHandle nodeHandle;
   // Get node parameters
-  std::string taskFile, urdfFile, referenceFile;
+  std::string stocFile, taskFile, urdfFile, referenceFile;
+  nodeHandle.getParam("/stocFile", stocFile);
   nodeHandle.getParam("/taskFile", taskFile);
   nodeHandle.getParam("/urdfFile", urdfFile);
   nodeHandle.getParam("/referenceFile", referenceFile);
 
   // Robot interface
   // LeggedRobotInterface interface(taskFile, urdfFile, referenceFile);
-  STOC_LeggedRobotInterface stocInterface(taskFile, urdfFile, referenceFile);
+  STOC_LeggedRobotInterface stocInterface(stocFile, taskFile, urdfFile, referenceFile);
 
   // Gait receiver
   auto gaitReceiverPtr =

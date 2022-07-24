@@ -6,6 +6,8 @@
     <arg name="description_name"   default="legged_robot_description"/>
     <arg name="multiplot"          default="false"/>
 
+    <!-- The task file for the STOC. -->
+    <arg name="stocFile"          default="$(find ocs2_stoc_legged_robot)/config/mpc/stoc.info"/>
     <!-- The task file for the mpc. -->
     <arg name="taskFile"          default="$(find ocs2_legged_robot)/config/mpc/task.info"/>
     <!-- The reference related config file of the robot -->
@@ -28,6 +30,7 @@
     </group>
 
     <!-- make the files into global parameters -->
+    <param name="stocFile"          value="$(arg stocFile)" />
     <param name="taskFile"          value="$(arg taskFile)" />
     <param name="referenceFile"     value="$(arg referenceFile)" />
     <param name="urdfFile"          value="$(arg urdfFile)" />

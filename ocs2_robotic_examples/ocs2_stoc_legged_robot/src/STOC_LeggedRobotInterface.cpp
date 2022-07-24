@@ -13,11 +13,12 @@ namespace legged_robot {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-STOC_LeggedRobotInterface::STOC_LeggedRobotInterface(const std::string& taskFile, const std::string& urdfFile, const std::string& referenceFile)
+STOC_LeggedRobotInterface::STOC_LeggedRobotInterface(const std::string& stocSettingFile, const std::string& taskFile, 
+                                                     const std::string& urdfFile, const std::string& referenceFile)
   : baseInterface_(taskFile, urdfFile, referenceFile) {
   bool verbose;
   loadData::loadCppDataType(taskFile, "legged_robot_interface.verbose", verbose);
-  stocSettings_ = stoc::loadSettings(taskFile, "stoc", verbose);
+  stocSettings_ = stoc::loadSettings(stocSettingFile, "stoc", verbose);
   setupOptimalConrolProblem(taskFile, urdfFile, referenceFile, verbose);
 }
 
