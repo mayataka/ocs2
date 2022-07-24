@@ -22,14 +22,14 @@ MinimumDwellTimeConstraint* MinimumDwellTimeConstraint::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t MinimumDwellTimeConstraint::getNumConstraints(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule,  
-                                                     const ModeSchedule& /* referenceModeSchedule */) const { 
-  const auto validSwitchingTimes = extractValidSwitchingTimes(initTime, finalTime, stoModeSchedule);
-  if (validSwitchingTimes.empty()) {
+size_t MinimumDwellTimeConstraint::getNumConstraints(scalar_t initTime, scalar_t finalTime, const ModeSchedule& /*stoModeSchedule*/,  
+                                                     const ModeSchedule& referenceModeSchedule) const { 
+  const auto validReferenceSwitchingTimes = extractValidSwitchingTimes(initTime, finalTime, referenceModeSchedule);
+  if (validReferenceSwitchingTimes.empty()) {
     return 0;
   }
   else {
-    return validSwitchingTimes.size() + 1;
+    return validReferenceSwitchingTimes.size() + 1;
   }
 }
 
@@ -38,14 +38,15 @@ size_t MinimumDwellTimeConstraint::getNumConstraints(scalar_t initTime, scalar_t
 /******************************************************************************************************/
 vector_t MinimumDwellTimeConstraint::getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
                                               const ModeSchedule& referenceModeSchedule, const PreComputation& preComp) const {
-  const auto validModeSchedule = extractValidModeSchedule(initTime, finalTime, stoModeSchedule);
-  if (validModeSchedule.eventTimes.empty()) {
+  const auto validModeSchedulePair = extractValidModeSchedule(initTime, finalTime, stoModeSchedule, referenceModeSchedule);
+  const auto& validStoModeSchedule = validModeSchedulePair.first;
+  if (validStoModeSchedule.eventTimes.empty()) {
     return vector_t();
   }
-  const auto numConstraints = validModeSchedule.eventTimes.size() + 1;
+  const auto numConstraints = validStoModeSchedule.eventTimes.size() + 1;
   vector_t minimumDwellTimes(numConstraints);
   for (size_t i = 0; i < numConstraints; ++i) {
-    const auto mode = validModeSchedule.modeSequence[i];
+    const auto mode = validStoModeSchedule.modeSequence[i];
     const auto minDt = minimumDwellTimesMap_.find(mode);
     if (minDt != minimumDwellTimesMap_.end()) {
       minimumDwellTimes.coeffRef(i) = minDt->second;
@@ -54,11 +55,11 @@ vector_t MinimumDwellTimeConstraint::getValue(scalar_t initTime, scalar_t finalT
     }
   }
   vector_t dwellTimes(numConstraints);
-  dwellTimes.coeffRef(0) = validModeSchedule.eventTimes[0] - initTime;
+  dwellTimes.coeffRef(0) = validStoModeSchedule.eventTimes[0] - initTime;
   for (size_t i = 0; i < numConstraints - 2; ++i) {
-    dwellTimes.coeffRef(i+1) = validModeSchedule.eventTimes[i+1] - validModeSchedule.eventTimes[i];
+    dwellTimes.coeffRef(i+1) = validStoModeSchedule.eventTimes[i+1] - validStoModeSchedule.eventTimes[i];
   }
-  dwellTimes.coeffRef(numConstraints-1) = finalTime - validModeSchedule.eventTimes[numConstraints - 2];
+  dwellTimes.coeffRef(numConstraints-1) = finalTime - validStoModeSchedule.eventTimes[numConstraints - 2];
   const vector_t constraintValue = minimumDwellTimes - dwellTimes;
   return constraintValue;
 }

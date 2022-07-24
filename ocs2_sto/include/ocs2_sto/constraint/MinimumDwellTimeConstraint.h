@@ -9,7 +9,7 @@
 #include <ocs2_core/NumericTraits.h>
 
 #include "ocs2_sto/constraint/StoConstraint.h"
-#include "ocs2_sto/ModeSchedule.h"
+#include "ocs2_sto/ValidModeSchedule.h"
 
 
 namespace ocs2 {

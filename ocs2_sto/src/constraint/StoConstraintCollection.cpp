@@ -59,7 +59,7 @@ VectorFunctionLinearApproximation StoConstraintCollection::getLinearApproximatio
                                                                                   const ModeSchedule& stoModeSchedule, 
                                                                                   const ModeSchedule& referenceModeSchedule,
                                                                                   const PreComputation& preComp) const {
-  const auto numSwitchingTimes = extractValidSwitchingTimes(initTime, finalTime, stoModeSchedule).size();
+  const auto numSwitchingTimes = extractValidSwitchingTimes(initTime, finalTime, referenceModeSchedule).size();
   VectorFunctionLinearApproximation linearApproximation(getNumConstraints(initTime, finalTime, stoModeSchedule, referenceModeSchedule), 
                                                         numSwitchingTimes, 0);
   // append linearApproximation of each constraintTerm

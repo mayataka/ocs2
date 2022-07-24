@@ -43,11 +43,12 @@ ScalarFunctionQuadraticApproximation QuadraticStoCost::getQuadraticApproximation
 /******************************************************************************************************/
 vector_t QuadraticStoCost::getSwitchingTimeDeviation(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
                                                      const ModeSchedule& referenceModeSchedule) const {
-  const auto switchingTimes = extractValidSwitchingTimes(initTime, finalTime, stoModeSchedule);
-  const auto referenceSwitchingTimes = extractValidSwitchingTimes(initTime, finalTime, referenceModeSchedule);
-  vector_t tsDeviation(switchingTimes.size());
-  for (size_t i = 0; i < switchingTimes.size(); ++i) {
-    tsDeviation.coeffRef(i) = switchingTimes[i] - referenceSwitchingTimes[i];
+  const auto validSwitchingTimesPair = extractValidSwitchingTimes(initTime, finalTime, stoModeSchedule, referenceModeSchedule);
+  const auto& validStoSwitchingTimes = validSwitchingTimesPair.first;
+  const auto& validReferenceSwitchingTimes = validSwitchingTimesPair.second;
+  vector_t tsDeviation(validStoSwitchingTimes.size());
+  for (size_t i = 0; i < validStoSwitchingTimes.size(); ++i) {
+    tsDeviation.coeffRef(i) = validStoSwitchingTimes[i] - validReferenceSwitchingTimes[i];
   }
   return tsDeviation;
 }

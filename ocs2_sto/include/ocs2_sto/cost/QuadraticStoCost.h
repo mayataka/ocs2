@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ocs2_sto/cost/StoCost.h"
-#include "ocs2_sto/ModeSchedule.h"
+#include "ocs2_sto/ValidModeSchedule.h"
 
 namespace ocs2 {
 
