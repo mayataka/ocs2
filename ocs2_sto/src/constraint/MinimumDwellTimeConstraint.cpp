@@ -24,12 +24,12 @@ MinimumDwellTimeConstraint* MinimumDwellTimeConstraint::clone() const {
 /******************************************************************************************************/
 size_t MinimumDwellTimeConstraint::getNumConstraints(scalar_t initTime, scalar_t finalTime, const ModeSchedule& /*stoModeSchedule*/,  
                                                      const ModeSchedule& referenceModeSchedule) const { 
-  const auto validReferenceSwitchingTimes = extractValidSwitchingTimes(initTime, finalTime, referenceModeSchedule);
-  if (validReferenceSwitchingTimes.empty()) {
+  const size_t numValidSwitchingTimes = getNumValidSwitchingTimes(initTime, finalTime, referenceModeSchedule);
+  if (numValidSwitchingTimes == 0) {
     return 0;
   }
   else {
-    return validReferenceSwitchingTimes.size() + 1;
+    return numValidSwitchingTimes + 1;
   }
 }
 

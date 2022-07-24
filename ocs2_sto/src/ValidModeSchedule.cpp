@@ -4,6 +4,15 @@
 
 namespace ocs2 {
 
+size_t getNumValidSwitchingTimes(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule) {
+  size_t num = 0;
+  for (size_t i = 0 ; i < modeSchedule.eventTimes.size(); ++i) {
+    num = i;
+    if (modeSchedule.eventTimes[i] >= finalTime) break;
+  }
+  return num;
+}
+
 scalar_array_t extractValidSwitchingTimes(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule) {
   const auto validModeSchedule = extractValidModeSchedule(initTime, finalTime, modeSchedule);
   return std::move(validModeSchedule.eventTimes);

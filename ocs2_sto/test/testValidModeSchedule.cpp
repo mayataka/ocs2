@@ -26,6 +26,7 @@ TEST(testTimeDiscretization, testTimeDiscretization) {
   for (int i=0; i<validSwitchingTimes.size(); ++i) {
     EXPECT_DOUBLE_EQ(validSwitchingTimes[i], validModeSchedule.eventTimes[i]);
   }
+  EXPECT_EQ(validSwitchingTimes.size(), getNumValidSwitchingTimes(initTime, finalTime, modeSchedule));
 
   const auto referenceModeSchedule = modeSchedule;
   auto stoModeSchedule = modeSchedule;
