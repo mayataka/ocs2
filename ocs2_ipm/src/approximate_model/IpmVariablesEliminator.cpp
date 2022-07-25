@@ -1,4 +1,4 @@
-#include <ocs2_ipm/approximate_model/IpmVariableEliminator.h>
+#include <ocs2_ipm/approximate_model/IpmVariablesEliminator.h>
 #include <ocs2_ipm/core/InteriorPointMethod.h>
 
 
