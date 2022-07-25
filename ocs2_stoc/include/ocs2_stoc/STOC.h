@@ -15,7 +15,7 @@
 #include <ocs2_ipm/model_data/ModelData.h>
 #include <ocs2_ipm/approximate_model/LinearQuadraticApproximator.h>
 #include <ocs2_ipm/approximate_model/LinearQuadraticDiscretizer.h>
-#include <ocs2_ipm/approximate_model/IpmVariableEliminator.h>
+#include <ocs2_ipm/approximate_model/IpmVariablesEliminator.h>
 #include <ocs2_ipm/approximate_model/IpmVariablesRetriver.h>
 #include <ocs2_ipm/approximate_model/ConstraintProjection.h>
 

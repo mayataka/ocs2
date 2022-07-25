@@ -6,6 +6,7 @@ set(CATKIN_PACKAGE_DEPENDENCIES
   ocs2_oc
   ocs2_sqp
   ocs2_ddp
+  ocs2_sto
   ocs2_ipm
   ocs2_mpc
 )
@@ -50,6 +51,10 @@ include_directories(
 
 # ocs2_stoc library
 add_library(${PROJECT_NAME}
+  src/sto/LinearQuadraticApproximator.cpp
+  src/sto/IpmVariables.cpp
+  src/sto/IpmVariablesEliminator.cpp
+  src/sto/IpmVariablesRetriver.cpp
   src/riccati_recursion/BackwardRiccatiRecursion.cpp
   src/riccati_recursion/ForwardRiccatiRecursion.cpp
   src/riccati_recursion/RiccatiRecursion.cpp
