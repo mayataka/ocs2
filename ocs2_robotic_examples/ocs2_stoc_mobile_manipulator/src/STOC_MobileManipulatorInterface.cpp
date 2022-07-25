@@ -26,13 +26,14 @@ STOC_MobileManipulatorInterface::STOC_MobileManipulatorInterface(const std::stri
   stocSettings_ = stoc::loadSettings(stocFile, "stoc");
 
   problem_ = ipm::OptimalControlProblem(baseInterface_.getOptimalControlProblem());
-  const bool activateJointPositionLimit = problem_.softConstraintPtr->erase("jointPositionLimits");
-  if (activateJointPositionLimit) {
-    problem_.stateInequalityConstraintPtr->add("jointPositionLimits",
-                                               getJointPositionLimitConstraint(getPinocchioInterface(), taskFile, "jointPositionLimits"));
-  }
-  problem_.softConstraintPtr->erase("jointVelocityLimits");
-  problem_.inequalityConstraintPtr->add("jointVelocityLimits", getJointVelocityLimitConstraint(taskFile, "jointVelocityLimits"));
+  // TODO: remove soft inequality constraint and introduce a regularization (soft inequality constraint works as a regularization)
+  // const bool activateJointPositionLimit = problem_.softConstraintPtr->erase("jointPositionLimits");
+  // if (activateJointPositionLimit) 
+  problem_.stateInequalityConstraintPtr->add("jointPositionLimits",
+                                              getJointPositionLimitConstraint(getPinocchioInterface(), taskFile, "jointPositionLimits"));
+  // TODO: use hard inequality constraint instead of soft constraints
+  // problem_.softConstraintPtr->erase("jointVelocityLimits");
+  // problem_.inequalityConstraintPtr->add("jointVelocityLimits", getJointVelocityLimitConstraint(taskFile, "jointVelocityLimits"));
 }
 
 /******************************************************************************************************/
