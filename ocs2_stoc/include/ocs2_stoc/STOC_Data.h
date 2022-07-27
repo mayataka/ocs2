@@ -5,6 +5,7 @@
 #include <ocs2_ipm/model_data/ModelData.h>
 #include <ocs2_ipm/oc_data/IpmVariables.h>
 #include <ocs2_ipm/oc_data/IpmData.h>
+#include <ocs2_sto/model_data/StoModelData.h>
 
 #include <ocs2_core/control/LinearController.h>
 
@@ -56,6 +57,27 @@ struct IpmDataContainer {
   inline void clear() {
     ipmVariablesTrajectory.clear();
     ipmDataTrajectory.clear();
+  }
+};
+
+/**
+ * Sto data container
+ */
+struct StoDataContainer {
+  ModeSchedule stoModeSchedule;
+  StoModelData stoModelData;
+  ipm::IpmVariables stoIpmVariables;
+  ipm::IpmData stoIpmData;
+
+  inline void swap(StoDataContainer& other) {
+    ::ocs2::swap(stoModeSchedule, other.stoModeSchedule);
+    std::swap(stoModelData, other.stoModelData);
+    std::swap(stoIpmVariables, other.stoIpmVariables);
+    std::swap(stoIpmData, other.stoIpmData);
+  }
+
+  inline void clear() {
+    stoModeSchedule.clear();
   }
 };
 

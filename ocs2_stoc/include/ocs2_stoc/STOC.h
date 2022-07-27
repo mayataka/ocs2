@@ -149,7 +149,7 @@ class STOC : public SolverBase {
   // Data
   stoc::PrimalDataContainer primalData_;
   stoc::IpmDataContainer ipmData_;
-  std::unique_ptr<ModeSchedule> stoModeSchedulePtr_;
+  stoc::StoDataContainer stoData_;
 
   // riccati Recurision
   stoc::RiccatiRecursion riccatiRecursion_;
