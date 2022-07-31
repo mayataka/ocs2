@@ -7,6 +7,8 @@ namespace ocs2 {
 
 size_t getNumValidSwitchingTimes(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule);
 
+size_array_t extractValidSwitchingTimeIndices(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule);
+
 scalar_array_t extractValidSwitchingTimes(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule);
 
 std::pair<scalar_array_t, scalar_array_t> extractValidSwitchingTimes(scalar_t initTime, scalar_t finalTime, 
