@@ -200,50 +200,51 @@ TEST(Exp0Test, Constrained_FixedSwitchingTimes) {
   stoc.run(startTime, randomInitState, finalTime);
 }
 
-// TEST(Exp0Test, Constrained_SwitchingTimesOptimization) {
-//   static constexpr size_t STATE_DIM = 2;
-//   static constexpr size_t INPUT_DIM = 1;
+TEST(Exp0Test, Constrained_SwitchingTimesOptimization) {
+  static constexpr size_t STATE_DIM = 2;
+  static constexpr size_t INPUT_DIM = 1;
 
-//   stoc::Settings settings;
-//   settings.numIteration  = 10;
-//   settings.useFeedbackPolicy = true;
-//   settings.dt = 0.01;
-//   settings.printSolverStatus = true;
-//   settings.printSolverStatistics = true;
-//   settings.printLinesearch = true;
-//   settings.nThreads = 4;
-//   settings.stoEnable = {{0, true} };
-//   settings.minimumDwellTimes = {{0, 0.02}, {1, 0.02}, };
+  stoc::Settings settings;
+  settings.numIteration  = 10;
+  settings.useFeedbackPolicy = true;
+  settings.dt = 0.01;
+  settings.printSolverStatus = true;
+  settings.printSolverStatistics = true;
+  settings.printLinesearch = true;
+  settings.nThreads = 4;
+  settings.isStoEnabledMode = {{0, true} };
+  settings.minimumDwellTimesMode = {{0, 0.02}, {1, 0.02}, };
+  settings.minimumDwellTime = 0.01;
 
-//   const scalar_array_t initEventTimes{1.0};
-//   const std::vector<size_t> modeSequence{0, 1};
-//   auto referenceManagerPtr = getExp0ReferenceManager(initEventTimes, modeSequence);
-//   auto problem = createExp0Problem(referenceManagerPtr);
-//   auto ipmProblem = ipm::OptimalControlProblem(problem);
+  const scalar_array_t initEventTimes{1.0};
+  const std::vector<size_t> modeSequence{0, 1};
+  auto referenceManagerPtr = getExp0ReferenceManager(initEventTimes, modeSequence);
+  auto problem = createExp0Problem(referenceManagerPtr);
+  auto ipmProblem = ipm::OptimalControlProblem(problem);
 
-//   const scalar_t startTime = 0.0;
-//   const scalar_t finalTime = 2.0;
-//   const vector_t initState = (vector_t(STATE_DIM) << 0.0, 2.0).finished();
+  const scalar_t startTime = 0.0;
+  const scalar_t finalTime = 2.0;
+  const vector_t initState = (vector_t(STATE_DIM) << 0.0, 2.0).finished();
 
-//   auto initializerPtr = std::unique_ptr<Initializer>(new DefaultInitializer(INPUT_DIM));
+  auto initializerPtr = std::unique_ptr<Initializer>(new DefaultInitializer(INPUT_DIM));
 
-//   STOC stoc(settings, ipmProblem, *initializerPtr);
-//   stoc.setReferenceManager(referenceManagerPtr);
-//   stoc.run(startTime, initState, finalTime);
-//   std::cout << stoc.getBenchmarkingInformation() << std::endl;
-//   std::cout << stoc.getIpmPerformanceIndeces() << std::endl;
+  STOC stoc(settings, ipmProblem, *initializerPtr);
+  stoc.setReferenceManager(referenceManagerPtr);
+  stoc.run(startTime, initState, finalTime);
+  std::cout << stoc.getBenchmarkingInformation() << std::endl;
+  std::cout << stoc.getIpmPerformanceIndeces() << std::endl;
 
-//   const scalar_t expectedCost = 9.766;
-//   EXPECT_NEAR(stoc.getIpmPerformanceIndeces().cost, expectedCost, 0.05); 
-//   // The error comes from the discretization 
+  const scalar_t expectedCost = 9.766;
+  EXPECT_NEAR(stoc.getIpmPerformanceIndeces().cost, expectedCost, 0.05); 
+  // The error comes from the discretization 
 
-//   const auto primalSolution = stoc.primalSolution(finalTime);
-//   std::cout << "Optimal unconstrained trajectory" << std::endl; 
-//   for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
-//     std::cout << "time: " << std::setprecision(4) << primalSolution.timeTrajectory_[i] << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
-//               << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
-//   }
-// }
+  const auto primalSolution = stoc.primalSolution(finalTime);
+  std::cout << "Optimal unconstrained trajectory" << std::endl; 
+  for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
+    std::cout << "time: " << std::setprecision(4) << primalSolution.timeTrajectory_[i] << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
+              << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
+  }
+}
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
