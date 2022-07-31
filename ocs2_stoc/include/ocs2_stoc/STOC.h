@@ -118,7 +118,7 @@ class STOC : public SolverBase {
   void setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector_array_t&& stateTrajectory, vector_array_t&& inputTrajectory,
                          vector_array_t&& costateTrajectory);
 
-  enum class Convergence { FALSE, SUCCESS, MAXITERATIONS, STEPSIZE };
+  enum class Convergence { FALSE, SUCCESS, MAXITERATIONS, STEPSIZE, DIVERGE };
   static std::string toString(Convergence convergence) {
     switch (convergence) {
     case Convergence::FALSE:
@@ -132,6 +132,9 @@ class STOC : public SolverBase {
       break;
     case Convergence::STEPSIZE:
       return "STEPSIZE";
+      break;
+    case Convergence::DIVERGE:
+      return "DIVERGE";
       break;
     default:
       return "";

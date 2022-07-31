@@ -143,7 +143,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
   // Directions
   vector_array_t dx, du, dlmd;
-  scalar_array_t dts(numPhases+1, 0.0);
+  scalar_array_t dts(numPhases, 0.0);
   std::vector<ipm::IpmVariablesDirection> ipmVariablesDirectionTrajectory;
 
   size_t iter = 0;
@@ -162,7 +162,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     ipmPerformanceIndeces_.push_back(performanceIndex);
     performanceIndeces_.push_back(convert(performanceIndex));
     linearQuadraticApproximationTimer_.endTimer();
-
+    
     // Reserve and resize directions
     const auto N = timeDiscretization.size() - 1;
     dx.resize(N + 1); du.resize(N); dlmd.resize(N + 1); 
@@ -537,7 +537,6 @@ void STOC::updateIterate(scalar_t initTime, scalar_t finalTime, const ModeSchedu
   if (settings_.stoEnable.empty()) return;
 
   const auto validSwitchingTimeIndices = extractValidSwitchingTimeIndices(initTime, finalTime, referenceModeSchedule);
-  assert(validSwitchingTimeIndices.size() == dts.size());
   for (size_t phase=0; phase<validSwitchingTimeIndices.size(); ++phase) {
     const auto mode = modeSchedule.modeSequence[phase+validSwitchingTimeIndices.front()];
     if (settings_.stoEnable.find(mode) != settings_.stoEnable.end()) {
@@ -635,6 +634,9 @@ STOC::Convergence STOC::checkConvergence(size_t iteration, scalar_t barrierParam
   } else if ((iteration + 1) >= settings_.numIteration) {
     // Falied to converge because the next iteration would exceed the specified number of iterations
     return Convergence::MAXITERATIONS;
+  } else if (std::isnan(primalFeas) || std::isnan(dualFeas) || std::isinf(primalFeas) || std::isinf(dualFeas)) {
+    // Falied to converge because the KKT error diverges
+    return Convergence::DIVERGE;
   } else {
     // None of the above convergence criteria were met -> not converged.
     return Convergence::FALSE;

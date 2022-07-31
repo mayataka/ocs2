@@ -186,7 +186,7 @@ TEST(Exp1Test, Constrained_FixedSwitchingTimes) {
   }
 
   // test reset subject to the constraints
-  const vector_t randomInitState = vector_t::Random(STATE_DIM);
+  const vector_t randomInitState = vector_t::Random(STATE_DIM) + 0.5 * (xmin + xmax);
   stoc.reset();
   stoc.setReferenceManager(referenceManagerPtr);
   stoc.run(startTime, randomInitState, finalTime);
