@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <unordered_map>
 
 #include <ocs2_core/Types.h>
 #include <ocs2_stoc/riccati_recursion/RiccatiSolverMode.h>
@@ -38,7 +39,9 @@ struct Settings {
   scalar_t dt = 0.01;  // user-defined time discretization
 
   // STO strategy
-  scalar_t minimumDwellTime = 0.02; // Minimum dwell time. Should be larger than dt.
+  std::unordered_map<size_t, bool> stoEnable; // If the switching time is considered as the optimization variable or not.
+  std::unordered_map<size_t, scalar_t> minimumDwellTimes; // Minimum dwell times. Should be larger than dt.
+  scalar_t minimumDwellTime = 0.02; // Minimum dwell time for phases that are not specified by minimumDwellTimes. Should be larger than dt.
 
   // Riccati option
   RiccatiSolverMode riccatiSolverMode = RiccatiSolverMode::Robust;

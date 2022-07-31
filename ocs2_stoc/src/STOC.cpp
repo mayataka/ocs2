@@ -117,8 +117,11 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     optimalControlProblem.targetTrajectoriesPtr = &targetTrajectories;
   }
 
+  // Save the initial mode schedule
+  const auto initModeSchedule = this->getReferenceManager().getModeSchedule();
+
   // Determine time discretization, taking into account event times.
-  const auto& modeSchedule = this->getReferenceManager().getModeSchedule();
+  auto modeSchedule = initModeSchedule;
   const auto initTimeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
   const auto numPhases = initTimeDiscretization.back().phase + 1;
 
@@ -226,6 +229,10 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     // Update iterate
     updateIterate(stateTrajectory, inputTrajectory, costateTrajectory, ipmVariablesTrajectory, 
                   dx, du, dlmd, ipmVariablesDirectionTrajectory, primalStepSize, dualStepSize);
+    updateIterate(initTime, finalTime, initModeSchedule, modeSchedule, dts, primalStepSize, dualStepSize);
+
+    // Update mode schedule 
+    getReferenceManager().setModeSchedule(modeSchedule);
 
     // Check convergence
     convergence = checkConvergence(iter, barrierParameter, performanceIndex, primalStepSize, dualStepSize);
@@ -522,6 +529,20 @@ void STOC::updateIterate(vector_array_t& x, vector_array_t& u, vector_array_t& l
   }
   for (size_t i=0; i<=N; ++i) {
     ipm::updateIpmVariables(ipmVariablesTrajectory[i], ipmVariablesDirectionTrajectory[i], primalStepSize, dualStepSize);
+  }
+}
+
+void STOC::updateIterate(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule, ModeSchedule& modeSchedule, 
+                         const scalar_array_t& dts, scalar_t primalStepSize, scalar_t dualStepSize) {
+  if (settings_.stoEnable.empty()) return;
+
+  const auto validSwitchingTimeIndices = extractValidSwitchingTimeIndices(initTime, finalTime, referenceModeSchedule);
+  assert(validSwitchingTimeIndices.size() == dts.size());
+  for (size_t phase=0; phase<validSwitchingTimeIndices.size(); ++phase) {
+    const auto mode = modeSchedule.modeSequence[phase+validSwitchingTimeIndices.front()];
+    if (settings_.stoEnable.find(mode) != settings_.stoEnable.end()) {
+      if (settings_.stoEnable[mode]) modeSchedule.eventTimes[validSwitchingTimeIndices[phase]] += dts[phase];
+    }
   }
 }
 
