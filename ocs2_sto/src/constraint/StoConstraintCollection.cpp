@@ -1,5 +1,4 @@
 #include <ocs2_sto/constraint/StoConstraintCollection.h>
-#include <iostream>
 
 namespace ocs2 {
 
@@ -63,20 +62,15 @@ VectorFunctionLinearApproximation StoConstraintCollection::getLinearApproximatio
   const auto numSwitchingTimes = getNumValidSwitchingTimes(initTime, finalTime, referenceModeSchedule);
   VectorFunctionLinearApproximation linearApproximation(getNumConstraints(initTime, finalTime, referenceModeSchedule, stoModeSchedule), 
                                                         numSwitchingTimes, 0);
-  std::cout << "STO constr Linear approx: " << linearApproximation << std::endl;
   // append linearApproximation of each constraintTerm
   size_t i = 0;
   for (const auto& constraintTerm : this->terms_) {
     if (constraintTerm->isActive(initTime, finalTime, referenceModeSchedule, stoModeSchedule)) {
-      std::cout << "aa" << std::endl;
       const auto constraintTermApproximation = constraintTerm->getLinearApproximation(initTime, finalTime, referenceModeSchedule, 
                                                                                       stoModeSchedule, preComp);
-      std::cout << "term linear approx" << constraintTermApproximation << std::endl;
-      std::cout << "bb" << std::endl;
       const size_t nc = constraintTermApproximation.f.rows();
       linearApproximation.f.segment(i, nc) = constraintTermApproximation.f;
       linearApproximation.dfdx.middleRows(i, nc) = constraintTermApproximation.dfdx;
-      std::cout << "cc" << std::endl;
       i += nc;
     }
   }

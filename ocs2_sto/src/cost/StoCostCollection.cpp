@@ -46,7 +46,7 @@ ScalarFunctionQuadraticApproximation StoCostCollection::getQuadraticApproximatio
 
   // No active terms (or terms is empty).
   if (firstActive == terms_.end()) {
-    return ScalarFunctionQuadraticApproximation::Zero(extractValidSwitchingTimes(initTime, finalTime, referenceModeSchedule).size(), 0);
+    return ScalarFunctionQuadraticApproximation::Zero(getNumValidSwitchingTimes(initTime, finalTime, referenceModeSchedule), 0);
   }
 
   // Initialize with first active term, accumulate potentially other active terms.
