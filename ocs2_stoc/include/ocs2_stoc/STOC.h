@@ -125,7 +125,8 @@ class STOC : public SolverBase {
                             scalar_t primalStepSize, scalar_t dualStepSize);
 
   void updateIterate(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule, ModeSchedule& modeSchedule, 
-                     const scalar_array_t& dts, scalar_t primalStepSize, scalar_t dualStepSize);
+                     ipm::IpmVariables& stoIpmVariables, const scalar_array_t& dts, 
+                     const ipm::IpmVariablesDirection& stoIpmVariablesDirection, scalar_t primalStepSize, scalar_t dualStepSize);
 
   void setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector_array_t&& stateTrajectory, vector_array_t&& inputTrajectory,
                          vector_array_t&& costateTrajectory);

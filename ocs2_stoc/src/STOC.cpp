@@ -149,6 +149,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   vector_array_t dx, du, dlmd;
   scalar_array_t dts(numPhases, 0.0);
   std::vector<ipm::IpmVariablesDirection> ipmVariablesDirectionTrajectory;
+  ipm::IpmVariablesDirection stoIpmVariablesDirection;
 
   size_t iter = 0;
   auto convergence = Convergence::FALSE;
@@ -160,12 +161,11 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     const auto timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
     linearQuadraticApproximationTimer_.startTimer();
     const bool initIpmVariablesTrajectory = (iter == 0);
-    const auto performanceIndex = approximateOptimalControlProblem(timeDiscretization, initState, stateTrajectory, inputTrajectory, 
-                                                                   costateTrajectory, ipmVariablesTrajectory, barrierParameter, 
-                                                                   initIpmVariablesTrajectory);
-    const auto performanceIndexSto = approximateSwitchingTimeOptimizationProblem(initTime, finalTime, initModeSchedule, modeSchedule,
-                                                                                 stoIpmVariables, barrierParameter, 
-                                                                                 initIpmVariablesTrajectory);
+    auto performanceIndex = approximateOptimalControlProblem(timeDiscretization, initState, stateTrajectory, inputTrajectory, 
+                                                             costateTrajectory, ipmVariablesTrajectory, barrierParameter, 
+                                                             initIpmVariablesTrajectory);
+    performanceIndex += approximateSwitchingTimeOptimizationProblem(initTime, finalTime, initModeSchedule, modeSchedule,
+                                                                    stoIpmVariables, barrierParameter, initIpmVariablesTrajectory);
     ipmPerformanceIndeces_.push_back(performanceIndex);
     performanceIndeces_.push_back(convert(performanceIndex));
     linearQuadraticApproximationTimer_.endTimer();
@@ -236,7 +236,8 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     // Update iterate
     updateIterate(stateTrajectory, inputTrajectory, costateTrajectory, ipmVariablesTrajectory, 
                   dx, du, dlmd, ipmVariablesDirectionTrajectory, primalStepSize, dualStepSize);
-    updateIterate(initTime, finalTime, initModeSchedule, modeSchedule, dts, primalStepSize, dualStepSize);
+    updateIterate(initTime, finalTime, initModeSchedule, modeSchedule, stoIpmVariables, dts, stoIpmVariablesDirection, 
+                  primalStepSize, dualStepSize);
 
     // Update mode schedule 
     getReferenceManager().setModeSchedule(modeSchedule);
@@ -537,7 +538,6 @@ STOC::StepSizes STOC::selectStepSizes(const std::vector<Grid>& timeDiscretizatio
   return stepSizes;
 }
 
-
 void STOC::updateIterate(vector_array_t& x, vector_array_t& u, vector_array_t& lmd, std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
                          const vector_array_t& dx, const vector_array_t& du, const vector_array_t& dlmd,
                          const std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory,
@@ -558,7 +558,8 @@ void STOC::updateIterate(vector_array_t& x, vector_array_t& u, vector_array_t& l
 }
 
 void STOC::updateIterate(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule, ModeSchedule& modeSchedule, 
-                         const scalar_array_t& dts, scalar_t primalStepSize, scalar_t dualStepSize) {
+                         ipm::IpmVariables& stoIpmVariables, const scalar_array_t& dts, 
+                         const ipm::IpmVariablesDirection& stoIpmVariablesDirection, scalar_t primalStepSize, scalar_t dualStepSize) {
   if (settings_.isStoEnabledMode.empty()) return;
 
   const auto validSwitchingTimeIndices = extractValidSwitchingTimeIndices(initTime, finalTime, referenceModeSchedule);
@@ -568,6 +569,7 @@ void STOC::updateIterate(scalar_t initTime, scalar_t finalTime, const ModeSchedu
       if (settings_.isStoEnabledMode[mode]) modeSchedule.eventTimes[validSwitchingTimeIndices[phase]] += dts[phase];
     }
   }
+  ipm::updateIpmVariables(stoIpmVariables, stoIpmVariablesDirection, primalStepSize, dualStepSize);
 }
 
 void STOC::setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector_array_t&& stateTrajectory, vector_array_t&& inputTrajectory,

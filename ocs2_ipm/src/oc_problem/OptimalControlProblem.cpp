@@ -76,6 +76,9 @@ OptimalControlProblem::OptimalControlProblem(const ::ocs2::OptimalControlProblem
       preJumpInequalityLagrangianPtr(other.preJumpInequalityLagrangianPtr->clone()),
       finalEqualityLagrangianPtr(other.finalEqualityLagrangianPtr->clone()),
       finalInequalityLagrangianPtr(other.finalInequalityLagrangianPtr->clone()),
+      /* STO */
+      stoCostPtr(new StoCostCollection),
+      stoConstraintPtr(new StoConstraintCollection),
       /* Misc. */
       preComputationPtr(other.preComputationPtr->clone()),
       targetTrajectoriesPtr(other.targetTrajectoriesPtr) {
@@ -117,17 +120,14 @@ OptimalControlProblem::OptimalControlProblem(const OptimalControlProblem& other)
       preJumpInequalityLagrangianPtr(other.preJumpInequalityLagrangianPtr->clone()),
       finalEqualityLagrangianPtr(other.finalEqualityLagrangianPtr->clone()),
       finalInequalityLagrangianPtr(other.finalInequalityLagrangianPtr->clone()),
+      /* STO */
+      stoCostPtr(other.stoCostPtr->clone()),
+      stoConstraintPtr(other.stoConstraintPtr->clone()),
       /* Misc. */
       preComputationPtr(other.preComputationPtr->clone()),
       targetTrajectoriesPtr(other.targetTrajectoriesPtr) {
   if (other.dynamicsPtr != nullptr) {
     dynamicsPtr.reset(other.dynamicsPtr->clone());
-  }
-  if (other.stoCostPtr != nullptr) {
-    stoCostPtr.reset(other.stoCostPtr->clone());
-  }
-  if (other.stoConstraintPtr != nullptr) {
-    stoConstraintPtr.reset(other.stoConstraintPtr->clone());
   }
 }
 
