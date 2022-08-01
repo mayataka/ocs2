@@ -5,7 +5,7 @@ namespace ocs2 {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-QuadraticStoCost::QuadraticStoCost(matrix_t Q) : Q_(std::move(Q)), StoCost() {}
+QuadraticStoCost::QuadraticStoCost(scalar_t Q) : Q_(Q), StoCost() {}
 
 /******************************************************************************************************/
 /******************************************************************************************************/
@@ -20,7 +20,7 @@ QuadraticStoCost* QuadraticStoCost::clone() const {
 scalar_t QuadraticStoCost::getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule, 
                                     const ModeSchedule& stoModeSchedule, const PreComputation& preComp) const {
   const vector_t tsDeviation = getSwitchingTimeDeviation(initTime, finalTime, referenceModeSchedule, stoModeSchedule);
-  return 0.5 * tsDeviation.dot(Q_ * tsDeviation);
+  return 0.5 * tsDeviation.dot(vector_t::Constant(tsDeviation.size(), Q_).asDiagonal() * tsDeviation);
 }
 
 /******************************************************************************************************/
@@ -31,9 +31,9 @@ ScalarFunctionQuadraticApproximation QuadraticStoCost::getQuadraticApproximation
                                                                                  const ModeSchedule& stoModeSchedule, 
                                                                                  const PreComputation& preComp) const {
   const vector_t tsDeviation = getSwitchingTimeDeviation(initTime, finalTime, referenceModeSchedule, stoModeSchedule);
-  ScalarFunctionQuadraticApproximation Phi;
-  Phi.dfdxx = Q_;
-  Phi.dfdx.noalias() = Q_ * tsDeviation;
+  ScalarFunctionQuadraticApproximation Phi(tsDeviation.size(), 0);
+  Phi.dfdxx = vector_t::Constant(tsDeviation.size(), Q_).asDiagonal();
+  Phi.dfdx.noalias() = Phi.dfdxx * tsDeviation;
   Phi.f = 0.5 * tsDeviation.dot(Phi.dfdx);
   return Phi;
 }

@@ -27,8 +27,7 @@ size_t MinimumDwellTimeConstraint::getNumConstraints(scalar_t initTime, scalar_t
   const size_t numValidSwitchingTimes = getNumValidSwitchingTimes(initTime, finalTime, referenceModeSchedule);
   if (numValidSwitchingTimes == 0) {
     return 0;
-  }
-  else {
+  } else {
     return numValidSwitchingTimes + 1;
   }
 }
@@ -71,7 +70,8 @@ VectorFunctionLinearApproximation MinimumDwellTimeConstraint::getLinearApproxima
                                                                                      const ModeSchedule& referenceModeSchedule, 
                                                                                      const ModeSchedule& stoModeSchedule, 
                                                                                      const PreComputation& preComp) const {
-  VectorFunctionLinearApproximation linearApproximation;
+  VectorFunctionLinearApproximation linearApproximation(getNumConstraints(initTime, finalTime, referenceModeSchedule, stoModeSchedule), 
+                                                        getNumValidSwitchingTimes(initTime, finalTime, referenceModeSchedule), 0);
   linearApproximation.f = getValue(initTime, finalTime, referenceModeSchedule, stoModeSchedule, preComp);
   const auto numConstraints = linearApproximation.f.size();
   if (numConstraints > 0) {

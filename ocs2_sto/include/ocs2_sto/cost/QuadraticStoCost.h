@@ -13,7 +13,7 @@ class QuadraticStoCost : public StoCost {
    * \f$ \l = 0.5(x-x_{n})' Q (x-x_{n}) \f$. (x: a swithcing times vector)
    * @param [in] Q: \f$ Q \f$
    */
-  explicit QuadraticStoCost(matrix_t Q);
+  explicit QuadraticStoCost(scalar_t Q);
   ~QuadraticStoCost() override = default;
   QuadraticStoCost* clone() const override;
 
@@ -36,7 +36,7 @@ class QuadraticStoCost : public StoCost {
                                              const ModeSchedule& stoModeSchedule) const;
 
  private:
-  matrix_t Q_;
+  scalar_t Q_;
 };
 
 }  // namespace ocs2

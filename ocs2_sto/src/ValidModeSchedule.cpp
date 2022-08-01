@@ -6,9 +6,8 @@ namespace ocs2 {
 
 size_t getNumValidSwitchingTimes(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule) {
   size_t num = 0;
-  for (size_t i = 0 ; i < modeSchedule.eventTimes.size(); ++i) {
-    num = i;
-    if (modeSchedule.eventTimes[i] >= finalTime) break;
+  for (const auto e : modeSchedule.eventTimes) {
+    if (e > initTime && e < finalTime) ++num;
   }
   return num;
 }
