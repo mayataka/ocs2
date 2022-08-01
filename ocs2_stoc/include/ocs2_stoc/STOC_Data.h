@@ -42,23 +42,6 @@ struct PrimalDataContainer {
   }
 };
 
-/**
- * Ipm data container
- */
-struct IpmDataContainer {
-  std::vector<ipm::IpmVariables> ipmVariablesTrajectory;
-  std::vector<ipm::IpmData> ipmDataTrajectory;
-
-  inline void swap(IpmDataContainer& other) {
-    ipmVariablesTrajectory.swap(other.ipmVariablesTrajectory);
-    ipmDataTrajectory.swap(other.ipmDataTrajectory);
-  }
-
-  inline void clear() {
-    ipmVariablesTrajectory.clear();
-    ipmDataTrajectory.clear();
-  }
-};
 
 /**
  * Sto data container
@@ -66,18 +49,37 @@ struct IpmDataContainer {
 struct StoDataContainer {
   ModeSchedule stoModeSchedule;
   StoModelData stoModelData;
-  ipm::IpmVariables stoIpmVariables;
-  ipm::IpmData stoIpmData;
 
   inline void swap(StoDataContainer& other) {
     ::ocs2::swap(stoModeSchedule, other.stoModeSchedule);
     std::swap(stoModelData, other.stoModelData);
+  }
+
+  inline void clear() {
+    stoModeSchedule.clear();
+  }
+};
+
+/**
+ * Ipm data container
+ */
+struct IpmDataContainer {
+  std::vector<ipm::IpmVariables> ipmVariablesTrajectory;
+  std::vector<ipm::IpmData> ipmDataTrajectory;
+
+  ipm::IpmVariables stoIpmVariables;
+  ipm::IpmData stoIpmData;
+
+  inline void swap(IpmDataContainer& other) {
+    ipmVariablesTrajectory.swap(other.ipmVariablesTrajectory);
+    ipmDataTrajectory.swap(other.ipmDataTrajectory);
     std::swap(stoIpmVariables, other.stoIpmVariables);
     std::swap(stoIpmData, other.stoIpmData);
   }
 
   inline void clear() {
-    stoModeSchedule.clear();
+    ipmVariablesTrajectory.clear();
+    ipmDataTrajectory.clear();
   }
 };
 

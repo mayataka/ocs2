@@ -23,17 +23,17 @@ class StoConstraintCollection : public Collection<StoConstraint> {
   StoConstraintCollection* clone() const override;
 
   /** Get the size of the constraint vector at given times */
-  virtual size_t getNumConstraints(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
-                                   const ModeSchedule& referenceModeSchedule) const;
+  virtual size_t getNumConstraints(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule, 
+                                   const ModeSchedule& stoModeSchedule) const;
 
   /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
-                            const ModeSchedule& referenceModeSchedule, const PreComputation& preComp) const;
+  virtual vector_t getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule, 
+                            const ModeSchedule& stoModeSchedule, const PreComputation& preComp) const;
 
   /** Get the constraint linear approximation */
   virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t initTime, scalar_t finalTime, 
-                                                                   const ModeSchedule& stoModeSchedule, 
                                                                    const ModeSchedule& referenceModeSchedule,
+                                                                   const ModeSchedule& stoModeSchedule, 
                                                                    const PreComputation& preComp) const;
 
  protected:

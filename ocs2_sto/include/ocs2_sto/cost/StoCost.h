@@ -15,17 +15,17 @@ class StoCost {
   virtual StoCost* clone() const = 0;
 
   /** Check if cost term is active */
-  virtual bool isActive(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
-                        const ModeSchedule& referenceModeSchedule) const { return true; }
+  virtual bool isActive(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule, 
+                        const ModeSchedule& stoModeSchedule) const { return true; }
 
   /** Get cost term value */
-  virtual scalar_t getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
-                            const ModeSchedule& referenceModeSchedule, const PreComputation& preComp) const = 0;
+  virtual scalar_t getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule, 
+                            const ModeSchedule& stoModeSchedule, const PreComputation& preComp) const = 0;
 
   /** Get cost term quadratic approximation */
   virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t initTime, scalar_t finalTime,  
+                                                                         const ModeSchedule& referenceModeSchedule,
                                                                          const ModeSchedule& stoModeSchedule, 
-                                                                         const ModeSchedule& referenceModeSchedule, 
                                                                          const PreComputation& preComp) const = 0;
 
  protected:

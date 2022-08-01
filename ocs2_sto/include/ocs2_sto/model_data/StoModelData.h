@@ -17,4 +17,6 @@ struct StoModelData {
   VectorFunctionLinearApproximation stoConstraint;
 };
 
+
+
 }  // namespace ocs2

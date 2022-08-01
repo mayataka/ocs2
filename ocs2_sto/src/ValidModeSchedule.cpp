@@ -31,13 +31,13 @@ scalar_array_t extractValidSwitchingTimes(scalar_t initTime, scalar_t finalTime,
   return std::move(validModeSchedule.eventTimes);
 }
 
-std::pair<scalar_array_t, scalar_array_t> extractValidSwitchingTimes(scalar_t initTime, scalar_t finalTime, 
-                                                                     const ModeSchedule& stoModeSchedule,
-                                                                     const ModeSchedule& referenceModeSchedule) {
-  ModeSchedule validStoModeSchedule, validReferenceModeSchedule;
-  std::tie(validStoModeSchedule, validReferenceModeSchedule) = extractValidModeSchedule(initTime, finalTime, 
-                                                                                        stoModeSchedule, referenceModeSchedule);
-  return std::make_pair(std::move(validStoModeSchedule.eventTimes), std::move(validReferenceModeSchedule.eventTimes));
+std::pair<scalar_array_t, scalar_array_t> extractValidSwitchingTimesPair(scalar_t initTime, scalar_t finalTime, 
+                                                                         const ModeSchedule& referenceModeSchedule,
+                                                                         const ModeSchedule& stoModeSchedule) {
+  ModeSchedule validReferenceModeSchedule, validStoModeSchedule;
+  std::tie(validReferenceModeSchedule, validStoModeSchedule) = extractValidModeSchedulePair(initTime, finalTime, 
+                                                                                            referenceModeSchedule, stoModeSchedule);
+  return std::make_pair(std::move(validReferenceModeSchedule.eventTimes), std::move(validStoModeSchedule.eventTimes));
 }
 
 ModeSchedule extractValidModeSchedule(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule) {
@@ -55,8 +55,9 @@ ModeSchedule extractValidModeSchedule(scalar_t initTime, scalar_t finalTime, con
   return validModeSchedule;
 }
 
-std::pair<ModeSchedule, ModeSchedule> extractValidModeSchedule(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule,
-                                                               const ModeSchedule& referenceModeSchedule) {
+std::pair<ModeSchedule, ModeSchedule> extractValidModeSchedulePair(scalar_t initTime, scalar_t finalTime, 
+                                                                   const ModeSchedule& referenceModeSchedule,
+                                                                   const ModeSchedule& stoModeSchedule) {
   assert(stoModeSchedule.eventTimes.size() == referenceModeSchedule.eventTimes.size());
   assert(stoModeSchedule.modeSequence.size() == referenceModeSchedule.modeSequence.size());
   ModeSchedule validStoModeSchedule, validReferenceModeSchedule;
@@ -64,17 +65,18 @@ std::pair<ModeSchedule, ModeSchedule> extractValidModeSchedule(scalar_t initTime
   for (size_t i = 0 ; i < referenceModeSchedule.eventTimes.size(); ++i) {
     lastIndex = i;
     if (referenceModeSchedule.eventTimes[i] > initTime && referenceModeSchedule.eventTimes[i] < finalTime) {
-      validStoModeSchedule.eventTimes.push_back(stoModeSchedule.eventTimes[i]);
-      validStoModeSchedule.modeSequence.push_back(stoModeSchedule.modeSequence[i]);
-
       validReferenceModeSchedule.eventTimes.push_back(referenceModeSchedule.eventTimes[i]);
       validReferenceModeSchedule.modeSequence.push_back(referenceModeSchedule.modeSequence[i]);
+
+      validStoModeSchedule.eventTimes.push_back(stoModeSchedule.eventTimes[i]);
+      validStoModeSchedule.modeSequence.push_back(stoModeSchedule.modeSequence[i]);
     }
     else if (referenceModeSchedule.eventTimes[i] >= finalTime) break;
   }
-  validStoModeSchedule.modeSequence.push_back(stoModeSchedule.modeSequence[lastIndex]);
   validReferenceModeSchedule.modeSequence.push_back(referenceModeSchedule.modeSequence[lastIndex]);
-  return std::make_pair(std::move(validStoModeSchedule), std::move(validReferenceModeSchedule));
+  validStoModeSchedule.modeSequence.push_back(stoModeSchedule.modeSequence[lastIndex]);
+  return std::make_pair(std::move(validReferenceModeSchedule), std::move(validStoModeSchedule));
 }
 
 }  // namespace ocs2
+

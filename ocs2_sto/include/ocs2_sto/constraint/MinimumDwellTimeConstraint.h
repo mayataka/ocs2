@@ -23,17 +23,17 @@ class MinimumDwellTimeConstraint : public StoConstraint {
   virtual MinimumDwellTimeConstraint* clone() const;
 
   /** Get the size of the constraint vector at given times */
-  virtual size_t getNumConstraints(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule,  
-                                   const ModeSchedule& referenceModeSchedule) const override;
+  virtual size_t getNumConstraints(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule,  
+                                   const ModeSchedule& stoModeSchedule) const override;
 
   /** Get the constraint vector value */
-  virtual vector_t getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
-                            const ModeSchedule& referenceModeSchedule, const PreComputation& preComp) const override;
+  virtual vector_t getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule, 
+                            const ModeSchedule& stoModeSchedule, const PreComputation& preComp) const override;
 
   /** Get the constraint linear approximation */
   virtual VectorFunctionLinearApproximation getLinearApproximation(scalar_t initTime, scalar_t finalTime, 
-                                                                   const ModeSchedule& stoModeSchedule,
                                                                    const ModeSchedule& referenceModeSchedule,
+                                                                   const ModeSchedule& stoModeSchedule,
                                                                    const PreComputation& preComp) const override;
 
  protected:

@@ -120,6 +120,12 @@ OptimalControlProblem::OptimalControlProblem(const OptimalControlProblem& other)
   if (other.dynamicsPtr != nullptr) {
     dynamicsPtr.reset(other.dynamicsPtr->clone());
   }
+  if (other.stoCostPtr != nullptr) {
+    stoCostPtr.reset(other.stoCostPtr->clone());
+  }
+  if (other.stoConstraintPtr != nullptr) {
+    stoConstraintPtr.reset(other.stoConstraintPtr->clone());
+  }
 }
 
 /******************************************************************************************************/
@@ -171,6 +177,10 @@ void OptimalControlProblem::swap(OptimalControlProblem& other) noexcept {
 
   /* Dynamics */
   dynamicsPtr.swap(other.dynamicsPtr);
+
+  /* STO */
+  stoCostPtr.swap(other.stoCostPtr);
+  stoConstraintPtr.swap(other.stoConstraintPtr);
 
   /* Misc. */
   preComputationPtr.swap(other.preComputationPtr);

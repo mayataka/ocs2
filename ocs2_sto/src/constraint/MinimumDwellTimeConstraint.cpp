@@ -22,8 +22,8 @@ MinimumDwellTimeConstraint* MinimumDwellTimeConstraint::clone() const {
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-size_t MinimumDwellTimeConstraint::getNumConstraints(scalar_t initTime, scalar_t finalTime, const ModeSchedule& /*stoModeSchedule*/,  
-                                                     const ModeSchedule& referenceModeSchedule) const { 
+size_t MinimumDwellTimeConstraint::getNumConstraints(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule,  
+                                                     const ModeSchedule& /*stoModeSchedule*/) const { 
   const size_t numValidSwitchingTimes = getNumValidSwitchingTimes(initTime, finalTime, referenceModeSchedule);
   if (numValidSwitchingTimes == 0) {
     return 0;
@@ -36,9 +36,9 @@ size_t MinimumDwellTimeConstraint::getNumConstraints(scalar_t initTime, scalar_t
 /******************************************************************************************************/
 /******************************************************************************************************/
 /******************************************************************************************************/
-vector_t MinimumDwellTimeConstraint::getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
-                                              const ModeSchedule& referenceModeSchedule, const PreComputation& preComp) const {
-  const auto validModeSchedulePair = extractValidModeSchedule(initTime, finalTime, stoModeSchedule, referenceModeSchedule);
+vector_t MinimumDwellTimeConstraint::getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule, 
+                                              const ModeSchedule& stoModeSchedule, const PreComputation& preComp) const {
+  const auto validModeSchedulePair = extractValidModeSchedulePair(initTime, finalTime, stoModeSchedule, referenceModeSchedule);
   const auto& validStoModeSchedule = validModeSchedulePair.first;
   if (validStoModeSchedule.eventTimes.empty()) {
     return vector_t();
@@ -68,11 +68,11 @@ vector_t MinimumDwellTimeConstraint::getValue(scalar_t initTime, scalar_t finalT
 /******************************************************************************************************/
 /******************************************************************************************************/
 VectorFunctionLinearApproximation MinimumDwellTimeConstraint::getLinearApproximation(scalar_t initTime, scalar_t finalTime, 
-                                                                                     const ModeSchedule& stoModeSchedule, 
                                                                                      const ModeSchedule& referenceModeSchedule, 
+                                                                                     const ModeSchedule& stoModeSchedule, 
                                                                                      const PreComputation& preComp) const {
   VectorFunctionLinearApproximation linearApproximation;
-  linearApproximation.f = getValue(initTime, finalTime, stoModeSchedule, referenceModeSchedule, preComp);
+  linearApproximation.f = getValue(initTime, finalTime, referenceModeSchedule, stoModeSchedule, preComp);
   const auto numConstraints = linearApproximation.f.size();
   if (numConstraints > 0) {
     linearApproximation.dfdx.setZero(numConstraints, numConstraints-1);

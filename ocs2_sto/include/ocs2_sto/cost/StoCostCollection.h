@@ -23,13 +23,13 @@ class StoCostCollection : public Collection<StoCost> {
   virtual StoCostCollection* clone() const;
 
   /** Get state-only cost value */
-  virtual scalar_t getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& stoModeSchedule, 
-                            const ModeSchedule& referenceModeSchedule, const PreComputation& preComp) const;
+  virtual scalar_t getValue(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule, 
+                            const ModeSchedule& stoModeSchedule, const PreComputation& preComp) const;
 
   /** Get state-only cost quadratic approximation */
   virtual ScalarFunctionQuadraticApproximation getQuadraticApproximation(scalar_t initTime, scalar_t finalTime,  
-                                                                         const ModeSchedule& stoModeSchedule, 
                                                                          const ModeSchedule& referenceModeSchedule, 
+                                                                         const ModeSchedule& stoModeSchedule, 
                                                                          const PreComputation& preComp) const;
 
  protected:

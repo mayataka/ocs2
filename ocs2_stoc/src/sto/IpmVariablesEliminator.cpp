@@ -3,21 +3,20 @@
 
 
 namespace ocs2 {
-namespace ipm {
 
-void eliminateIpmVariablesSTO(const ipm::SlackDual& ipmVariables, StoModelData& stoModelData, ipm::InteriorPointMethodData& ipmData, 
+void eliminateIpmVariablesSTO(const ipm::IpmVariables& ipmVariables, StoModelData& stoModelData, ipm::IpmData& ipmData, 
                               scalar_t barrierParam) {
-  ipm::initInteriorPointMethodData(stoModelData.stoConstraint, ipmData);
-  evalPerturbedResidual(stoModelData.stoConstraint, ipmVariables, ipmData, stoModelData.stoCost, barrierParam, true, false);
-  condenseSlackDual(stoModelData.stoConstraint, ipmVariables, ipmData, stoModelData.stoCost, true, false);
+  ipm::initInteriorPointMethodData(stoModelData.stoConstraint, ipmData.dataStateIneqConstraint);
+  ipm::evalPerturbedResidual(stoModelData.stoConstraint, ipmVariables.slackDualStateIneqConstraint, ipmData.dataStateIneqConstraint, 
+                             stoModelData.stoCost, barrierParam, true, false);
+  ipm::condenseSlackDual(stoModelData.stoConstraint, ipmVariables.slackDualStateIneqConstraint, ipmData.dataStateIneqConstraint, 
+                         stoModelData.stoCost, true, false);
 }
 
-ipm::InteriorPointMethodData eliminateIpmVariablesSTO(const ipm::SlackDual& ipmVariables, StoModelData& stoModelData, 
-                                                      scalar_t barrierParam) {
-  ipm::InteriorPointMethodData ipmData;
+ipm::IpmData eliminateIpmVariablesSTO(const ipm::IpmVariables& ipmVariables, StoModelData& stoModelData, scalar_t barrierParam) {
+  ipm::IpmData ipmData;
   eliminateIpmVariablesSTO(ipmVariables, stoModelData, ipmData, barrierParam);
   return ipmData;
 }
 
-}  // namespace ipm
 }  // namespace ocs2

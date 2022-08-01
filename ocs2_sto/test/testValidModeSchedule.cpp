@@ -34,9 +34,9 @@ TEST(testTimeDiscretization, testTimeDiscretization) {
     e += 5.0; 
   }
 
-  const auto validModeSchedulePair = extractValidModeSchedule(initTime, finalTime, stoModeSchedule, referenceModeSchedule);
-  const auto validStoModeSchedule = validModeSchedulePair.first;
-  const auto validReferenceModeSchedule = validModeSchedulePair.second;
+  const auto validModeSchedulePair = extractValidModeSchedulePair(initTime, finalTime, referenceModeSchedule, stoModeSchedule);
+  const auto validReferenceModeSchedule = validModeSchedulePair.first;
+  const auto validStoModeSchedule = validModeSchedulePair.second;
   for (const auto e : validReferenceModeSchedule.eventTimes) {
     EXPECT_TRUE(e > initTime);
     EXPECT_TRUE(e < finalTime);
@@ -48,9 +48,9 @@ TEST(testTimeDiscretization, testTimeDiscretization) {
     EXPECT_EQ(validStoModeSchedule.modeSequence[i], validReferenceModeSchedule.modeSequence[i]);
   }
 
-  const auto validSwitchingTimesPair = extractValidSwitchingTimes(initTime, finalTime, stoModeSchedule, referenceModeSchedule);
-  const auto validStoSwitchingTimes = validSwitchingTimesPair.first;
-  const auto validReferenceSwitchingTimes = validSwitchingTimesPair.second;
+  const auto validSwitchingTimesPair = extractValidSwitchingTimesPair(initTime, finalTime, referenceModeSchedule, stoModeSchedule);
+  const auto validReferenceSwitchingTimes = validSwitchingTimesPair.first;
+  const auto validStoSwitchingTimes = validSwitchingTimesPair.second;
   for (int i=0; i<validStoSwitchingTimes.size(); ++i) {
     EXPECT_DOUBLE_EQ(validStoSwitchingTimes[i], validStoModeSchedule.eventTimes[i]);
   }

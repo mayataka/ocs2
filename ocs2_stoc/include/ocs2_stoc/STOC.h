@@ -19,6 +19,11 @@
 #include <ocs2_ipm/approximate_model/IpmVariablesRetriver.h>
 #include <ocs2_ipm/approximate_model/ConstraintProjection.h>
 
+#include "ocs2_stoc/sto/LinearQuadraticApproximator.h"
+#include "ocs2_stoc/sto/IpmVariables.h"
+#include "ocs2_stoc/sto/IpmVariablesEliminator.h"
+#include "ocs2_stoc/sto/IpmVariablesRetriver.h"
+
 #include "ocs2_stoc/riccati_recursion/RiccatiRecursion.h"
 #include "ocs2_stoc/TimeDiscretization.h"
 #include "ocs2_stoc/STOC_Settings.h"
@@ -101,13 +106,19 @@ class STOC : public SolverBase {
                                                          std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
                                                          scalar_t barrierParameter, bool initIpmVariablesTrajectory);
 
+  ipm::PerformanceIndex approximateSwitchingTimeOptimizationProblem(scalar_t initTime, scalar_t finalTime, 
+                                                                    const ModeSchedule& referenceModeSchedule, 
+                                                                    const ModeSchedule& stoModeSchedule, 
+                                                                    ipm::IpmVariables& stoIpmVariables,
+                                                                    scalar_t barrierParameter, bool initStoIpmVariables);
+
   struct StepSizes {
     scalar_t primalStepSize, dualStepSize;
   };
   StepSizes selectStepSizes(const std::vector<Grid>& timeDiscretization, const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
                             const vector_array_t& dx, const vector_array_t& du, const vector_array_t& dlmd, const scalar_array_t& dts,
                             std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory, scalar_t fractionToBoundaryMargin); 
-
+  
   static void updateIterate(vector_array_t& x, vector_array_t& u, vector_array_t& lmd, std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
                             const vector_array_t& dx, const vector_array_t& du, const vector_array_t& dlmd, 
                             const std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory,

@@ -6,6 +6,7 @@
 #include <ocs2_core/Types.h>
 #include <ocs2_ipm/model_data/ModelData.h>
 #include <ocs2_ipm/oc_data/IpmData.h>
+#include <ocs2_sto/model_data/StoModelData.h>
 #include <ocs2_oc/oc_solver/PerformanceIndex.h>
 
 namespace ocs2 {
@@ -105,6 +106,15 @@ PerformanceIndex fromIpmData(const IpmData& ipmData) {
     performanceIndex.complementarySlacknessSSE += ipmData.dataStateInputIneqConstraint.complementarySlackness.squaredNorm();
   performanceIndex.costBarrier = ipmData.dataStateIneqConstraint.costBarrier 
                                   + ipmData.dataStateInputIneqConstraint.costBarrier;
+  return performanceIndex;
+}
+
+PerformanceIndex fromStoModelData(const StoModelData& stoModelData, bool includeDualDynamicsViolation=false) {
+  PerformanceIndex performanceIndex;
+  performanceIndex.cost = stoModelData.stoCost.f;
+  if (includeDualDynamicsViolation && stoModelData.stoCost.dfdx.size() > 0) {
+    performanceIndex.dualDynamicsViolationSSE = stoModelData.stoCost.dfdx.squaredNorm();
+  }
   return performanceIndex;
 }
 

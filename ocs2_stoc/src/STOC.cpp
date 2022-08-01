@@ -137,8 +137,9 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   vector_array_t costateTrajectory;
   initializeCostateTrajectories(initTimeDiscretization, stateTrajectory, inputTrajectory, costateTrajectory);
 
-  // Ipm variables are initialized in approximateOptimalControlProblem()
+  // Ipm variables are initialized in approximateOptimalControlProblem() and approximateSwitchingTimeOptimizationProblem()
   std::vector<ipm::IpmVariables> ipmVariablesTrajectory;
+  ipm::IpmVariables stoIpmVariables;
 
   // Bookkeeping
   performanceIndeces_.clear();
@@ -162,6 +163,9 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     const auto performanceIndex = approximateOptimalControlProblem(timeDiscretization, initState, stateTrajectory, inputTrajectory, 
                                                                    costateTrajectory, ipmVariablesTrajectory, barrierParameter, 
                                                                    initIpmVariablesTrajectory);
+    const auto performanceIndexSto = approximateSwitchingTimeOptimizationProblem(initTime, finalTime, initModeSchedule, modeSchedule,
+                                                                                 stoIpmVariables, barrierParameter, 
+                                                                                 initIpmVariablesTrajectory);
     ipmPerformanceIndeces_.push_back(performanceIndex);
     performanceIndeces_.push_back(convert(performanceIndex));
     linearQuadraticApproximationTimer_.endTimer();
@@ -391,8 +395,8 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
         if (settings_.projectStateInputEqualityConstraints) {
           projectedModelDataTrajectory[i] = modelDataTrajectory[i];
         }
-        workerPerformance += fromModelData(modelDataTrajectory[i]);
-        workerPerformance += fromIpmData(ipmDataTrajectory[i]);
+        workerPerformance += ipm::fromModelData(modelDataTrajectory[i]);
+        workerPerformance += ipm::fromIpmData(ipmDataTrajectory[i]);
       } else {
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(timeDiscretization[i]);
@@ -408,11 +412,11 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
         ipm::eliminateIpmVariablesIntermediateLQ(ipmVariablesTrajectory[i], modelDataTrajectory[i], ipmDataTrajectory[i], barrierParameter);
         if (settings_.projectStateInputEqualityConstraints) {
           ipm::projectIntermediateLQ(modelDataTrajectory[i], constraintProjection[i], projectedModelDataTrajectory[i]);
-          workerPerformance += fromModelData(projectedModelDataTrajectory[i]);
+          workerPerformance += ipm::fromModelData(projectedModelDataTrajectory[i]);
         } else {
-          workerPerformance += fromModelData(modelDataTrajectory[i]);
+          workerPerformance += ipm::fromModelData(modelDataTrajectory[i]);
         }
-        workerPerformance += fromIpmData(ipmDataTrajectory[i]);
+        workerPerformance += ipm::fromIpmData(ipmDataTrajectory[i]);
       }
 
       i = timeIndex++;
@@ -429,8 +433,8 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
       if (settings_.projectStateInputEqualityConstraints) {
         projectedModelDataTrajectory[i] = modelDataTrajectory[i];
       }
-      workerPerformance += fromModelData(modelDataTrajectory[N]);
-      workerPerformance += fromIpmData(ipmDataTrajectory[N]);
+      workerPerformance += ipm::fromModelData(modelDataTrajectory[N]);
+      workerPerformance += ipm::fromIpmData(ipmDataTrajectory[N]);
     }
 
     // Accumulate! Same worker might run multiple tasks
@@ -444,6 +448,24 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
   // Sum performance of the threads
   auto totalPerformance = std::accumulate(std::next(performance.begin()), performance.end(), performance.front());
   return totalPerformance;
+}
+
+ipm::PerformanceIndex STOC::approximateSwitchingTimeOptimizationProblem(scalar_t initTime, scalar_t finalTime, 
+                                                                        const ModeSchedule& referenceModeSchedule, 
+                                                                        const ModeSchedule& stoModeSchedule, 
+                                                                        ipm::IpmVariables& stoIpmVariables,
+                                                                        scalar_t barrierParameter, bool initStoIpmVariables) {
+  // create alias
+  auto& stoModelData = stoData_.stoModelData;
+  auto& stoIpmData = ipmData_.stoIpmData;
+
+  approximateStoProblem(optimalControlProblemStock_[0], initTime, finalTime, referenceModeSchedule, stoModeSchedule, stoModelData);
+  if (initStoIpmVariables) {
+    initIpmVariables(stoModelData, stoIpmVariables, barrierParameter);
+  }
+  eliminateIpmVariablesSTO(stoIpmVariables, stoModelData, stoIpmData, barrierParameter);
+  const auto performance = ipm::fromStoModelData(stoModelData) + ipm::fromIpmData(stoIpmData);
+  return performance;
 }
 
 STOC::StepSizes STOC::selectStepSizes(const std::vector<Grid>& timeDiscretization, 
