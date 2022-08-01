@@ -147,7 +147,8 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
   // Directions
   vector_array_t dx, du, dlmd;
-  scalar_array_t dts(numPhases, 0.0);
+  scalar_array_t dts;
+  if (numPhases > 0) dts.resize(numPhases-1); 
   std::vector<ipm::IpmVariablesDirection> ipmVariablesDirectionTrajectory;
   ipm::IpmVariablesDirection stoIpmVariablesDirection;
 
@@ -160,16 +161,16 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     // Make QP approximation of nonlinear primal-dual interior point method
     const auto timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
     linearQuadraticApproximationTimer_.startTimer();
-    const bool initIpmVariablesTrajectory = (iter == 0);
+    const bool initIpmVariables = (iter == 0);
     auto performanceIndex = approximateOptimalControlProblem(timeDiscretization, initState, stateTrajectory, inputTrajectory, 
                                                              costateTrajectory, ipmVariablesTrajectory, barrierParameter, 
-                                                             initIpmVariablesTrajectory);
+                                                             initIpmVariables);
     performanceIndex += approximateSwitchingTimeOptimizationProblem(initTime, finalTime, initModeSchedule, modeSchedule,
-                                                                    stoIpmVariables, barrierParameter, initIpmVariablesTrajectory);
+                                                                    stoIpmVariables, barrierParameter, initIpmVariables);
     ipmPerformanceIndeces_.push_back(performanceIndex);
     performanceIndeces_.push_back(convert(performanceIndex));
     linearQuadraticApproximationTimer_.endTimer();
-    
+
     // Reserve and resize directions
     const auto N = timeDiscretization.size() - 1;
     dx.resize(N + 1); du.resize(N); dlmd.resize(N + 1); 
@@ -186,6 +187,17 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     for (size_t i = 0; i < N + 1; ++i) {
       dlmd[i].resize(primalData_.modelDataTrajectory[i].stateDim);
     }
+
+    // for (int nn=0; nn<=N; ++nn) {
+    //   std::cout << "\ni: " << nn << std::endl;
+    //   std::cout << "time:  " << timeDiscretization[nn].time << std::endl;
+    //   std::cout << "mode:  " << timeDiscretization[nn].mode << std::endl;
+    //   std::cout << "phase: " << timeDiscretization[nn].phase << std::endl;
+    //   std::cout << primalData_.modelDataTrajectory[nn].cost << std::endl;
+    //   std::cout << primalData_.modelDataTrajectory[nn].hamiltonian << std::endl;
+    // }
+    // return;
+    
 
     // Solve QP
     riccatiRecursionTimer_.startTimer();
@@ -224,10 +236,11 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
       ipmVariablesDirectionTrajectory.push_back(ipm::IpmVariablesDirection());
     }
     linesearchTimer_.startTimer();
-    const auto stepSizes = selectStepSizes(timeDiscretization, ipmVariablesTrajectory, dx, du, dlmd, dts, ipmVariablesDirectionTrajectory,
+    const auto stepSizes = selectStepSizes(timeDiscretization, ipmVariablesTrajectory, dx, du, dlmd, ipmVariablesDirectionTrajectory,
                                            settings_.fractionToBoundaryMargin);
-    const scalar_t primalStepSize = stepSizes.primalStepSize;
-    const scalar_t dualStepSize = stepSizes.dualStepSize;
+    const auto stepSizesSto = selectStepSizes(stoIpmVariables, dts, stoIpmVariablesDirection, settings_.fractionToBoundaryMargin);
+    const scalar_t primalStepSize = std::min(stepSizes.primalStepSize, stepSizesSto.primalStepSize);
+    const scalar_t dualStepSize = std::min(stepSizes.dualStepSize, stepSizesSto.dualStepSize);
     linesearchTimer_.endTimer();
     if (settings_.printLinesearch) {
       std::cerr << "[Linesearch] Primal step size: " << primalStepSize << ", Dual step size: " << dualStepSize << "\n";
@@ -372,6 +385,10 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
     ipmVariablesTrajectory.resize(N + 1);
   }
 
+  const auto numGrids = getNumGrids(timeDiscretization);
+  for (int i=0; i<numGrids.size(); ++i) {
+    std::cout << "numGrids[" << i << "]: " << numGrids[i] << std::endl;
+  }
   std::vector<ipm::PerformanceIndex> performance(settings_.nThreads, ipm::PerformanceIndex());
 
   std::atomic_int timeIndex{0};
@@ -410,6 +427,8 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
         if (initIpmVariablesTrajectory) {
           ipm::initIpmVariables(modelDataTrajectory[i], ipmVariablesTrajectory[i], barrierParameter);
         }
+        modelDataTrajectory[i].hamiltonian *= (1.0 / numGrids[timeDiscretization[i].phase]);
+        modelDataTrajectory[i].hamiltonian.dfdt *= (1.0 / numGrids[timeDiscretization[i].phase]);
         ipm::eliminateIpmVariablesIntermediateLQ(ipmVariablesTrajectory[i], modelDataTrajectory[i], ipmDataTrajectory[i], barrierParameter);
         if (settings_.projectStateInputEqualityConstraints) {
           ipm::projectIntermediateLQ(modelDataTrajectory[i], constraintProjection[i], projectedModelDataTrajectory[i]);
@@ -471,7 +490,7 @@ ipm::PerformanceIndex STOC::approximateSwitchingTimeOptimizationProblem(scalar_t
 
 STOC::StepSizes STOC::selectStepSizes(const std::vector<Grid>& timeDiscretization, 
                                       const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory, const vector_array_t& dx, 
-                                      const vector_array_t& du, const vector_array_t& dlmd, const scalar_array_t& dts,
+                                      const vector_array_t& du, const vector_array_t& dlmd,
                                       std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory, 
                                       scalar_t fractionToBoundaryMargin) {
   // Problem horizon
@@ -480,37 +499,29 @@ STOC::StepSizes STOC::selectStepSizes(const std::vector<Grid>& timeDiscretizatio
   const auto& modelDataTrajectory = primalData_.modelDataTrajectory;
   const auto& ipmDataTrajectory = ipmData_.ipmDataTrajectory;
 
-  scalar_array_t primalStepSize(settings_.nThreads, 0.0);
-  scalar_array_t dualStepSize(settings_.nThreads, 0.0);
+  scalar_array_t primalStepSize(N+1, 1.0);
+  scalar_array_t dualStepSize(N+1, 1.0);
 
   std::atomic_int timeIndex{0};
   auto parallelTask = [&](int workerId) {
-    // Get worker specific resources
-    scalar_t workerPrimalStepSize = 1.0;
-    scalar_t workerDualStepSize = 1.0;
-
     int i = timeIndex++;
     while (i < N) {
       if (timeDiscretization[i].event == Grid::Event::PreEvent) {
         // Event node
         ipm::retrivePreJumpIpmVariablesDirection(modelDataTrajectory[i], ipmDataTrajectory[i], ipmVariablesTrajectory[i], dx[i], 
                                                  ipmVariablesDirectionTrajectory[i]);
-        workerPrimalStepSize = std::min(ipm::preJumpPrimalStepSize(ipmDataTrajectory[i], ipmVariablesTrajectory[i], 
-                                                                   ipmVariablesDirectionTrajectory[i], fractionToBoundaryMargin), 
-                                        workerPrimalStepSize);
-        workerDualStepSize = std::min(ipm::preJumpDualStepSize(ipmDataTrajectory[i], ipmVariablesTrajectory[i], 
-                                                               ipmVariablesDirectionTrajectory[i], fractionToBoundaryMargin), 
-                                      workerDualStepSize);
+        primalStepSize[i] = ipm::preJumpPrimalStepSize(ipmDataTrajectory[i], ipmVariablesTrajectory[i], 
+                                                       ipmVariablesDirectionTrajectory[i], fractionToBoundaryMargin);
+        dualStepSize[i] = ipm::preJumpDualStepSize(ipmDataTrajectory[i], ipmVariablesTrajectory[i], 
+                                                   ipmVariablesDirectionTrajectory[i], fractionToBoundaryMargin);
       } else {
         // Normal, intermediate node
         ipm::retriveIntermediateIpmVariablesDirection(modelDataTrajectory[i], ipmDataTrajectory[i], ipmVariablesTrajectory[i], dx[i], du[i],
                                                       ipmVariablesDirectionTrajectory[i]);
-        workerPrimalStepSize = std::min(ipm::intermediatePrimalStepSize(ipmDataTrajectory[i], ipmVariablesTrajectory[i], 
-                                                                        ipmVariablesDirectionTrajectory[i], fractionToBoundaryMargin), 
-                                        workerPrimalStepSize);
-        workerDualStepSize = std::min(ipm::intermediateDualStepSize(ipmDataTrajectory[i], ipmVariablesTrajectory[i], 
-                                                                    ipmVariablesDirectionTrajectory[i], fractionToBoundaryMargin), 
-                                      workerDualStepSize);
+        primalStepSize[i] = ipm::intermediatePrimalStepSize(ipmDataTrajectory[i], ipmVariablesTrajectory[i], 
+                                                            ipmVariablesDirectionTrajectory[i], fractionToBoundaryMargin);
+        dualStepSize[i] = ipm::intermediateDualStepSize(ipmDataTrajectory[i], ipmVariablesTrajectory[i], 
+                                                        ipmVariablesDirectionTrajectory[i], fractionToBoundaryMargin);
       }
       i = timeIndex++;
     }
@@ -518,23 +529,34 @@ STOC::StepSizes STOC::selectStepSizes(const std::vector<Grid>& timeDiscretizatio
     if (i == N) {  // Only one worker will execute this
         ipm::retriveFinalIpmVariablesDirection(modelDataTrajectory[N], ipmDataTrajectory[N], ipmVariablesTrajectory[N], dx[N], 
                                                ipmVariablesDirectionTrajectory[N]);
-        workerPrimalStepSize = std::min(ipm::finalPrimalStepSize(ipmDataTrajectory[i], ipmVariablesTrajectory[i],   
-                                                                 ipmVariablesDirectionTrajectory[i], fractionToBoundaryMargin), 
-                                        workerPrimalStepSize);
-        workerDualStepSize = std::min(ipm::finalDualStepSize(ipmDataTrajectory[i], ipmVariablesTrajectory[i], 
-                                                             ipmVariablesDirectionTrajectory[i], fractionToBoundaryMargin), 
-                                      workerDualStepSize);
+        primalStepSize[i] = ipm::finalPrimalStepSize(ipmDataTrajectory[N], ipmVariablesTrajectory[N],   
+                                                     ipmVariablesDirectionTrajectory[N], fractionToBoundaryMargin);
+        dualStepSize[i] = ipm::finalDualStepSize(ipmDataTrajectory[N], ipmVariablesTrajectory[N], 
+                                                 ipmVariablesDirectionTrajectory[N], fractionToBoundaryMargin);
     }
-
-    // Accumulate! Same worker might run multiple tasks
-    primalStepSize[workerId] = workerPrimalStepSize;
-    dualStepSize[workerId] = workerDualStepSize;
   };
   runParallel(std::move(parallelTask));
 
   StepSizes stepSizes;
   stepSizes.primalStepSize = *std::min_element(primalStepSize.begin(), primalStepSize.end());
   stepSizes.dualStepSize = *std::min_element(dualStepSize.begin(), dualStepSize.end());
+  return stepSizes;
+}
+
+STOC::StepSizes STOC::selectStepSizes(const ipm::IpmVariables& stoIpmVariables, const scalar_array_t& dts, 
+                                      ipm::IpmVariablesDirection& stoIpmVariablesDirection, scalar_t fractionToBoundaryMargin) {
+  // create alias
+  const auto& stoModelData = stoData_.stoModelData;
+  const auto& stoIpmData = ipmData_.stoIpmData;
+  vector_t dts_(dts.size());
+  for (size_t i=0; i<dts.size(); ++i) {
+    dts_.coeffRef(i) = dts[i];
+  }
+
+  retriveStoIpmVariablesDirection(stoModelData, stoIpmData, stoIpmVariables, dts_, stoIpmVariablesDirection);
+  StepSizes stepSizes;
+  stepSizes.primalStepSize = stoPrimalStepSize(stoIpmData, stoIpmVariables, stoIpmVariablesDirection, fractionToBoundaryMargin);
+  stepSizes.dualStepSize   = stoDualStepSize(stoIpmData, stoIpmVariables, stoIpmVariablesDirection, fractionToBoundaryMargin);
   return stepSizes;
 }
 

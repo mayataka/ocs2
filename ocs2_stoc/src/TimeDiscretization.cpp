@@ -35,14 +35,13 @@ std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t f
   std::vector<Grid> timeDiscretizationGrid;
   timeDiscretizationGrid.reserve(timeDiscretization.size());
   size_t phase = 0;
-  size_t modePrev = modeSchedule.modeAtTime(timeDiscretization.front().time);
   for (const auto& e : timeDiscretization) {
-    const auto mode = modeSchedule.modeAtTime(e.time);
-    if (mode != modePrev) {
+    auto mode = modeSchedule.modeAtTime(e.time);
+    if (e.event == AnnotatedTime::Event::PostEvent) {
+      mode = modeSchedule.modeAtTime(e.time+dt_min); // TODO: test this carefully 
       ++phase;
-    }
+    } 
     timeDiscretizationGrid.emplace_back(e.time, mode, phase, castEvent(e.event));
-    modePrev = mode;
   }
   if (!isStoEnabled.empty()) {
     assert(isStoEnabled.size() == modeSchedule.eventTimes.size());
@@ -113,6 +112,24 @@ std::vector<AnnotatedTime> multiPhaseTimeDiscretization(scalar_t initTime, scala
     timeDiscretization[j].time = lastEventTime + (j-lastPostEventGrid) * dtPhase;
   }
   return timeDiscretization;
+}
+
+size_array_t getNumGrids(const std::vector<Grid>& timeDiscretizationGrid) {
+  size_array_t numGrids;
+  numGrids.reserve(timeDiscretizationGrid.back().phase+1);
+  size_t phase = timeDiscretizationGrid.front().phase;
+  size_t gridCount = 0;
+  for (const auto grid : timeDiscretizationGrid) {
+    if (grid.phase == phase) {
+      if (grid.event != Grid::Event::PreEvent) ++gridCount;
+    } else {
+      numGrids.push_back(gridCount);
+      phase = grid.phase;
+      gridCount = 0;
+    }
+  }
+  numGrids.push_back(gridCount);
+  return numGrids;
 }
 
 std::string toString(const Grid::Event& event) {

@@ -117,7 +117,9 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints) {
   // check constraint satisfaction
   for (int i = 0; i < primalSolution.timeTrajectory_.size()-1; i++) {
     if (primalSolution.inputTrajectory_[i].size() > 0) {
-      EXPECT_NEAR(primalSolution.stateTrajectory_[i].dot(primalSolution.inputTrajectory_[i]), 0.0, 1.0e-06);
+      const scalar_t projectionConstraintViolation = primalSolution.stateTrajectory_[i].dot(primalSolution.inputTrajectory_[i]);
+      scalar_t projectionConstraintSSE = projectionConstraintViolation * projectionConstraintViolation;
+      EXPECT_LT(std::abs(projectionConstraintViolation), 1.0e-06);
     }
   }
 
@@ -200,7 +202,8 @@ TEST(test_circular_kinematics, solve_projected_EqConstraints_WithIneqConstraints
   // check constraint satisfaction
   for (int i = 0; i < primalSolution.timeTrajectory_.size()-1; i++) {
     if (primalSolution.inputTrajectory_[i].size() > 0) {
-      EXPECT_NEAR(primalSolution.stateTrajectory_[i].dot(primalSolution.inputTrajectory_[i]), 0.0, 1.0e-06);
+      const scalar_t projectionConstraintViolation = primalSolution.stateTrajectory_[i].dot(primalSolution.inputTrajectory_[i]);
+      EXPECT_LT(std::abs(projectionConstraintViolation), 1.0e-06);
     }
   }
 

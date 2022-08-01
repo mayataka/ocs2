@@ -2,6 +2,7 @@
 #include <ocs2_ipm/core/InteriorPointMethod.h>
 
 #include <cassert>
+#include <iostream>
 
 namespace ocs2 {
 
