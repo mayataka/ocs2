@@ -63,7 +63,7 @@ ScalarFunctionQuadraticApproximation StoCostCollection::getQuadraticApproximatio
   // Make sure that input derivatives have zero size
   cost.dfdu.resize(0);
   cost.dfduu.resize(0, 0);
-  cost.dfdux.resize(0, 0);
+  cost.dfdux.resize(0, getNumValidSwitchingTimes(initTime, finalTime, referenceModeSchedule));
 
   return cost;
 }

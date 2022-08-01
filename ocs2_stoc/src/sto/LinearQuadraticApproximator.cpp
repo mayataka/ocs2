@@ -44,8 +44,10 @@ StoModelData approximateStoProblem(const ipm::OptimalControlProblem& problem, sc
 scalar_t computeCost(const ipm::OptimalControlProblem& problem, scalar_t initTime, scalar_t finalTime, 
                      const ModeSchedule& referenceModeSchedule, const ModeSchedule& stoModeSchedule) {
   const auto& preComputation = *problem.preComputationPtr;
-
-  return problem.stoCostPtr->getValue(initTime, finalTime, referenceModeSchedule, stoModeSchedule, preComputation);
+  if (problem.stoCostPtr)
+    return problem.stoCostPtr->getValue(initTime, finalTime, referenceModeSchedule, stoModeSchedule, preComputation);
+  else 
+    return 0.0;
 }
 
 /******************************************************************************************************/
@@ -54,8 +56,10 @@ scalar_t computeCost(const ipm::OptimalControlProblem& problem, scalar_t initTim
 ScalarFunctionQuadraticApproximation approximateCost(const ipm::OptimalControlProblem& problem, scalar_t initTime, scalar_t finalTime, 
                                                      const ModeSchedule& stoModeSchedule, const ModeSchedule& referenceModeSchedule) {
   const auto& preComputation = *problem.preComputationPtr;
-
-  return problem.stoCostPtr->getQuadraticApproximation(initTime, finalTime, referenceModeSchedule, stoModeSchedule, preComputation);
+  if (problem.stoCostPtr)
+    return problem.stoCostPtr->getQuadraticApproximation(initTime, finalTime, referenceModeSchedule, stoModeSchedule, preComputation);
+  else 
+    ScalarFunctionQuadraticApproximation(getNumValidSwitchingTimes(initTime, finalTime, referenceModeSchedule), 0);
 }
 
 }  // namespace ocs2

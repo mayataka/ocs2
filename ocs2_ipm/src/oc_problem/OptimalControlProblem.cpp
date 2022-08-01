@@ -36,6 +36,9 @@ OptimalControlProblem::OptimalControlProblem()
       preJumpInequalityLagrangianPtr(new StateCostCollection),
       finalEqualityLagrangianPtr(new StateCostCollection),
       finalInequalityLagrangianPtr(new StateCostCollection),
+      /* STO */
+      stoCostPtr(new StoCostCollection),
+      stoConstraintPtr(new StoConstraintCollection),
       /* Misc. */
       preComputationPtr(new PreComputation),
       targetTrajectoriesPtr(nullptr) {}
