@@ -79,5 +79,7 @@ std::string checkSize(int constraintDim, const InteriorPointMethodData& data, co
 std::string checkSize(int constraintDim, int stateDim, int inputDim, 
                       const InteriorPointMethodData& data, const std::string& dataName);
 
+std::ostream& operator<<(std::ostream& out, const InteriorPointMethodData& data);
+
 }  // namespace ipm
 }  // namespace ocs2

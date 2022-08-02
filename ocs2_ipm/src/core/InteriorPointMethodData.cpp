@@ -83,5 +83,13 @@ std::string checkSize(int constraintDim, int stateDim, int inputDim,
   return errorDescription.str();
 }
 
+std::ostream& operator<<(std::ostream& out, const InteriorPointMethodData& data) {
+  out << "dim: " << data.dim << '\n';
+  out << "costBarrier: " << data.costBarrier << '\n';
+  out << "primalResidual: " << data.primalResidual.transpose() << '\n';
+  out << "complementarySlackness: " << data.complementarySlackness.transpose() << '\n';
+  return out;
+}
+
 }  // namespace ipm
 }  // namespace ocs2

@@ -13,7 +13,7 @@ void discretizeIntermediateLQ(const scalar_t dt, const vector_t& state, const ve
   modelData.cost.dfdu.noalias() += modelData.dynamics.dfdu.transpose() * costateNext; 
 
   // hamiltonian
-  modelData.hamiltonian.h = modelData.cost.f;
+  modelData.hamiltonian.h = modelData.cost.f + costateNext.dot(modelData.dynamics.f);
   modelData.hamiltonian.dhdx = modelData.cost.dfdx;
   modelData.hamiltonian.dhdu = modelData.cost.dfdu;
   modelData.hamiltonian.dfdt = modelData.dynamics.f;
