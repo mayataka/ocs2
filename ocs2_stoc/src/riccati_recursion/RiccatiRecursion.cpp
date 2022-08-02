@@ -42,11 +42,12 @@ void RiccatiRecursion::backwardRecursion(const std::vector<Grid>& timeDiscretiza
 
 void RiccatiRecursion::forwardRecursion(const std::vector<Grid>& timeDiscretizationGrid, const std::vector<ipm::ModelData>& modelData,
                                         vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, 
-                                        vector_array_t& costateTrajectory, scalar_array_t& switchingTimes) {
+                                        vector_array_t& costateTrajectory, scalar_array_t& switchingTimesOutput) {
   const size_t N = timeDiscretizationGrid.size() - 1;
-  const size_t numPhases = timeDiscretizationGrid.back().phase;
+  const size_t numPhases = timeDiscretizationGrid.back().phase + 1;
   const auto phase = timeDiscretizationGrid[0].phase;
   const bool sto   = timeDiscretizationGrid[0].sto;
+  scalar_array_t switchingTimes(numPhases, 0.0);
   switchingTimes[phase] = 0.0;
   if (sto) {
     // This is the switching time from phase to phase+1
@@ -73,6 +74,10 @@ void RiccatiRecursion::forwardRecursion(const std::vector<Grid>& timeDiscretizat
     }
   }
   ForwardRiccatiRecursion::computeCostate(riccati_[N], stateTrajectory[N], costateTrajectory[N]);
+  assert(switchingTimesOutput.size() == numPhases-1);
+  for (int i=0; i<switchingTimesOutput.size(); ++i) {
+    switchingTimesOutput[i] = switchingTimes[i+1];
+  }
 }
 
 } // namespace stoc

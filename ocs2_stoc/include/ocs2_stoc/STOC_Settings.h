@@ -40,8 +40,6 @@ struct Settings {
 
   // STO strategy
   std::unordered_map<size_t, bool> isStoEnabledMode; // If the switching time associated with the specified mode is considered as the optimization variable or not.
-  std::unordered_map<size_t, scalar_t> minimumDwellTimesMode; // Minimum dwell time of the specified mode. 
-  scalar_t minimumDwellTime = 0.02; // Minimum dwell time for phases that are not specified by minimumDwellTimes. 
 
   // Riccati option
   RiccatiSolverMode riccatiSolverMode = RiccatiSolverMode::Robust;

@@ -112,6 +112,8 @@ class STOC : public SolverBase {
                                                                     ipm::IpmVariables& stoIpmVariables,
                                                                     scalar_t barrierParameter, bool initStoIpmVariables);
 
+  void summarizeModelData(const std::vector<Grid>& timeDiscretization);
+
   struct StepSizes {
     scalar_t primalStepSize, dualStepSize;
   };

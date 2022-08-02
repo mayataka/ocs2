@@ -147,8 +147,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
   // Directions
   vector_array_t dx, du, dlmd;
-  scalar_array_t dts;
-  if (numPhases > 0) dts.resize(numPhases-1); 
+  scalar_array_t dts(numPhases-1, 0.0);
   std::vector<ipm::IpmVariablesDirection> ipmVariablesDirectionTrajectory;
   ipm::IpmVariablesDirection stoIpmVariablesDirection;
 
@@ -167,6 +166,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
                                                              initIpmVariables);
     performanceIndex += approximateSwitchingTimeOptimizationProblem(initTime, finalTime, initModeSchedule, modeSchedule,
                                                                     stoIpmVariables, barrierParameter, initIpmVariables);
+    summarizeModelData(timeDiscretization);
     ipmPerformanceIndeces_.push_back(performanceIndex);
     performanceIndeces_.push_back(convert(performanceIndex));
     linearQuadraticApproximationTimer_.endTimer();
@@ -193,9 +193,17 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     //   std::cout << "time:  " << timeDiscretization[nn].time << std::endl;
     //   std::cout << "mode:  " << timeDiscretization[nn].mode << std::endl;
     //   std::cout << "phase: " << timeDiscretization[nn].phase << std::endl;
-    //   std::cout << primalData_.modelDataTrajectory[nn].cost << std::endl;
+    //   // std::cout << primalData_.modelDataTrajectory[nn].dynamics << std::endl;
+    //   // std::cout << primalData_.modelDataTrajectory[nn].cost << std::endl;
     //   std::cout << primalData_.modelDataTrajectory[nn].hamiltonian << std::endl;
     // }
+    // // std::cout << "STO: slack:  " << stoIpmVariables.slackDualStateIneqConstraint.slack.transpose() << std::endl;
+    // // std::cout << "STO: dual:   " << stoIpmVariables.slackDualStateIneqConstraint.dual.transpose()  << std::endl;
+    // // std::cout << "STO: constr: " << stoData_.stoModelData.stoConstraint << std::endl;
+    // // std::cout << "STO: ipmdata:" << ipmData_.stoIpmData.dataStateIneqConstraint  << std::endl;
+    // // std::cout << "STO: cost:   " << stoData_.stoModelData.stoCost << std::endl;
+    // std::cout << "STO: df2dt2: " << stoData_.stoModelData.stoCost.dfdxx << std::endl;
+    // std::cout << "STO: dfdt:   " << stoData_.stoModelData.stoCost.dfdx.transpose() << std::endl;
     // return;
     
 
@@ -386,9 +394,7 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
   }
 
   const auto numGrids = getNumGrids(timeDiscretization);
-  for (int i=0; i<numGrids.size(); ++i) {
-    std::cout << "numGrids[" << i << "]: " << numGrids[i] << std::endl;
-  }
+
   std::vector<ipm::PerformanceIndex> performance(settings_.nThreads, ipm::PerformanceIndex());
 
   std::atomic_int timeIndex{0};
@@ -427,8 +433,7 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
         if (initIpmVariablesTrajectory) {
           ipm::initIpmVariables(modelDataTrajectory[i], ipmVariablesTrajectory[i], barrierParameter);
         }
-        modelDataTrajectory[i].hamiltonian *= (1.0 / numGrids[timeDiscretization[i].phase]);
-        modelDataTrajectory[i].hamiltonian.dfdt *= (1.0 / numGrids[timeDiscretization[i].phase]);
+        modelDataTrajectory[i].hamiltonian *= (1.0/static_cast<scalar_t>(numGrids[timeDiscretization[i].phase]));
         ipm::eliminateIpmVariablesIntermediateLQ(ipmVariablesTrajectory[i], modelDataTrajectory[i], ipmDataTrajectory[i], barrierParameter);
         if (settings_.projectStateInputEqualityConstraints) {
           ipm::projectIntermediateLQ(modelDataTrajectory[i], constraintProjection[i], projectedModelDataTrajectory[i]);
@@ -484,8 +489,25 @@ ipm::PerformanceIndex STOC::approximateSwitchingTimeOptimizationProblem(scalar_t
     initIpmVariables(stoModelData, stoIpmVariables, barrierParameter);
   }
   eliminateIpmVariablesSTO(stoIpmVariables, stoModelData, stoIpmData, barrierParameter);
+
   const auto performance = ipm::fromStoModelData(stoModelData) + ipm::fromIpmData(stoIpmData);
   return performance;
+}
+
+void STOC::summarizeModelData(const std::vector<Grid>& timeDiscretization) {
+  // Problem horizon
+  const int N = static_cast<int>(timeDiscretization.size()) - 1;
+  // create alias
+  auto& modelDataTrajectory = primalData_.modelDataTrajectory;
+  const auto& stoModelData = stoData_.stoModelData;
+
+  for (size_t i = 0; i < N; ++i) {
+    if (timeDiscretization[i].event == Grid::Event::PostEvent) {
+      const auto switchIndex = timeDiscretization[i].phase - 1;
+      modelDataTrajectory[i].hamiltonian.h += stoModelData.stoCost.dfdx.coeff(switchIndex);
+      modelDataTrajectory[i].hamiltonian.dhdt = stoModelData.stoCost.dfdxx.coeff(switchIndex, switchIndex); // diagonal approximation
+    }
+  }
 }
 
 STOC::StepSizes STOC::selectStepSizes(const std::vector<Grid>& timeDiscretization, 

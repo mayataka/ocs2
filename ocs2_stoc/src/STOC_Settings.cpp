@@ -64,9 +64,6 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   // std::vector<bool> stoEnableInput;
   // loadData::loadStdVector(filename, fieldName + ".stoEnable", stoEnableInput, verbose);
 
-  // std::vector<bool> minimumDwellTimesInput;
-  // loadData::loadStdVector(filename, fieldName + ".minimumDwellTimes", minimumDwellTimesInput, verbose);
-
   loadData::loadPtreeValue(pt, settings.printSolverStatus, fieldName + ".printSolverStatus", verbose);
   loadData::loadPtreeValue(pt, settings.printSolverStatistics, fieldName + ".printSolverStatistics", verbose);
   loadData::loadPtreeValue(pt, settings.printLinesearch, fieldName + ".printLinesearch", verbose);

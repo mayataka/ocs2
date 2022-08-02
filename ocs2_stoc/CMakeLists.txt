@@ -114,32 +114,32 @@ install(DIRECTORY include/${PROJECT_NAME}/
 #   gtest_main
 # )
 
-catkin_add_gtest(Exp0Test_${PROJECT_NAME}
-  test/Exp0Test.cpp
+# catkin_add_gtest(Exp0Test_${PROJECT_NAME}
+#   test/Exp0Test.cpp
+# )
+# add_dependencies(Exp0Test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+# target_link_libraries(Exp0Test_${PROJECT_NAME} 
+#   ${PROJECT_NAME}
+#   ${catkin_LIBRARIES}
+#   gtest_main
+# )
+
+catkin_add_gtest(Exp1Test_${PROJECT_NAME}
+  test/Exp1Test.cpp
 )
-add_dependencies(Exp0Test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(Exp0Test_${PROJECT_NAME} 
+add_dependencies(Exp1Test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(Exp1Test_${PROJECT_NAME} 
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
   gtest_main
 )
 
-# catkin_add_gtest(Exp1Test_${PROJECT_NAME}
-#   test/Exp1Test.cpp
-# )
-# add_dependencies(Exp1Test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-# target_link_libraries(Exp1Test_${PROJECT_NAME} 
-#   ${PROJECT_NAME}
-#   ${catkin_LIBRARIES}
-#   gtest_main
-# )
-
-# catkin_add_gtest(testCircularKinematics_${PROJECT_NAME}
-#   test/testCircularKinematics.cpp
-# )
-# add_dependencies(testCircularKinematics_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-# target_link_libraries(testCircularKinematics_${PROJECT_NAME} 
-#   ${PROJECT_NAME}
-#   ${catkin_LIBRARIES}
-#   gtest_main
-# )
+catkin_add_gtest(testCircularKinematics_${PROJECT_NAME}
+  test/testCircularKinematics.cpp
+)
+add_dependencies(testCircularKinematics_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(testCircularKinematics_${PROJECT_NAME} 
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
