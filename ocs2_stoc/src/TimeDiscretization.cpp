@@ -54,19 +54,55 @@ std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t f
       e.sto = isStoEnabled[skipInitPhases+phase];
       if (skipInitPhases+phase+1 < isStoEnabled.size()) {
         e.stoNext = isStoEnabled[skipInitPhases+phase+1];
-      }
-      else {
+      } else {
         e.stoNext = false;
       }
       if (skipInitPhases+phase+2 < isStoEnabled.size()) {
         e.stoNextNext = isStoEnabled[skipInitPhases+phase+2];
-      }
-      else {
+      } else {
         e.stoNextNext = false;
       }
     }
   }
   return timeDiscretizationGrid; 
+}
+
+void updateTimeIntervals(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule, std::vector<Grid>& timeDiscretization) {
+  const int N = static_cast<int>(timeDiscretization.size()) - 1;
+  if (modeSchedule.eventTimes.empty()) return;
+
+  int eventIndex = 0;
+  for (int i=0; i<N; ++i) {
+    if (timeDiscretization[i].event == Grid::Event::PreEvent) {
+      timeDiscretization[i].time = modeSchedule.eventTimes[eventIndex];
+    }
+    else if (timeDiscretization[i].event == Grid::Event::PostEvent) {
+      timeDiscretization[i].time = modeSchedule.eventTimes[eventIndex];
+      ++eventIndex;
+    }
+  }
+
+  int lastPostEventGrid = 0;
+  scalar_t lastEventTime = initTime;
+  for (int i=0; i<N; ++i) {
+    if (timeDiscretization[i].event == Grid::Event::PreEvent) {
+      const int numGrids = i - lastPostEventGrid;
+      const scalar_t dt = (timeDiscretization[i].time - lastEventTime) / numGrids;
+      for (int j=lastPostEventGrid+1; j<i; ++j) {
+        timeDiscretization[j].time = lastEventTime + (j - lastPostEventGrid) * dt;
+      }
+    }
+    else if (timeDiscretization[i].event == Grid::Event::PostEvent) {
+      lastPostEventGrid = i;
+      lastEventTime = timeDiscretization[i].time;
+    }
+  }
+  const int numGrids = N - lastPostEventGrid;
+  const scalar_t dt = (timeDiscretization[N].time - lastEventTime) / numGrids;
+  for (int j=lastPostEventGrid+1; j<N; ++j) {
+    timeDiscretization[j].time = lastEventTime + (j - lastPostEventGrid) * dt;
+  }
+  timeDiscretization[N].time = finalTime;
 }
 
 std::vector<AnnotatedTime> multiPhaseTimeDiscretization(scalar_t initTime, scalar_t finalTime, scalar_t dt,
@@ -115,20 +151,12 @@ std::vector<AnnotatedTime> multiPhaseTimeDiscretization(scalar_t initTime, scala
 }
 
 size_array_t getNumGrids(const std::vector<Grid>& timeDiscretizationGrid) {
-  size_array_t numGrids;
-  numGrids.reserve(timeDiscretizationGrid.back().phase+1);
-  size_t phase = timeDiscretizationGrid.front().phase;
-  size_t gridCount = 0;
-  for (const auto grid : timeDiscretizationGrid) {
-    if (grid.phase == phase) {
-      if (grid.event != Grid::Event::PreEvent) ++gridCount;
-    } else {
-      numGrids.push_back(gridCount);
-      phase = grid.phase;
-      gridCount = 0;
-    }
+  size_array_t numGrids(timeDiscretizationGrid.back().phase+1, 0);
+  for (size_t i=0; i < timeDiscretizationGrid.size()-1; ++i) {
+    if (timeDiscretizationGrid[i].event != Grid::Event::PreEvent) {
+      ++numGrids[timeDiscretizationGrid[i].phase];
+    } 
   }
-  numGrids.push_back(gridCount);
   return numGrids;
 }
 
@@ -164,7 +192,8 @@ std::ostream& operator<<(std::ostream& stream, const std::vector<Grid>& timeDisc
            << ", event: " << toString(e.event) 
            << ", sto: " << std::boolalpha << e.sto
            << ", stoNext: " << std::boolalpha << e.stoNext
-           << ", stoNextNext: " << std::boolalpha << e.stoNextNext << "\n";
+           << ", stoNextNext: " << std::boolalpha << e.stoNextNext 
+           << "\n";
   }
   return stream;
 }

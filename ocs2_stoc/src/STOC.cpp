@@ -14,7 +14,7 @@ namespace ocs2 {
 STOC::STOC(stoc::Settings settings, const ipm::OptimalControlProblem& optimalControlProblem, const Initializer& initializer)
     : SolverBase(),
       settings_(std::move(settings)),
-      riccatiRecursion_(),
+      riccatiRecursion_(settings_.riccatiSolverMode, settings_.switchingTimeTrustRegionRadius, settings_.enableSwitchingTimeTrustRegion),
       threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority) {
   Eigen::setNbThreads(1);  // No multithreading within Eigen.
   Eigen::initParallel();
@@ -151,6 +151,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   std::vector<ipm::IpmVariablesDirection> ipmVariablesDirectionTrajectory;
   ipm::IpmVariablesDirection stoIpmVariablesDirection;
 
+  auto timeDiscretization = initTimeDiscretization;
   size_t iter = 0;
   auto convergence = Convergence::FALSE;
   while (convergence == Convergence::FALSE) {
@@ -158,7 +159,8 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
       std::cerr << "\nSTOC iteration: " << iter << " (barrier parameter: " << barrierParameter << ")\n";
     }
     // Make QP approximation of nonlinear primal-dual interior point method
-    const auto timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
+    updateTimeIntervals(initTime, finalTime, modeSchedule, timeDiscretization);
+    // timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule, isStoEnabled);
     linearQuadraticApproximationTimer_.startTimer();
     const bool initIpmVariables = (iter == 0);
     auto performanceIndex = approximateOptimalControlProblem(timeDiscretization, initState, stateTrajectory, inputTrajectory, 
@@ -187,25 +189,6 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     for (size_t i = 0; i < N + 1; ++i) {
       dlmd[i].resize(primalData_.modelDataTrajectory[i].stateDim);
     }
-
-    // for (int nn=0; nn<=N; ++nn) {
-    //   std::cout << "\ni: " << nn << std::endl;
-    //   std::cout << "time:  " << timeDiscretization[nn].time << std::endl;
-    //   std::cout << "mode:  " << timeDiscretization[nn].mode << std::endl;
-    //   std::cout << "phase: " << timeDiscretization[nn].phase << std::endl;
-    //   // std::cout << primalData_.modelDataTrajectory[nn].dynamics << std::endl;
-    //   // std::cout << primalData_.modelDataTrajectory[nn].cost << std::endl;
-    //   std::cout << primalData_.modelDataTrajectory[nn].hamiltonian << std::endl;
-    // }
-    // // std::cout << "STO: slack:  " << stoIpmVariables.slackDualStateIneqConstraint.slack.transpose() << std::endl;
-    // // std::cout << "STO: dual:   " << stoIpmVariables.slackDualStateIneqConstraint.dual.transpose()  << std::endl;
-    // // std::cout << "STO: constr: " << stoData_.stoModelData.stoConstraint << std::endl;
-    // // std::cout << "STO: ipmdata:" << ipmData_.stoIpmData.dataStateIneqConstraint  << std::endl;
-    // // std::cout << "STO: cost:   " << stoData_.stoModelData.stoCost << std::endl;
-    // std::cout << "STO: df2dt2: " << stoData_.stoModelData.stoCost.dfdxx << std::endl;
-    // std::cout << "STO: dfdt:   " << stoData_.stoModelData.stoCost.dfdx.transpose() << std::endl;
-    // return;
-    
 
     // Solve QP
     riccatiRecursionTimer_.startTimer();
@@ -275,7 +258,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   }
 
   computeControllerTimer_.startTimer();
-  const auto timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
+  timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
   setPrimalSolution(timeDiscretization, std::move(stateTrajectory), std::move(inputTrajectory), std::move(costateTrajectory));
   computeControllerTimer_.endTimer();
   ++numProblems_;

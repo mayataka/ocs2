@@ -5,11 +5,12 @@
 namespace ocs2 {
 namespace stoc {
 
-RiccatiRecursion::RiccatiRecursion(RiccatiSolverMode riccatiSolverMode, scalar_t dts0_max)
+RiccatiRecursion::RiccatiRecursion(RiccatiSolverMode riccatiSolverMode, scalar_t switchingTimeTrustRegion, 
+                                   bool enableSwitchingTimeTrustRegion)
   : riccati_(),
     lqrPolicy_(),
     stoPolicy_(),
-    backwardRecursion_(riccatiSolverMode, dts0_max) {
+    backwardRecursion_(riccatiSolverMode, switchingTimeTrustRegion, enableSwitchingTimeTrustRegion) {
 }
 
 
@@ -30,12 +31,16 @@ void RiccatiRecursion::backwardRecursion(const std::vector<Grid>& timeDiscretiza
     const bool sto     = timeDiscretizationGrid[i].sto;
     const bool stoNext = timeDiscretizationGrid[i].stoNext;
     if (timeDiscretizationGrid[i].event == Grid::Event::PreEvent) {
-      assert(timeDiscretizationGrid[i+1].event == Grid::Event::PostEvent);
-      backwardRecursion_.computeIntermediate(riccati_[i+1], modelData[i], riccati_[i], lqrPolicy_[i], sto, stoNext);
-    } else {
       const auto phase = timeDiscretizationGrid[i].phase;
       backwardRecursion_.computePreJump(riccati_[i+1], modelData[i], riccati_[i], lqrPolicy_[i], stoPolicy_[phase+1], sto, stoNext);
+    } else {
+      backwardRecursion_.computeIntermediate(riccati_[i+1], modelData[i], riccati_[i], lqrPolicy_[i], sto, stoNext);
     }
+  }
+  if (timeDiscretizationGrid[0].sto) {
+    const bool stoNext = timeDiscretizationGrid[0].stoNext;
+    const auto phase = timeDiscretizationGrid[0].phase;
+    backwardRecursion_.modifyPreJump(riccati_[0], stoPolicy_[phase], stoNext);
   }
 }
 

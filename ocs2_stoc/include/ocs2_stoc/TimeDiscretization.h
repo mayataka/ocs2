@@ -56,6 +56,8 @@ std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t f
                                                    const std::vector<bool>& isStoEnabled = {},
                                                    scalar_t dt_min = 10.0 * numeric_traits::limitEpsilon<scalar_t>());
 
+void updateTimeIntervals(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule, std::vector<Grid>& timeDiscretization);
+
 /**
  * Decides on multi-phase time discretization along the horizon. Tries to makes step of dt, but will also ensure that eventtimes are part of the
  * discretization.

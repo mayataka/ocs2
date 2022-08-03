@@ -2,14 +2,17 @@
 
 #include <cmath>
 #include <exception>
+#include <iostream>
 
 namespace ocs2 {
 namespace stoc {
 
-BackwardRiccatiRecursion::BackwardRiccatiRecursion(RiccatiSolverMode riccatiSolverMode, scalar_t dts0_max) 
+BackwardRiccatiRecursion::BackwardRiccatiRecursion(RiccatiSolverMode riccatiSolverMode, scalar_t switchingTimeTrustRegionRadius,
+                                                   bool enableSwitchingTimeTrustRegion) 
   : riccatiSolverMode_(riccatiSolverMode),
-    dts0_max_(),
-    sgm_eps_(std::sqrt(std::numeric_limits<double>::epsilon())),
+    switchingTimeTrustRegionRadius_(switchingTimeTrustRegionRadius),
+    enableSwitchingTimeTrustRegion_(enableSwitchingTimeTrustRegion),
+    minQuadraticCoeff_(std::sqrt(std::numeric_limits<double>::epsilon())),
     AtP_(),
     BtP_(),
     GK_(),
@@ -20,15 +23,16 @@ BackwardRiccatiRecursion::BackwardRiccatiRecursion(RiccatiSolverMode riccatiSolv
     Ginv_1_(0),
     llt_(),
     ldlt_() {
-  setRegularization(dts0_max);
+  setRegularization(switchingTimeTrustRegionRadius, enableSwitchingTimeTrustRegion);
 }
 
 
-void BackwardRiccatiRecursion::setRegularization(scalar_t dts0_max) {
-  if (dts0_max < 0) {
-    throw std::out_of_range("dts0_max must be non-negative!");
+void BackwardRiccatiRecursion::setRegularization(scalar_t switchingTimeTrustRegionRadius, bool enableSwitchingTimeTrustRegion) {
+  if (switchingTimeTrustRegionRadius < 0) {
+    throw std::out_of_range("switchingTimeTrustRegionRadius must be non-negative!");
   }
-  dts0_max_ = dts0_max;
+  switchingTimeTrustRegionRadius_ = switchingTimeTrustRegionRadius;
+  enableSwitchingTimeTrustRegion_ = enableSwitchingTimeTrustRegion;
 }
 
 
@@ -256,17 +260,20 @@ void BackwardRiccatiRecursion::computePreJump(const RiccatiRecursionData& riccat
                                               RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy, StoPolicy& stoPolicy, 
                                               const bool sto, const bool stoNext) {
   computeIntermediate(riccatiNext, modelData, riccati, lqrPolicy, sto, stoNext);
-  modifyPreJump(riccati, stoPolicy, stoNext);
+  modifyPreJump(riccati, stoPolicy, sto);
 }
 
-void BackwardRiccatiRecursion::modifyPreJump(RiccatiRecursionData& riccati, StoPolicy& stoPolicy, const bool stoNext) const {
+void BackwardRiccatiRecursion::modifyPreJump(RiccatiRecursionData& riccati, StoPolicy& stoPolicy, const bool sto) const {
   const size_t nx = riccati.s.size();
   stoPolicy.resize(nx);
-  if (stoNext) {
+  if (sto) {
     double sgm = riccati.xi - 2.0 * riccati.chi + riccati.rho;
-    if ((sgm*dts0_max_) < std::abs(riccati.eta-riccati.iota) || sgm < sgm_eps_) {
-      sgm = std::abs(sgm) + std::abs(riccati.eta-riccati.iota) / dts0_max_;
+    if (enableSwitchingTimeTrustRegion_ 
+        && ((sgm*switchingTimeTrustRegionRadius_) < std::abs(riccati.eta-riccati.iota) || sgm < minQuadraticCoeff_)) {
+      // std::cout << "sgm notmodified = " << sgm << std::endl;
+      sgm = std::abs(sgm) + std::abs(riccati.eta-riccati.iota) / switchingTimeTrustRegionRadius_;
     }
+    // std::cout << "sgm = " << sgm << std::endl;
     stoPolicy.dtsdx  = - (1.0/sgm) * (riccati.Psi-riccati.Phi);
     stoPolicy.dtsdts =   (1.0/sgm) * (riccati.xi-riccati.chi);
     stoPolicy.dts0   = - (1.0/sgm) * (riccati.eta-riccati.iota);

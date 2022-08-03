@@ -14,11 +14,12 @@ namespace stoc {
 
 class BackwardRiccatiRecursion {
 public:
-  BackwardRiccatiRecursion(RiccatiSolverMode riccatiSolverMode=RiccatiSolverMode::Robust, scalar_t dts0_max=0.1);
+  BackwardRiccatiRecursion(RiccatiSolverMode riccatiSolverMode=RiccatiSolverMode::Robust, scalar_t switchingTimeTrustRegionRadius=0.1,
+                           bool enableSwitchingTimeTrustRegion=true);
 
   void resize(size_t nx, size_t nu);
 
-  void setRegularization(scalar_t dts0_max);
+  void setRegularization(scalar_t switchingTimeTrustRegion, bool enableSwitchingTimeTrustRegion=true);
 
   static void computeFinal(const ipm::ModelData& modelData, RiccatiRecursionData& riccati);
 
@@ -28,9 +29,12 @@ public:
   void computePreJump(const RiccatiRecursionData& riccatiNext, ipm::ModelData& modelData, 
                       RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy, StoPolicy& stoPolicy, const bool sto, const bool stoNext);
 
+  void modifyPreJump(RiccatiRecursionData& riccati, StoPolicy& stoPolicy, const bool sto) const;
+
 private:
   RiccatiSolverMode riccatiSolverMode_;
-  scalar_t dts0_max_, sgm_eps_;
+  scalar_t switchingTimeTrustRegionRadius_, minQuadraticCoeff_;
+  bool enableSwitchingTimeTrustRegion_;
   matrix_t AtP_, BtP_, GK_, Ginv_4_, Ginv_3_, Ginv_2_;
   vector_t Pf_;
   scalar_t Ginv_1_;
@@ -39,8 +43,6 @@ private:
 
   void computeIntermediate(const RiccatiRecursionData& riccatiNext, ipm::ModelData& modelData, 
                            RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy);
-
-  void modifyPreJump(RiccatiRecursionData& riccati, StoPolicy& stoPolicy, const bool stoNext) const;
 };
 
 } // namespace stoc

@@ -60,6 +60,8 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   auto riccatiSolverModeName = riccatiSolverModeToString(settings.riccatiSolverMode);  // keep default
   loadData::loadPtreeValue(pt, riccatiSolverModeName, fieldName + ".riccatiSolverMode", verbose);
   settings.riccatiSolverMode = stringToriccatiSolverMode(riccatiSolverModeName);
+  loadData::loadPtreeValue(pt, settings.switchingTimeTrustRegionRadius, fieldName + ".switchingTimeTrustRegion", verbose);
+  loadData::loadPtreeValue(pt, settings.enableSwitchingTimeTrustRegion, fieldName + ".enableSwitchingTimeTrustRegion", verbose);
 
   // std::vector<bool> stoEnableInput;
   // loadData::loadStdVector(filename, fieldName + ".stoEnable", stoEnableInput, verbose);

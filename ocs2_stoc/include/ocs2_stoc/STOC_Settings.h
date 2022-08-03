@@ -41,8 +41,10 @@ struct Settings {
   // STO strategy
   std::unordered_map<size_t, bool> isStoEnabledMode; // If the switching time associated with the specified mode is considered as the optimization variable or not.
 
-  // Riccati option
-  RiccatiSolverMode riccatiSolverMode = RiccatiSolverMode::Robust;
+  // Riccati options
+  RiccatiSolverMode riccatiSolverMode = RiccatiSolverMode::Robust; // Robust: LDLT, Speed: LLT
+  scalar_t switchingTimeTrustRegionRadius = 0.1; 
+  bool enableSwitchingTimeTrustRegion = true;
 
   // Printing
   bool printSolverStatus = false;      // Print HPIPM status after solving the QP subproblem

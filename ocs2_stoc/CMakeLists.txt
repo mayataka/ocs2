@@ -104,25 +104,25 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## Testing ##
 #############
 
-# catkin_add_gtest(test_${PROJECT_NAME}
-#   test/testTimeDiscretization.cpp
-# )
-# add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-# target_link_libraries(test_${PROJECT_NAME}
-#   ${PROJECT_NAME}
-#   ${catkin_LIBRARIES}
-#   gtest_main
-# )
+catkin_add_gtest(test_${PROJECT_NAME}
+  test/testTimeDiscretization.cpp
+)
+add_dependencies(test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_${PROJECT_NAME}
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
 
-# catkin_add_gtest(Exp0Test_${PROJECT_NAME}
-#   test/Exp0Test.cpp
-# )
-# add_dependencies(Exp0Test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-# target_link_libraries(Exp0Test_${PROJECT_NAME} 
-#   ${PROJECT_NAME}
-#   ${catkin_LIBRARIES}
-#   gtest_main
-# )
+catkin_add_gtest(Exp0Test_${PROJECT_NAME}
+  test/Exp0Test.cpp
+)
+add_dependencies(Exp0Test_${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(Exp0Test_${PROJECT_NAME} 
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  gtest_main
+)
 
 catkin_add_gtest(Exp1Test_${PROJECT_NAME}
   test/Exp1Test.cpp
