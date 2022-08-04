@@ -37,9 +37,7 @@ void discretizePreJumpLQ(const vector_t& state, const vector_t& stateNext, const
   modelData.cost.dfdx.noalias() += modelData.dynamics.dfdx.transpose() * costateNext; 
 
   // hamiltonian
-  modelData.hamiltonian.h = modelData.cost.f;
-  modelData.hamiltonian.dhdx = modelData.cost.dfdx;
-  modelData.hamiltonian.dfdt = modelData.dynamics.f;
+  modelData.hamiltonian.setZero(modelData.stateDim, 0);
 
   // dynamics 
   modelData.dynamics.f.noalias() -= stateNext;
@@ -51,8 +49,7 @@ void discretizePreJumpLQ(const vector_t& state, const vector_t& stateNext, const
 
 void discretizeFinalLQ(const vector_t& costate, ModelData& modelData) {
   // hamiltonian
-  modelData.hamiltonian.h = modelData.cost.f;
-  modelData.hamiltonian.dhdx = modelData.cost.dfdx;
+  modelData.hamiltonian.setZero(modelData.stateDim, 0);
 
   // cost
   modelData.cost.dfdx.noalias() -= costate;
