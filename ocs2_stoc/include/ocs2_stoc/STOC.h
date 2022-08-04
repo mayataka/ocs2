@@ -27,7 +27,6 @@
 #include "ocs2_stoc/riccati_recursion/RiccatiRecursion.h"
 #include "ocs2_stoc/TimeDiscretization.h"
 #include "ocs2_stoc/STOC_Settings.h"
-#include "ocs2_stoc/STOC_HelperFunctions.h"
 #include "ocs2_stoc/STOC_Data.h"
 
 namespace ocs2 {

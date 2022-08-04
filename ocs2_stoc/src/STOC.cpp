@@ -156,9 +156,9 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     if (settings_.printSolverStatus || settings_.printLinesearch) {
       std::cerr << "\nSTOC iteration: " << iter << " (barrier parameter: " << barrierParameter << ")\n";
     }
-    // Make QP approximation of nonlinear primal-dual interior point method
     updateTimeIntervals(initTime, finalTime, modeSchedule, timeDiscretization);
     // TODO: add mesh refinement of timeDiscretization.
+    // Make QP approximation of nonlinear primal-dual interior point method
     linearQuadraticApproximationTimer_.startTimer();
     const bool initIpmVariables = (iter == 0);
     auto performanceIndex = approximateOptimalControlProblem(timeDiscretization, initState, stateTrajectory, inputTrajectory, 
@@ -210,21 +210,6 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     }
     riccatiRecursionTimer_.endTimer();
 
-    // // Debugging 
-    // for (size_t i=0; i<N; ++i) {
-    //   std::cout << "dx[" << i << "]: " << dx[i].transpose() << "\n";
-    //   std::cout << "du[" << i << "]: " << du[i].transpose() << "\n";
-    //   std::cout << "dlmd[" << i << "]: " << dlmd[i].transpose() << "\n\n";
-    // }
-    // std::cout << "dx[" << N << "]: " << dx[N].transpose() << "\n";
-    // std::cout << "dlmd[" << N << "]: " << dlmd[N].transpose() << "\n\n";
-    // for (size_t i=0; i<dts.size(); ++i) {
-    //   std::cout << "dts[" << i << "]: " << dts[i] << std::endl;
-    // }
-
-    // std::cout << "sto dx:" << stoData_.stoModelData.stoCost.dfdx.transpose() << std::endl;
-    // std::cout << "sto dxx:\n" << stoData_.stoModelData.stoCost.dfdxx << std::endl;
-
     // Select step sizes
     ipmVariablesDirectionTrajectory.reserve(N + 1);
     while (ipmVariablesDirectionTrajectory.size() < N + 1) {
@@ -248,7 +233,9 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
                   primalStepSize, dualStepSize);
 
     // Update mode schedule 
+    // TODO: a safer way to update only the event times!
     getReferenceManager().setModeSchedule(modeSchedule);
+    getReferenceManager().preSolverRun(initTime, finalTime, initState);
 
     // Check convergence
     convergence = checkConvergence(iter, barrierParameter, performanceIndex, primalStepSize, dualStepSize);
@@ -381,7 +368,6 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
   }
 
   const auto numGrids = getNumGrids(timeDiscretization);
-
   std::vector<ipm::PerformanceIndex> performance(settings_.nThreads, ipm::PerformanceIndex());
 
   std::atomic_int timeIndex{0};
@@ -443,7 +429,7 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
       }
       ipm::eliminateIpmVariablesFinalLQ(ipmVariablesTrajectory[N], modelDataTrajectory[N], ipmDataTrajectory[N], barrierParameter);
       if (settings_.projectStateInputEqualityConstraints) {
-        projectedModelDataTrajectory[i] = modelDataTrajectory[i];
+        projectedModelDataTrajectory[N] = modelDataTrajectory[N];
       }
       workerPerformance += ipm::fromModelData(modelDataTrajectory[N]);
       workerPerformance += ipm::fromIpmData(ipmDataTrajectory[N]);
@@ -597,7 +583,7 @@ void STOC::updateIterate(scalar_t initTime, scalar_t finalTime, const ModeSchedu
   for (size_t phase=0; phase<validSwitchingTimeIndices.size(); ++phase) {
     const auto mode = modeSchedule.modeSequence[phase+validSwitchingTimeIndices.front()];
     if (settings_.isStoEnabledInMode.find(mode) != settings_.isStoEnabledInMode.end()) {
-      if (settings_.isStoEnabledInMode[mode]) modeSchedule.eventTimes[validSwitchingTimeIndices[phase]] += dts[phase];
+      if (settings_.isStoEnabledInMode[mode]) modeSchedule.eventTimes[validSwitchingTimeIndices[phase]] += primalStepSize * dts[phase];
     }
   }
   ipm::updateIpmVariables(stoIpmVariables, stoIpmVariablesDirection, primalStepSize, dualStepSize);
