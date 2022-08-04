@@ -7,8 +7,8 @@
 
 namespace ocs2 {
 
-std::vector<bool> getIsStoEnabled(const ModeSchedule& modeSchedule, const std::unordered_map<size_t, bool>& isStoEnabledMode);
+std::vector<bool> getIsStoEnabled(const ModeSchedule& modeSchedule, const std::unordered_map<size_t, bool>& isStoEnabledInMode);
 
-bool getIsStoEnabledMode(const std::unordered_map<size_t, bool>& isStoEnabledMode, size_t mode);
+bool getisStoEnabledInMode(const std::unordered_map<size_t, bool>& isStoEnabledInMode, size_t mode);
 
 }  // namespace ocs2

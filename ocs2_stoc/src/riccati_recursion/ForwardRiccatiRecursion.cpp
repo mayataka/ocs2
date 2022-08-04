@@ -13,7 +13,7 @@ void computeInput(const LqrPolicy& lqrPolicy, const vector_t& dx, vector_t& du,
     if (sto) {
       du.noalias() += lqrPolicy.T * (dtsNext-dts);
       if (stoNext) {
-        du.noalias() -= lqrPolicy.W * dts;
+        du.noalias() -= lqrPolicy.W * dtsNext;
       }
     }
   }

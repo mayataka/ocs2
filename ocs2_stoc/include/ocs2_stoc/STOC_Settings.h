@@ -39,7 +39,7 @@ struct Settings {
   scalar_t dt = 0.01;  // user-defined time discretization
 
   // STO strategy
-  std::unordered_map<size_t, bool> isStoEnabledMode; // If the switching time associated with the specified mode is considered as the optimization variable or not.
+  std::unordered_map<size_t, bool> isStoEnabledInMode; // If the switching time associated with the specified mode is considered as the optimization variable or not.
 
   // Riccati options
   RiccatiSolverMode riccatiSolverMode = RiccatiSolverMode::Robust; // Robust: LDLT, Speed: LLT

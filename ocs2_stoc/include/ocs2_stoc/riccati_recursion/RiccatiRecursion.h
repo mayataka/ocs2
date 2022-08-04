@@ -27,12 +27,12 @@ public:
                         vector_array_t& stateTrajectory, vector_array_t& inputTrajectory, 
                         vector_array_t& costateTrajectory, scalar_array_t& switchingTimes);
 
-  const std::vector<RiccatiRecursionData>& getRiccatiRecursionData() const { return riccati_; }
+  const std::vector<RiccatiRecursionData>& getRiccatiRecursionData() const { return riccatiData_; }
 
   const std::vector<LqrPolicy>& getLQRPolicies() const { return lqrPolicy_; }
 
 private:
-  std::vector<RiccatiRecursionData> riccati_;
+  std::vector<RiccatiRecursionData> riccatiData_;
   std::vector<LqrPolicy> lqrPolicy_;
   std::vector<StoPolicy> stoPolicy_;
   BackwardRiccatiRecursion backwardRecursion_;

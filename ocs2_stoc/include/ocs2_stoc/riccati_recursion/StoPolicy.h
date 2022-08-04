@@ -21,6 +21,11 @@ struct StoPolicy {
     dts0 = 0.0;
   }
 
+  void setZero(size_t nx) {
+    resize(nx);
+    setZero();
+  }
+
   void swap(StoPolicy& other) {
     dtsdx.swap(other.dtsdx);
     std::swap(dtsdts, other.dtsdts);

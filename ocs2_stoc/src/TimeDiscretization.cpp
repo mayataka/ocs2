@@ -30,7 +30,7 @@ scalar_t getIntervalDuration(const Grid& start, const Grid& end) {
 }
 
 std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t finalTime, scalar_t dt, const ModeSchedule& modeSchedule, 
-                                                   const std::vector<bool>& isStoEnabled, scalar_t dt_min) {
+                                                   const std::unordered_map<size_t, bool>& isStoEnabledInMode, scalar_t dt_min) {
   const auto timeDiscretization = multiPhaseTimeDiscretization(initTime, finalTime, dt, modeSchedule.eventTimes, dt_min);
   std::vector<Grid> timeDiscretizationGrid;
   timeDiscretizationGrid.reserve(timeDiscretization.size());
@@ -41,27 +41,29 @@ std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t f
       mode = modeSchedule.modeAtTime(e.time+dt_min); // TODO: test this carefully 
       ++phase;
     } 
-    timeDiscretizationGrid.emplace_back(e.time, mode, phase, castEvent(e.event));
+    constexpr bool sto = false;
+    constexpr bool stoNext = false;
+    constexpr bool stoNextNext = false;
+    timeDiscretizationGrid.emplace_back(e.time, mode, phase, castEvent(e.event), sto, stoNext, stoNextNext);
   }
-  if (!isStoEnabled.empty()) {
-    assert(isStoEnabled.size() == modeSchedule.eventTimes.size());
-    size_t skipInitPhases = 0;
-    for (; skipInitPhases<modeSchedule.eventTimes.size(); ++skipInitPhases) {
-      if (modeSchedule.eventTimes[skipInitPhases] > initTime) break;
+
+  auto checkIsStoEnabledInmode = [](const std::unordered_map<size_t, bool>& isStoEnabledInMode, size_t mode) {
+    if (isStoEnabledInMode.empty()) return false;
+    if (isStoEnabledInMode.find(mode) == isStoEnabledInMode.end()) return false;
+    return isStoEnabledInMode.at(mode); 
+  };
+  std::vector<bool> isStoEnabledInPhase;
+  isStoEnabledInPhase.reserve(modeSchedule.modeSequence.size());
+  for (const auto mode : modeSchedule.modeSequence) {
+    isStoEnabledInPhase.push_back(checkIsStoEnabledInmode(isStoEnabledInMode, mode));
+  }
+  for (auto& e : timeDiscretizationGrid) {
+    e.sto = isStoEnabledInPhase[e.phase];
+    if (e.phase+1 < isStoEnabledInPhase.size()) {
+      e.stoNext = isStoEnabledInPhase[e.phase+1];
     }
-    for (auto& e : timeDiscretizationGrid) {
-      const auto phase = e.phase;
-      e.sto = isStoEnabled[skipInitPhases+phase];
-      if (skipInitPhases+phase+1 < isStoEnabled.size()) {
-        e.stoNext = isStoEnabled[skipInitPhases+phase+1];
-      } else {
-        e.stoNext = false;
-      }
-      if (skipInitPhases+phase+2 < isStoEnabled.size()) {
-        e.stoNextNext = isStoEnabled[skipInitPhases+phase+2];
-      } else {
-        e.stoNextNext = false;
-      }
+    if (e.phase+2 < isStoEnabledInPhase.size()) {
+      e.stoNextNext = isStoEnabledInPhase[e.phase+2];
     }
   }
   return timeDiscretizationGrid; 

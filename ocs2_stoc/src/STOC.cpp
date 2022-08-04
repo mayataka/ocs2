@@ -120,12 +120,10 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   // Save the initial mode schedule
   const auto initModeSchedule = this->getReferenceManager().getModeSchedule();
 
-  // is STO enalbed
-  const auto isStoEnabled = getIsStoEnabled(initModeSchedule, settings_.isStoEnabledMode);
-
   // Determine time discretization, taking into account event times.
   auto modeSchedule = initModeSchedule;
-  const auto initTimeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule, isStoEnabled);
+  const auto initTimeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule, 
+                                                                       settings_.isStoEnabledInMode);
   const auto numPhases = initTimeDiscretization.back().phase + 1;
 
   // initialize Barrier param
@@ -160,7 +158,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     }
     // Make QP approximation of nonlinear primal-dual interior point method
     updateTimeIntervals(initTime, finalTime, modeSchedule, timeDiscretization);
-    // timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule, isStoEnabled);
+    // TODO: add mesh refinement of timeDiscretization.
     linearQuadraticApproximationTimer_.startTimer();
     const bool initIpmVariables = (iter == 0);
     auto performanceIndex = approximateOptimalControlProblem(timeDiscretization, initState, stateTrajectory, inputTrajectory, 
@@ -216,10 +214,16 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     // for (size_t i=0; i<N; ++i) {
     //   std::cout << "dx[" << i << "]: " << dx[i].transpose() << "\n";
     //   std::cout << "du[" << i << "]: " << du[i].transpose() << "\n";
-    //   std::cout << "dlmd[" << i << "]: " << dlmd[i].transpose() << "\n";
+    //   std::cout << "dlmd[" << i << "]: " << dlmd[i].transpose() << "\n\n";
     // }
     // std::cout << "dx[" << N << "]: " << dx[N].transpose() << "\n";
-    // std::cout << "dlmd[" << N << "]: " << dlmd[N].transpose() << "\n";
+    // std::cout << "dlmd[" << N << "]: " << dlmd[N].transpose() << "\n\n";
+    // for (size_t i=0; i<dts.size(); ++i) {
+    //   std::cout << "dts[" << i << "]: " << dts[i] << std::endl;
+    // }
+
+    // std::cout << "sto dx:" << stoData_.stoModelData.stoCost.dfdx.transpose() << std::endl;
+    // std::cout << "sto dxx:\n" << stoData_.stoModelData.stoCost.dfdxx << std::endl;
 
     // Select step sizes
     ipmVariablesDirectionTrajectory.reserve(N + 1);
@@ -258,7 +262,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   }
 
   computeControllerTimer_.startTimer();
-  timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule);
+  updateTimeIntervals(initTime, finalTime, modeSchedule, timeDiscretization);
   setPrimalSolution(timeDiscretization, std::move(stateTrajectory), std::move(inputTrajectory), std::move(costateTrajectory));
   computeControllerTimer_.endTimer();
   ++numProblems_;
@@ -587,13 +591,13 @@ void STOC::updateIterate(vector_array_t& x, vector_array_t& u, vector_array_t& l
 void STOC::updateIterate(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule, ModeSchedule& modeSchedule, 
                          ipm::IpmVariables& stoIpmVariables, const scalar_array_t& dts, 
                          const ipm::IpmVariablesDirection& stoIpmVariablesDirection, scalar_t primalStepSize, scalar_t dualStepSize) {
-  if (settings_.isStoEnabledMode.empty()) return;
+  if (settings_.isStoEnabledInMode.empty()) return;
 
   const auto validSwitchingTimeIndices = extractValidSwitchingTimeIndices(initTime, finalTime, referenceModeSchedule);
   for (size_t phase=0; phase<validSwitchingTimeIndices.size(); ++phase) {
     const auto mode = modeSchedule.modeSequence[phase+validSwitchingTimeIndices.front()];
-    if (settings_.isStoEnabledMode.find(mode) != settings_.isStoEnabledMode.end()) {
-      if (settings_.isStoEnabledMode[mode]) modeSchedule.eventTimes[validSwitchingTimeIndices[phase]] += dts[phase];
+    if (settings_.isStoEnabledInMode.find(mode) != settings_.isStoEnabledInMode.end()) {
+      if (settings_.isStoEnabledInMode[mode]) modeSchedule.eventTimes[validSwitchingTimeIndices[phase]] += dts[phase];
     }
   }
   ipm::updateIpmVariables(stoIpmVariables, stoIpmVariablesDirection, primalStepSize, dualStepSize);

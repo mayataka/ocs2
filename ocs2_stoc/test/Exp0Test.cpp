@@ -76,7 +76,7 @@ TEST(Exp0Test, Unconstrained_FixedSwitchingTimes) {
   static constexpr size_t INPUT_DIM = 1;
 
   stoc::Settings settings;
-  settings.numIteration  = 10;
+  settings.numIteration = 100;
   settings.useFeedbackPolicy = true;
   settings.dt = 0.01;
   settings.printSolverStatus = true;
@@ -207,19 +207,19 @@ TEST(Exp0Test, Constrained_FixedSwitchingTimes) {
 //   static constexpr size_t INPUT_DIM = 1;
 
 //   stoc::Settings settings;
-//   settings.numIteration  = 10;
+//   settings.numIteration = 100;
 //   settings.useFeedbackPolicy = true;
 //   settings.dt = 0.01;
 //   settings.printSolverStatus = true;
 //   settings.printSolverStatistics = true;
 //   settings.printLinesearch = true;
 //   settings.nThreads = 1;
-//   settings.isStoEnabledMode = {{0, true}, {1, true}, };
+//   settings.isStoEnabledInMode = {{0, true}, {1, true}, };
 //   settings.initialBarrierParameter = 1.0e-01;
 //   settings.targetBarrierParameter = 1.0e-01;
 
 //   settings.switchingTimeTrustRegionRadius = 0.1;
-//   settings.enableSwitchingTimeTrustRegion = false; 
+//   settings.enableSwitchingTimeTrustRegion = true; 
 
 //   const scalar_array_t initEventTimes{1.0};
 //   const std::vector<size_t> modeSequence{0, 1};
@@ -246,13 +246,6 @@ TEST(Exp0Test, Constrained_FixedSwitchingTimes) {
 //   // const scalar_t expectedCost = 9.766;
 //   // EXPECT_NEAR(stoc.getIpmPerformanceIndeces().cost, expectedCost, 0.05); 
 //   // // The error comes from the discretization 
-
-//   // const auto primalSolution = stoc.primalSolution(finalTime);
-//   // std::cout << "Optimal unconstrained trajectory" << std::endl; 
-//   // for (int i = 0; i < primalSolution.timeTrajectory_.size(); i++) {
-//   //   std::cout << "time: " << std::setprecision(4) << primalSolution.timeTrajectory_[i] << "\t state: " << primalSolution.stateTrajectory_[i].transpose()
-//   //             << "\t input: " << primalSolution.inputTrajectory_[i].transpose() << std::endl;
-//   // }
 // }
 
 int main(int argc, char** argv) {

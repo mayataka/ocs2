@@ -25,6 +25,11 @@ struct LqrPolicy {
     W.setZero();
   }
 
+  void setZero(size_t nx, size_t nu) {
+    resize(nx, nu);
+    setZero();
+  }
+
   void swap(LqrPolicy& other) {
     K.swap(other.K);
     k.swap(other.k);

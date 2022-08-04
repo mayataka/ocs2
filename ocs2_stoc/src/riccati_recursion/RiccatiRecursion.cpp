@@ -7,7 +7,7 @@ namespace stoc {
 
 RiccatiRecursion::RiccatiRecursion(RiccatiSolverMode riccatiSolverMode, scalar_t switchingTimeTrustRegion, 
                                    bool enableSwitchingTimeTrustRegion)
-  : riccati_(),
+  : riccatiData_(),
     lqrPolicy_(),
     stoPolicy_(),
     backwardRecursion_(riccatiSolverMode, switchingTimeTrustRegion, enableSwitchingTimeTrustRegion) {
@@ -15,8 +15,8 @@ RiccatiRecursion::RiccatiRecursion(RiccatiSolverMode riccatiSolverMode, scalar_t
 
 
 void RiccatiRecursion::resize(size_t N) {
-  if (riccati_.size() < N+1) {
-    riccati_.resize(N+1);
+  if (riccatiData_.size() < N+1) {
+    riccatiData_.resize(N+1);
     lqrPolicy_.resize(N);
     stoPolicy_.resize(N);
   }
@@ -26,21 +26,23 @@ void RiccatiRecursion::resize(size_t N) {
 void RiccatiRecursion::backwardRecursion(const std::vector<Grid>& timeDiscretizationGrid, std::vector<ipm::ModelData>& modelData) {
   const size_t N = timeDiscretizationGrid.size() - 1;
   resize(N);
-  backwardRecursion_.computeFinal(modelData[N], riccati_[N]);
+  backwardRecursion_.computeFinal(modelData[N], riccatiData_[N]);
   for (int i=N-1; i>=0; --i) {
     const bool sto     = timeDiscretizationGrid[i].sto;
     const bool stoNext = timeDiscretizationGrid[i].stoNext;
     if (timeDiscretizationGrid[i].event == Grid::Event::PreEvent) {
       const auto phase = timeDiscretizationGrid[i].phase;
-      backwardRecursion_.computePreJump(riccati_[i+1], modelData[i], riccati_[i], lqrPolicy_[i], stoPolicy_[phase+1], sto, stoNext);
+      const bool stoNextNext = timeDiscretizationGrid[i].stoNextNext;
+      backwardRecursion_.computePreJump(riccatiData_[i+1], modelData[i], riccatiData_[i], lqrPolicy_[i], stoPolicy_[phase+1], sto, stoNext, 
+                                        stoNextNext);
     } else {
-      backwardRecursion_.computeIntermediate(riccati_[i+1], modelData[i], riccati_[i], lqrPolicy_[i], sto, stoNext);
+      backwardRecursion_.computeIntermediate(riccatiData_[i+1], modelData[i], riccatiData_[i], lqrPolicy_[i], sto, stoNext);
     }
   }
   if (timeDiscretizationGrid[0].sto) {
-    const bool stoNext = timeDiscretizationGrid[0].stoNext;
     const auto phase = timeDiscretizationGrid[0].phase;
-    backwardRecursion_.modifyPreJump(riccati_[0], stoPolicy_[phase], stoNext);
+    backwardRecursion_.modifyPreJump(riccatiData_[0], stoPolicy_[phase], timeDiscretizationGrid[0].stoNext);
+    riccatiData_[0].Phi.setZero();
   }
 }
 
@@ -50,36 +52,32 @@ void RiccatiRecursion::forwardRecursion(const std::vector<Grid>& timeDiscretizat
                                         vector_array_t& costateTrajectory, scalar_array_t& switchingTimesOutput) {
   const size_t N = timeDiscretizationGrid.size() - 1;
   const size_t numPhases = timeDiscretizationGrid.back().phase + 1;
-  const auto phase = timeDiscretizationGrid[0].phase;
-  const bool sto   = timeDiscretizationGrid[0].sto;
   scalar_array_t switchingTimes(numPhases, 0.0);
-  switchingTimes[phase] = 0.0;
-  if (sto) {
+  switchingTimes[timeDiscretizationGrid[0].phase] = 0.0;
+  if (timeDiscretizationGrid[0].sto) {
     // This is the switching time from phase to phase+1
+    const auto phase = timeDiscretizationGrid[0].phase;
+    constexpr bool stoPrev = false;
     switchingTimes[phase+1] = ForwardRiccatiRecursion::computeSwitchingTime(stoPolicy_[phase], stateTrajectory[0], 
-                                                                            switchingTimes[phase], false);
+                                                                            switchingTimes[phase], stoPrev);
   }
   for (int i=0; i<N; ++i) {
     const auto phase     = timeDiscretizationGrid[i].phase;
-    const auto phaseNext = timeDiscretizationGrid[i+1].phase;
     const bool sto     = timeDiscretizationGrid[i].sto;
     const bool stoNext = timeDiscretizationGrid[i].stoNext;
+    if (timeDiscretizationGrid[i].event == Grid::Event::PostEvent && stoNext) {
+      switchingTimes[phase+1] = ForwardRiccatiRecursion::computeSwitchingTime(stoPolicy_[phase], stateTrajectory[i], 
+                                                                              switchingTimes[phase], sto);
+    }
     ForwardRiccatiRecursion::computeInput(lqrPolicy_[i], stateTrajectory[i], inputTrajectory[i], 
                                           switchingTimes[phase], switchingTimes[phase+1], sto, stoNext);
     ForwardRiccatiRecursion::computeState(modelData[i], stateTrajectory[i], inputTrajectory[i], stateTrajectory[i+1], 
                                           switchingTimes[phase], switchingTimes[phase+1], sto);
-    ForwardRiccatiRecursion::computeCostate(riccati_[i], stateTrajectory[i], costateTrajectory[i],
+    ForwardRiccatiRecursion::computeCostate(riccatiData_[i], stateTrajectory[i], costateTrajectory[i],
                                             switchingTimes[phase], switchingTimes[phase+1], sto, stoNext);
-    if (phase != phaseNext) {
-      assert(phase+1 == phaseNext);
-      // In this case, the new mode becomes active at the grid i+1. 
-      // This switch is indexed by the phase.
-      switchingTimes[phase+1] = ForwardRiccatiRecursion::computeSwitchingTime(stoPolicy_[phase+1], stateTrajectory[i+1], 
-                                                                              switchingTimes[phase], stoNext);
-    }
   }
-  ForwardRiccatiRecursion::computeCostate(riccati_[N], stateTrajectory[N], costateTrajectory[N]);
-  assert(switchingTimesOutput.size() == numPhases-1);
+  ForwardRiccatiRecursion::computeCostate(riccatiData_[N], stateTrajectory[N], costateTrajectory[N]);
+  switchingTimesOutput.clear(); switchingTimesOutput.resize(numPhases-1);
   for (int i=0; i<switchingTimesOutput.size(); ++i) {
     switchingTimesOutput[i] = switchingTimes[i+1];
   }

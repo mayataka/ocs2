@@ -27,9 +27,10 @@ public:
                            RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy, const bool sto, const bool stoNext);
 
   void computePreJump(const RiccatiRecursionData& riccatiNext, ipm::ModelData& modelData, 
-                      RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy, StoPolicy& stoPolicy, const bool sto, const bool stoNext);
+                      RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy, StoPolicy& stoPolicy, 
+                      const bool sto, const bool stoNext, const bool stoNextNext);
 
-  void modifyPreJump(RiccatiRecursionData& riccati, StoPolicy& stoPolicy, const bool sto) const;
+  void modifyPreJump(RiccatiRecursionData& riccati, StoPolicy& stoPolicy, bool computeStoPolicy) const;
 
 private:
   RiccatiSolverMode riccatiSolverMode_;

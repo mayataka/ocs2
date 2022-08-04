@@ -131,7 +131,13 @@ void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& r
   computeIntermediate(riccatiNext, modelData, riccati, lqrPolicy);
   const auto& dynamics = modelData.dynamics;
   const auto& hamiltonian = modelData.hamiltonian;
-  if (sto) {
+  if (!sto) {
+    riccati.Psi.setZero();
+    riccati.xi = 0.;
+    riccati.chi = 0.;
+    riccati.eta = 0.;
+  }
+  else {
     const size_t nu = modelData.inputDim;
     riccati.psi_x.noalias()  = AtP_ * hamiltonian.dfdt;
     riccati.psi_x.noalias() += hamiltonian.dhdx;
@@ -248,47 +254,46 @@ void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& r
     } else {
       riccati.iota = 0.0;
     }
-  } else {
-    riccati.Psi.setZero();
-    riccati.xi = 0.;
-    riccati.chi = 0.;
-    riccati.eta = 0.;
-  }
+  } 
 }
 
 void BackwardRiccatiRecursion::computePreJump(const RiccatiRecursionData& riccatiNext, ipm::ModelData& modelData,
                                               RiccatiRecursionData& riccati, LqrPolicy& lqrPolicy, StoPolicy& stoPolicy, 
-                                              const bool sto, const bool stoNext) {
+                                              const bool sto, const bool stoNext, const bool stoNextNext) {
   computeIntermediate(riccatiNext, modelData, riccati, lqrPolicy, sto, stoNext);
-  modifyPreJump(riccati, stoPolicy, sto);
+  modifyPreJump(riccati, stoPolicy, stoNextNext);
 }
 
-void BackwardRiccatiRecursion::modifyPreJump(RiccatiRecursionData& riccati, StoPolicy& stoPolicy, const bool sto) const {
+void BackwardRiccatiRecursion::modifyPreJump(RiccatiRecursionData& riccati, StoPolicy& stoPolicy, bool computeStoPolicy) const {
   const size_t nx = riccati.s.size();
-  stoPolicy.resize(nx);
-  if (sto) {
-    double sgm = riccati.xi - 2.0 * riccati.chi + riccati.rho;
+  stoPolicy.setZero(nx);
+  if (computeStoPolicy) {
+    scalar_t sgm = riccati.xi - 2.0 * riccati.chi + riccati.rho;
     if (enableSwitchingTimeTrustRegion_ 
         && ((sgm*switchingTimeTrustRegionRadius_) < std::abs(riccati.eta-riccati.iota) || sgm < minQuadraticCoeff_)) {
-      // std::cout << "sgm notmodified = " << sgm << std::endl;
       sgm = std::abs(sgm) + std::abs(riccati.eta-riccati.iota) / switchingTimeTrustRegionRadius_;
     }
-    // std::cout << "sgm = " << sgm << std::endl;
     stoPolicy.dtsdx  = - (1.0/sgm) * (riccati.Psi-riccati.Phi);
     stoPolicy.dtsdts =   (1.0/sgm) * (riccati.xi-riccati.chi);
     stoPolicy.dts0   = - (1.0/sgm) * (riccati.eta-riccati.iota);
-    riccati.s.noalias()   += (1.0/sgm) * (riccati.Psi-riccati.Phi) * (riccati.eta-riccati.iota);
-    riccati.Phi.noalias() -= (1.0/sgm) * (riccati.Psi-riccati.Phi) * (riccati.xi-riccati.chi);
+    riccati.s.noalias() += (1.0/sgm) * (riccati.Psi-riccati.Phi) * (riccati.eta-riccati.iota);
+    riccati.Phi  = riccati.Psi - (1.0/sgm) * (riccati.Psi-riccati.Phi) * (riccati.xi-riccati.chi);
     riccati.rho  = riccati.xi - (1.0/sgm) * (riccati.xi-riccati.chi) * (riccati.xi-riccati.chi);
     riccati.iota = riccati.eta - (1.0/sgm) * (riccati.xi-riccati.chi)  * (riccati.eta-riccati.iota);
+    riccati.Psi.setZero();
+    riccati.xi  = 0.0;
+    riccati.chi = 0.0;
+    riccati.eta = 0.0;
   }
-  riccati.Phi = riccati.Psi;
-  riccati.Psi.setZero();
-  riccati.rho = riccati.xi;
-  riccati.xi = 0.0;
-  riccati.chi = 0.0;
-  riccati.iota = riccati.eta;
-  riccati.eta = 0.0;
+  else {
+    riccati.Phi  = riccati.Psi;
+    riccati.rho  = riccati.xi;
+    riccati.iota = riccati.eta;
+    riccati.Psi.setZero();
+    riccati.xi   = 0.0;
+    riccati.chi  = 0.0;
+    riccati.eta  = 0.0;
+  }
 }
 
 } // namespace stoc

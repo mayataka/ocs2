@@ -5,6 +5,7 @@
 #include <ocs2_sqp/TimeDiscretization.h>
 #include <ocs2_core/reference/ModeSchedule.h>
 
+#include <unordered_map>
 #include <iostream>
 
 namespace ocs2 {
@@ -53,7 +54,7 @@ scalar_t getIntervalDuration(const Grid& start, const Grid& end);
  * @return vector of discrete time grid
  */
 std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t finalTime, scalar_t dt, const ModeSchedule& modeSchedule,
-                                                   const std::vector<bool>& isStoEnabled = {},
+                                                   const std::unordered_map<size_t, bool>& isStoEnabledInMode = {},
                                                    scalar_t dt_min = 10.0 * numeric_traits::limitEpsilon<scalar_t>());
 
 void updateTimeIntervals(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule, std::vector<Grid>& timeDiscretization);
