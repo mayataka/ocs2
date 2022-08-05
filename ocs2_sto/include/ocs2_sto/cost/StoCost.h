@@ -8,6 +8,7 @@
 
 namespace ocs2 {
 
+/** Sto cost function base class */
 class StoCost {
  public:
   StoCost() = default;

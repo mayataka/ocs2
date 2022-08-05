@@ -8,6 +8,7 @@
 
 namespace ocs2 {
 
+/** Sto constraint function base class */
 class StoConstraint {
  public:
   StoConstraint() = default;

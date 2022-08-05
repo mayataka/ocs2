@@ -5,12 +5,12 @@
 
 namespace ocs2 {
 
-/** Quadratic state-only cost term */
+/** Quadratic Sto cost term */
 class QuadraticStoCost : public StoCost {
  public:
   /**
    * Constructor for the quadratic cost function defined as the following:
-   * \f$ \l = 0.5(x-x_{n})' Q (x-x_{n}) \f$. (x: a swithcing times vector)
+   * \f$ \l = 0.5(x-x_{n})' (Q*I_{n}) (x-x_{n}) \f$. (x: a swithcing times vector)
    * @param [in] Q: \f$ Q \f$
    */
   explicit QuadraticStoCost(scalar_t Q);

@@ -14,8 +14,14 @@
 
 namespace ocs2 {
 
+/** Minimum dwell-time constraint term */
 class MinimumDwellTimeConstraint : public StoConstraint {
  public:
+  /**
+   * Constructor for the minimum dwell-time constraint.
+   * @param [in] minimumDwellTimesMap: Minimum dwell times for modes.
+   * @param [in] minimumDwellTime: Minimum dwell time for the modes that are not specified by minimumDwellTimesMap. 
+   */
   MinimumDwellTimeConstraint(const std::unordered_map<size_t, scalar_t>& minimumDwellTimesMap,
                              const scalar_t minimumDwellTime=numeric_traits::limitEpsilon<scalar_t>());
   MinimumDwellTimeConstraint() = default;

@@ -10,7 +10,7 @@
 namespace ocs2 {
 
 /**
- * Constraint collection class
+ * Sto constraint collection class
  *
  * This class collects a variable number of constraint functions and provides methods to get the
  * concatenated constraint vectors and approximations. Each constraint can be accessed through its
