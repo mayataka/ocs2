@@ -63,6 +63,16 @@ struct PerformanceIndex {
   /** Sum of Squared Error (SSE) of complementary slackness */
   scalar_t complementarySlacknessSSE = 0.0;
 
+  /** Sum of Squared Error (SSE) of the primal feasibility */
+  scalar_t primalFeasibilitySSE() const {
+    return dynamicsViolationSSE + equalityConstraintsSSE + inequalityConstraintsSSE;
+  }
+
+  /** Sum of Squared Error (SSE) of the dual feasibility */
+  scalar_t dualFeasibilitySSE() const {
+    return dualDynamicsViolationSSE + dualControlViolationSSE + complementarySlacknessSSE;
+  }
+
   /** Add performance indices */
   PerformanceIndex& operator+=(const PerformanceIndex& rhs) {
     this->cost += rhs.cost;

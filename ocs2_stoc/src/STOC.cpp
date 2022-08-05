@@ -246,7 +246,9 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     convergence = checkConvergence(iter, barrierParameter, maxTimeInterval, performanceIndex, primalStepSize, dualStepSize);
 
     // mesh refinement
-    if (maxTimeInterval > settings_.maxTimeInterval) {
+    if (maxTimeInterval > settings_.maxTimeInterval 
+        && performanceIndex.primalFeasibilitySSE() < settings_.meshRefinementPrimalFeasTol 
+        && performanceIndex.dualFeasibilitySSE() < settings_.meshRefinementDualFeasTol) {
       if (settings_.printSwitchingTimeOptimization) {
         std::cerr << "[SwitchingTimeOptimization] Mesh refinement is performed! Max time interval: " << maxTimeInterval << "\n";
       }
@@ -681,12 +683,8 @@ void STOC::setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector
 STOC::Convergence STOC::checkConvergence(size_t iteration, scalar_t barrierParameter, scalar_t maxTimeInterval, 
                                          const ipm::PerformanceIndex& performanceIndex,
                                          scalar_t primalStepSize, scalar_t dualStepSize) const {
-  const auto primalFeas = performanceIndex.dynamicsViolationSSE 
-                          + performanceIndex.equalityConstraintsSSE
-                          + performanceIndex.inequalityConstraintsSSE;
-  const auto dualFeas = performanceIndex.dualDynamicsViolationSSE
-                          + performanceIndex.dualControlViolationSSE
-                          + performanceIndex.complementarySlacknessSSE;
+  const auto primalFeas = performanceIndex.primalFeasibilitySSE();
+  const auto dualFeas = performanceIndex.dualFeasibilitySSE();
   if (settings_.printSolverStatus) {
     std::cerr << "\nPrimal feasibility : " << primalFeas << ",  Dual feasibility : " << dualFeas << "\n";
   }

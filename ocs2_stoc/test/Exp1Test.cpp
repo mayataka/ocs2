@@ -245,7 +245,6 @@ TEST(Exp1Test, Unconstrained_SwitchingTimeOptimization) {
   EXPECT_NEAR(stoc.getReferenceManager().getModeSchedule().eventTimes[0], expectedEventTimes[0], 0.05); 
   EXPECT_NEAR(stoc.getReferenceManager().getModeSchedule().eventTimes[1], expectedEventTimes[1], 0.05); 
 
-  std::cout << stoc.getReferenceManager().getModeSchedule() << std::endl;
   const scalar_t expectedCost = 5.4399;
   EXPECT_NEAR(stoc.getIpmPerformanceIndeces().cost, expectedCost, 0.05); 
 }
