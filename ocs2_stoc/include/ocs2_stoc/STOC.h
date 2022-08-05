@@ -9,6 +9,8 @@
 #include <ocs2_core/thread_support/ThreadPool.h>
 
 #include <ocs2_oc/oc_solver/SolverBase.h>
+#include <ocs2_oc/synchronized_module/ReferenceManagerInterface.h>
+#include <ocs2_oc/synchronized_module/ReferenceManager.h>
 
 #include <ocs2_ipm/oc_problem/OptimalControlProblem.h>
 #include <ocs2_ipm/oc_solver/PerformanceIndex.h>
@@ -43,6 +45,11 @@ class STOC : public SolverBase {
   STOC(stoc::Settings settings, const ipm::OptimalControlProblem& optimalControlProblem, const Initializer& initializer);
 
   ~STOC() override;
+
+  /**
+   * Sets the internal ReferenceManager for the switching time optimization.
+   */
+  void setInternalReferenceManager(std::shared_ptr<ReferenceManagerInterface> internalReferenceManagerPtr);
 
   void reset() override;
 
@@ -190,6 +197,9 @@ class STOC : public SolverBase {
 
   // riccati Recurision
   stoc::RiccatiRecursion riccatiRecursion_;
+
+  // internal reference manager to manage mode schedules for the switching time optimization
+  std::shared_ptr<ReferenceManagerInterface> internalReferenceManagerPtr_;
 
   // Threading
   ThreadPool threadPool_;

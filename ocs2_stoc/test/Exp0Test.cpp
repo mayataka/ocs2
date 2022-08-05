@@ -228,8 +228,8 @@ TEST(Exp0Test, Unconstrained_SwitchingTimeOptimization) {
 
   const scalar_array_t initEventTimes{1.0};
   const std::vector<size_t> modeSequence{0, 1};
-  auto referenceManagerPtr = getExp0ReferenceManager(initEventTimes, modeSequence);
-  auto problem = createExp0Problem(referenceManagerPtr);
+  auto internalReferenceManagerPtr = getExp0ReferenceManager(initEventTimes, modeSequence);
+  auto problem = createExp0Problem(internalReferenceManagerPtr);
   auto ipmProblem = ipm::OptimalControlProblem(problem);
   auto quadraticStoCost = std::unique_ptr<QuadraticStoCost>(new QuadraticStoCost(0.0));
   ipmProblem.stoCostPtr->add("quadraticStoCost", std::move(quadraticStoCost));
@@ -243,7 +243,9 @@ TEST(Exp0Test, Unconstrained_SwitchingTimeOptimization) {
   auto initializerPtr = std::unique_ptr<Initializer>(new DefaultInitializer(INPUT_DIM));
 
   STOC stoc(settings, ipmProblem, *initializerPtr);
+  auto referenceManagerPtr = getExp0ReferenceManager(initEventTimes, modeSequence);
   stoc.setReferenceManager(referenceManagerPtr);
+  stoc.setInternalReferenceManager(internalReferenceManagerPtr);
   stoc.run(startTime, initState, finalTime);
   std::cout << stoc.getBenchmarkingInformation() << std::endl;
   std::cout << stoc.getIpmPerformanceIndeces() << std::endl;

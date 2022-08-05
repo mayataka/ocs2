@@ -16,6 +16,7 @@ STOC::STOC(stoc::Settings settings, const ipm::OptimalControlProblem& optimalCon
     : SolverBase(),
       settings_(std::move(settings)),
       riccatiRecursion_(settings_.riccatiSolverMode, settings_.switchingTimeTrustRegionRadius, settings_.enableSwitchingTimeTrustRegion),
+      internalReferenceManagerPtr_(new ReferenceManager),
       threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority) {
   Eigen::setNbThreads(1);  // No multithreading within Eigen.
   Eigen::initParallel();
@@ -44,6 +45,13 @@ STOC::~STOC() {
   if (settings_.printSolverStatistics) {
     std::cerr << getBenchmarkingInformation() << std::endl;
   }
+}
+
+void STOC::setInternalReferenceManager(std::shared_ptr<ReferenceManagerInterface> internalReferenceManagerPtr) {
+  if (internalReferenceManagerPtr == nullptr) {
+    throw std::runtime_error("[STOC] ReferenceManager pointer cannot be a nullptr!");
+  }
+  internalReferenceManagerPtr_ = std::move(internalReferenceManagerPtr);
 }
 
 void STOC::reset() {
@@ -117,6 +125,9 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     const auto& targetTrajectories = this->getReferenceManager().getTargetTrajectories();
     optimalControlProblem.targetTrajectoriesPtr = &targetTrajectories;
   }
+  internalReferenceManagerPtr_->setModeSchedule(this->getReferenceManager().getModeSchedule());
+  internalReferenceManagerPtr_->setTargetTrajectories(this->getReferenceManager().getTargetTrajectories());
+  internalReferenceManagerPtr_->preSolverRun(initTime, finalTime, initState);
 
   // Save the initial mode schedule
   const auto initModeSchedule = this->getReferenceManager().getModeSchedule();
@@ -231,10 +242,9 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     updateIterate(initTime, finalTime, initModeSchedule, modeSchedule, stoIpmVariables, dts, stoIpmVariablesDirection, 
                   primalStepSize, dualStepSize);
 
-    // Update mode schedule 
-    // TODO: a safer way to update only the event times!
-    getReferenceManager().setModeSchedule(modeSchedule);
-    getReferenceManager().preSolverRun(initTime, finalTime, initState);
+    // Update internal mode schedule 
+    internalReferenceManagerPtr_->setModeSchedule(modeSchedule);
+    internalReferenceManagerPtr_->preSolverRun(initTime, finalTime, initState);
 
     updateTimeIntervals(initTime, finalTime, modeSchedule, timeDiscretization);
     const scalar_t maxTimeInterval = getMaxTimeInterval(timeDiscretization);
@@ -273,6 +283,8 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
   computeControllerTimer_.startTimer();
   setPrimalSolution(timeDiscretization, std::move(stateTrajectory), std::move(inputTrajectory), std::move(costateTrajectory));
+  this->getReferenceManager().setModeSchedule(modeSchedule);
+  this->getReferenceManager().preSolverRun(initTime, finalTime, initState);
   computeControllerTimer_.endTimer();
   ++numProblems_;
 
@@ -667,7 +679,7 @@ void STOC::setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector
       primalSolution.postEventIndices_.push_back(i + 1);
     }
   }
-  primalSolution.modeSchedule_ = this->getReferenceManager().getModeSchedule();
+  primalSolution.modeSchedule_ = internalReferenceManagerPtr_->getModeSchedule();
 
   // Assign controller
   if (settings_.useFeedbackPolicy) {
