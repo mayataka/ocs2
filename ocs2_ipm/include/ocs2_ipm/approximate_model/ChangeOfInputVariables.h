@@ -6,7 +6,7 @@
 namespace ocs2 {
 namespace ipm {
 
-/** Applies the change of input variables to a hamiltonian */
+/** Applies the change of input variables to a Hamiltonian */
 void changeOfInputVariables(Hamiltonian& hamiltonian, const matrix_t& Pu, const matrix_t& Px = matrix_t(),
                             const vector_t& u0 = vector_t());
 

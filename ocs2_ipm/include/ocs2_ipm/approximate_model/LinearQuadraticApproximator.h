@@ -16,6 +16,8 @@ namespace ipm {
  * @param [in] state: The current state.
  * @param [in] input: The current input.
  * @param [out] modelData: The output data model.
+ * @param [in] enableStateOnlyIneqConstraint: Flag to enable the state-only inequality constraint or not. The state-only costraint should 
+ * be disabled at the initial stage. Default is true.
  */
 void approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t time, const vector_t& state, const vector_t& input,
                                ModelData& modelData, bool enableStateOnlyIneqConstraint=true);
@@ -27,6 +29,8 @@ void approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t ti
  * @param [in] time: The current time.
  * @param [in] state: The current state.
  * @param [in] input: The current input.
+ * @param [in] enableStateOnlyIneqConstraint: Flag to enable the state-only inequality constraint or not. The state-only costraint should 
+ * be disabled at the initial stage. Default is true.
  * @return The output data model.
  */
 inline ModelData approximateIntermediateLQ(OptimalControlProblem& problem, const scalar_t time, const vector_t& state,

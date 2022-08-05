@@ -9,40 +9,63 @@ namespace ocs2 {
 namespace ipm {
 
 /**
- * Calculates an LQ approximate of the constrained optimal control problem at a given time, state, and input.
+ * Eliminates the IPM-related variables and inequality constraints from a discrete-time LQ approximation.
  *
- * @param [in] problem: The optimal control problem
- * @param [in] time: The current time.
- * @param [in] state: The current state.
- * @param [in] input: The current input.
- * @param [out] modelData: The output data model.
+ * @param [in] ipmVariables: The IPM-related variables (a collection of slack and dual variables).
+ * @param [in, out] modelData: The discrete-time LQ approximation model data.
+ * @param [out] ipmData: The IPM-related data.
+ * @param [out] barrierParam: The barrier parameter of the IPM.
  */
 void eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData, scalar_t barrierParam);
 
+/**
+ * Eliminates the IPM-related variables and inequality constraints from a discrete-time LQ approximation.
+ *
+ * @param [in] ipmVariables: The IPM-related variables (a collection of slack and dual variables).
+ * @param [in, out] modelData: The discrete-time LQ approximation model data.
+ * @param [out] barrierParam: The barrier parameter of the IPM.
+ * @return The output IPM data.
+ */
 IpmData eliminateIpmVariablesIntermediateLQ(const IpmVariables& ipmVariables, ModelData& modelData, scalar_t barrierParam);
 
 /**
- * Calculates an LQ approximate of the constrained optimal control problem at a jump event time.
+ * Eliminates the IPM-related variables and inequality constraints from a discrete-time LQ approximation at a jump event time.
  *
- * @param [in] problem: The optimal control problem
- * @param [in] time: The current time.
- * @param [in] state: The current state.
- * @param [out] modelData: The output data model.
+ * @param [in] ipmVariables: The IPM-related variables (a collection of slack and dual variables).
+ * @param [in, out] modelData: The discrete-time LQ approximation model data.
+ * @param [out] ipmData: The IPM-related data.
+ * @param [out] barrierParam: The barrier parameter of the IPM.
  */
 void eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData, scalar_t barrierParam);
 
+/**
+ * Eliminates the IPM-related variables and inequality constraints from a discrete-time LQ approximation at a jump event time.
+ *
+ * @param [in] ipmVariables: The IPM-related variables (a collection of slack and dual variables).
+ * @param [in, out] modelData: The discrete-time LQ approximation model data.
+ * @param [out] barrierParam: The barrier parameter of the IPM.
+ * @return The output IPM data.
+ */
 IpmData eliminateIpmVariablesPreJumpLQ(const IpmVariables& ipmVariables, ModelData& modelData, scalar_t barrierParam);
 
 /**
- * Calculates an LQ approximate of the constrained optimal control problem at final time.
+ * Eliminates the IPM-related variables and inequality constraints from a discrete-time LQ approximation at final time.
  *
- * @param [in] problem: The optimal control problem
- * @param [in] time: The current time.
- * @param [in] state: The current state.
- * @param [out] modelData: The output data model.
+ * @param [in] ipmVariables: The IPM-related variables (a collection of slack and dual variables).
+ * @param [in, out] modelData: The discrete-time LQ approximation model data.
+ * @param [out] ipmData: The IPM-related data.
+ * @param [out] barrierParam: The barrier parameter of the IPM.
  */
 void eliminateIpmVariablesFinalLQ(const IpmVariables& ipmVariables, ModelData& modelData, IpmData& ipmData, scalar_t barrierParam);
 
+/**
+ * Eliminates the IPM-related variables and inequality constraints from a discrete-time LQ approximation at final time.
+ *
+ * @param [in] ipmVariables: The IPM-related variables (a collection of slack and dual variables).
+ * @param [in, out] modelData: The discrete-time LQ approximation model data.
+ * @param [out] barrierParam: The barrier parameter of the IPM.
+ * @return The output IPM data.
+ */
 IpmData eliminateIpmVariablesFinalLQ(const IpmVariables& ipmVariables, ModelData& modelData, scalar_t barrierParam);
 
 }  // namespace ipm
