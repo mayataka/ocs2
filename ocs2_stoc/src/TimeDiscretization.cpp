@@ -152,6 +152,17 @@ std::vector<AnnotatedTime> multiPhaseTimeDiscretization(scalar_t initTime, scala
   return timeDiscretization;
 }
 
+scalar_t getMaxTimeInterval(const std::vector<Grid>& timeDiscretizationGrid) {
+  assert(!timeDiscretizationGrid.empty());
+  scalar_t maxTimeInterval = timeDiscretizationGrid[1].time - timeDiscretizationGrid[0].time;
+  for (size_t i = 0; i < timeDiscretizationGrid.size() - 1; ++i) {
+    if (timeDiscretizationGrid[i].event == Grid::Event::PostEvent) {
+      maxTimeInterval = std::max(maxTimeInterval, (timeDiscretizationGrid[i + 1].time - timeDiscretizationGrid[i].time));
+    } 
+  }
+  return maxTimeInterval;
+}
+
 size_array_t getNumGrids(const std::vector<Grid>& timeDiscretizationGrid) {
   size_array_t numGrids(timeDiscretizationGrid.back().phase+1, 0);
   for (size_t i=0; i < timeDiscretizationGrid.size()-1; ++i) {
@@ -160,6 +171,19 @@ size_array_t getNumGrids(const std::vector<Grid>& timeDiscretizationGrid) {
     } 
   }
   return numGrids;
+}
+
+scalar_array_t getTimeIntervals(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule, const size_array_t& numGrids) {
+  assert(modeSchedule.modeSequence.size() == numGrids.size());
+  if (modeSchedule.modeSequence.size() == 1) return {(finalTime - initTime) / numGrids.front()};
+
+  scalar_array_t timeIntervals(modeSchedule.modeSequence.size(), 0.0);
+  timeIntervals[0] = (modeSchedule.eventTimes.front() - initTime) / numGrids.front();
+  for (size_t i = 1; i < modeSchedule.modeSequence.size() - 1; ++i) {
+    timeIntervals[i] = (modeSchedule.eventTimes[i] - modeSchedule.eventTimes[i-1]) / numGrids[i];
+  }
+  timeIntervals[modeSchedule.modeSequence.size() - 1] = (finalTime - modeSchedule.eventTimes.back()) / numGrids.back();
+  return timeIntervals;
 }
 
 std::string toString(const Grid::Event& event) {

@@ -195,7 +195,7 @@ TEST(Exp1Test, Constrained_FixedSwitchingTimes) {
 }
 
 
-TEST(Exp1Test, Unconstrained_SwitchingTimesOptimization) {
+TEST(Exp1Test, Unconstrained_SwitchingTimeOptimization) {
   static constexpr size_t STATE_DIM = 2;
   static constexpr size_t INPUT_DIM = 1;
 
@@ -206,11 +206,15 @@ TEST(Exp1Test, Unconstrained_SwitchingTimesOptimization) {
   settings.printSolverStatus = true;
   settings.printSolverStatistics = true;
   settings.printLinesearch = true;
+  settings.printSwitchingTimeOptimization = true;
   settings.nThreads = 4;
-  settings.isStoEnabledInMode = {{0, true}, {1, true}, {2, true}};
   settings.initialBarrierParameter = 1.0e-02;
   settings.targetBarrierParameter = 1.0e-04;
 
+  settings.isStoEnabledInMode = {{0, true}, {1, true}, {2, true}};
+  settings.maxTimeInterval = 0.015;
+  settings.meshRefinementPrimalFeasTol = 1.0e-02; 
+  settings.meshRefinementDualFeasTol = 1.0e-02; 
   settings.switchingTimeTrustRegionRadius = 0.1;
   settings.enableSwitchingTimeTrustRegion = true; 
 
@@ -235,11 +239,15 @@ TEST(Exp1Test, Unconstrained_SwitchingTimesOptimization) {
   stoc.run(startTime, initState, finalTime);
   std::cout << stoc.getBenchmarkingInformation() << std::endl;
   std::cout << stoc.getIpmPerformanceIndeces() << std::endl;
+  std::cout << "\n========= Optimized modeSchedule: =========\n" << stoc.getReferenceManager().getModeSchedule() << "\n" << std::endl;
+
+  const scalar_array_t expectedEventTimes = {0.2262, 1.0176};
+  EXPECT_NEAR(stoc.getReferenceManager().getModeSchedule().eventTimes[0], expectedEventTimes[0], 0.05); 
+  EXPECT_NEAR(stoc.getReferenceManager().getModeSchedule().eventTimes[1], expectedEventTimes[1], 0.05); 
 
   std::cout << stoc.getReferenceManager().getModeSchedule() << std::endl;
-  // const scalar_t expectedCost = 5.4399;
-  // EXPECT_NEAR(stoc.getIpmPerformanceIndeces().cost, expectedCost, 0.05); 
-  // // The error comes from the discretization 
+  const scalar_t expectedCost = 5.4399;
+  EXPECT_NEAR(stoc.getIpmPerformanceIndeces().cost, expectedCost, 0.05); 
 }
 
 int main(int argc, char** argv) {

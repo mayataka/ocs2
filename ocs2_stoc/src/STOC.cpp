@@ -5,6 +5,7 @@
 #include <ocs2_core/control/FeedforwardController.h>
 #include <ocs2_core/control/LinearController.h>
 #include <ocs2_core/misc/LinearInterpolation.h>
+#include <ocs2_core/misc/Display.h>
 
 #include <iostream>
 #include <numeric>
@@ -151,16 +152,14 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
   auto timeDiscretization = initTimeDiscretization;
   size_t iter = 0;
+  bool initIpmVariables = true;
   auto convergence = Convergence::FALSE;
   while (convergence == Convergence::FALSE) {
-    if (settings_.printSolverStatus || settings_.printLinesearch) {
+    if (settings_.printSolverStatus || settings_.printLinesearch || settings_.printSwitchingTimeOptimization) {
       std::cerr << "\nSTOC iteration: " << iter << " (barrier parameter: " << barrierParameter << ")\n";
     }
-    updateTimeIntervals(initTime, finalTime, modeSchedule, timeDiscretization);
-    // TODO: add mesh refinement of timeDiscretization.
     // Make QP approximation of nonlinear primal-dual interior point method
     linearQuadraticApproximationTimer_.startTimer();
-    const bool initIpmVariables = (iter == 0);
     auto performanceIndex = approximateOptimalControlProblem(timeDiscretization, initState, stateTrajectory, inputTrajectory, 
                                                              costateTrajectory, ipmVariablesTrajectory, barrierParameter, 
                                                              initIpmVariables);
@@ -237,8 +236,30 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     getReferenceManager().setModeSchedule(modeSchedule);
     getReferenceManager().preSolverRun(initTime, finalTime, initState);
 
+    updateTimeIntervals(initTime, finalTime, modeSchedule, timeDiscretization);
+    const scalar_t maxTimeInterval = getMaxTimeInterval(timeDiscretization);
+    if (settings_.printSwitchingTimeOptimization) {
+      std::cerr << "[SwitchingTimeOptimization] Event times:   {" << toDelimitedString(modeSchedule.eventTimes) << "}\n";
+    }
+
     // Check convergence
-    convergence = checkConvergence(iter, barrierParameter, performanceIndex, primalStepSize, dualStepSize);
+    convergence = checkConvergence(iter, barrierParameter, maxTimeInterval, performanceIndex, primalStepSize, dualStepSize);
+
+    // mesh refinement
+    if (maxTimeInterval > settings_.maxTimeInterval) {
+      if (settings_.printSwitchingTimeOptimization) {
+        std::cerr << "[SwitchingTimeOptimization] Mesh refinement is performed! Max time interval: " << maxTimeInterval << "\n";
+      }
+      setPrimalSolution(timeDiscretization, std::move(stateTrajectory), std::move(inputTrajectory), std::move(costateTrajectory));
+      timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule, 
+                                                            settings_.isStoEnabledInMode);
+      initializeStateInputTrajectories(timeDiscretization, initState, stateTrajectory, inputTrajectory);
+      initializeCostateTrajectories(timeDiscretization, stateTrajectory, inputTrajectory, costateTrajectory);
+      initIpmVariables = true;
+    }
+    else {
+      initIpmVariables = false;
+    }
 
     // update barriere parameter
     barrierParameter = updateBarrierParameter(barrierParameter, performanceIndex);
@@ -249,7 +270,6 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   }
 
   computeControllerTimer_.startTimer();
-  updateTimeIntervals(initTime, finalTime, modeSchedule, timeDiscretization);
   setPrimalSolution(timeDiscretization, std::move(stateTrajectory), std::move(inputTrajectory), std::move(costateTrajectory));
   computeControllerTimer_.endTimer();
   ++numProblems_;
@@ -658,7 +678,8 @@ void STOC::setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector
   primalData_.costateTrajectory = std::move(costateTrajectory);
 }
 
-STOC::Convergence STOC::checkConvergence(size_t iteration, scalar_t barrierParameter, const ipm::PerformanceIndex& performanceIndex,
+STOC::Convergence STOC::checkConvergence(size_t iteration, scalar_t barrierParameter, scalar_t maxTimeInterval, 
+                                         const ipm::PerformanceIndex& performanceIndex,
                                          scalar_t primalStepSize, scalar_t dualStepSize) const {
   const auto primalFeas = performanceIndex.dynamicsViolationSSE 
                           + performanceIndex.equalityConstraintsSSE
@@ -669,7 +690,8 @@ STOC::Convergence STOC::checkConvergence(size_t iteration, scalar_t barrierParam
   if (settings_.printSolverStatus) {
     std::cerr << "\nPrimal feasibility : " << primalFeas << ",  Dual feasibility : " << dualFeas << "\n";
   }
-  if (primalFeas < settings_.primalFeasTol && dualFeas < settings_.dualFeasTol && barrierParameter <= settings_.targetBarrierParameter) {
+  if (primalFeas < settings_.primalFeasTol && dualFeas < settings_.dualFeasTol 
+      && barrierParameter <= settings_.targetBarrierParameter && maxTimeInterval <= settings_.maxTimeInterval) {
     // Converged because the KKT error is below the specified tolerance and barrier parameter is below the target value
     return Convergence::SUCCESS;
   } else if (primalStepSize < settings_.minPrimalStepSize || dualStepSize < settings_.minDualStepSize) {

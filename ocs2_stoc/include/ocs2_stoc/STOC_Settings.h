@@ -40,6 +40,9 @@ struct Settings {
 
   // STO strategy
   std::unordered_map<size_t, bool> isStoEnabledInMode; // If the switching time associated with the specified mode is considered as the optimization variable or not.
+  scalar_t maxTimeInterval = 0.02;
+  scalar_t meshRefinementPrimalFeasTol = 1.0e-02; 
+  scalar_t meshRefinementDualFeasTol   = 1.0e-02; 
 
   // Riccati options
   RiccatiSolverMode riccatiSolverMode = RiccatiSolverMode::Robust; // Robust: LDLT, Speed: LLT
@@ -47,9 +50,10 @@ struct Settings {
   bool enableSwitchingTimeTrustRegion = true;
 
   // Printing
-  bool printSolverStatus = false;      // Print HPIPM status after solving the QP subproblem
-  bool printSolverStatistics = false;  // Print benchmarking of the multiple shooting method
-  bool printLinesearch = false;        // Print linesearch information
+  bool printSolverStatus = false;               // Print HPIPM status after solving the QP subproblem
+  bool printSolverStatistics = false;           // Print benchmarking of the multiple shooting method
+  bool printLinesearch = false;                 // Print linesearch information
+  bool printSwitchingTimeOptimization = false;  // Print switching time optimization-related information
 
   // Threading
   size_t nThreads = 4;

@@ -158,8 +158,8 @@ class STOC : public SolverBase {
       break;
     }
   }
-  Convergence checkConvergence(size_t iteration, scalar_t barrierParameter, const ipm::PerformanceIndex& performanceIndex, 
-                               scalar_t primalStepSize, scalar_t dualStepSize) const;
+  Convergence checkConvergence(size_t iteration, scalar_t barrierParameter, scalar_t maxTimeInterval, 
+                               const ipm::PerformanceIndex& performanceIndex, scalar_t primalStepSize, scalar_t dualStepSize) const;
 
   scalar_t updateBarrierParameter(scalar_t currentBarrierParameter,
                                   const ipm::PerformanceIndex& performanceIndex) const;

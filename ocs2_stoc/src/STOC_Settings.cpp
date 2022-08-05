@@ -57,6 +57,10 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
 
   loadData::loadPtreeValue(pt, settings.dt, fieldName + ".dt", verbose);
 
+  loadData::loadPtreeValue(pt, settings.maxTimeInterval, fieldName + ".maxTimeInterval", verbose);
+  loadData::loadPtreeValue(pt, settings.meshRefinementPrimalFeasTol, fieldName + ".meshRefinementPrimalFeasTol", verbose);
+  loadData::loadPtreeValue(pt, settings.meshRefinementDualFeasTol, fieldName + ".meshRefinementDualFeasTol", verbose);
+
   auto riccatiSolverModeName = riccatiSolverModeToString(settings.riccatiSolverMode);  // keep default
   loadData::loadPtreeValue(pt, riccatiSolverModeName, fieldName + ".riccatiSolverMode", verbose);
   settings.riccatiSolverMode = stringToriccatiSolverMode(riccatiSolverModeName);
