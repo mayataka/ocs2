@@ -173,19 +173,6 @@ size_array_t getNumGrids(const std::vector<Grid>& timeDiscretizationGrid) {
   return numGrids;
 }
 
-scalar_array_t getTimeIntervals(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule, const size_array_t& numGrids) {
-  assert(modeSchedule.modeSequence.size() == numGrids.size());
-  if (modeSchedule.modeSequence.size() == 1) return {(finalTime - initTime) / numGrids.front()};
-
-  scalar_array_t timeIntervals(modeSchedule.modeSequence.size(), 0.0);
-  timeIntervals[0] = (modeSchedule.eventTimes.front() - initTime) / numGrids.front();
-  for (size_t i = 1; i < modeSchedule.modeSequence.size() - 1; ++i) {
-    timeIntervals[i] = (modeSchedule.eventTimes[i] - modeSchedule.eventTimes[i-1]) / numGrids[i];
-  }
-  timeIntervals[modeSchedule.modeSequence.size() - 1] = (finalTime - modeSchedule.eventTimes.back()) / numGrids.back();
-  return timeIntervals;
-}
-
 std::string toString(const Grid::Event& event) {
   switch (event) {
     case Grid::Event::None:

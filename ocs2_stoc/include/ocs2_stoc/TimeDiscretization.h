@@ -47,8 +47,8 @@ scalar_t getIntervalDuration(const Grid& start, const Grid& end);
  * @param finalTime : final time.
  * @param dt : desired discretization step.
  * @param modeSchedule : Mode schedule reference.
- * @param isStoEnabled : Falgs if the sto is enabled or not. If empty (default), sto is disabled for all switches. If not empty, size must 
- * be the same as modeSchedule.eventTimes.  
+ * @param isStoEnabledInMode : Falgs if the sto is enabled or not in the specified mode. If the STO for a mode is not speficied, then the
+ * STO for the mode is disabled.
  * @param dt_min : minimum discretization step. Smaller intervals will be merged. Needs to be bigger than limitEpsilon to avoid
  * interpolation problems
  * @return vector of discrete time grid
@@ -57,6 +57,14 @@ std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t f
                                                    const std::unordered_map<size_t, bool>& isStoEnabledInMode = {},
                                                    scalar_t dt_min = 10.0 * numeric_traits::limitEpsilon<scalar_t>());
 
+/**
+ * Updates the time intervals of all of the time discretization grids while keeping the grid structure, i.e., mode, phase, event, and sto.
+ *
+ * @param initTime : start time.
+ * @param finalTime : final time.
+ * @param modeSchedule : Mode schedule reference.
+ * @param timeDiscretization: The time discretization grids.
+ */
 void updateTimeIntervals(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule, std::vector<Grid>& timeDiscretization);
 
 /**
@@ -75,12 +83,25 @@ std::vector<AnnotatedTime> multiPhaseTimeDiscretization(scalar_t initTime, scala
                                                         const scalar_array_t& eventTimes,
                                                         scalar_t dt_min = 10.0 * numeric_traits::limitEpsilon<scalar_t>());
 
-scalar_t getMaxTimeInterval(const std::vector<Grid>& timeDiscretizationGrid);
+/**
+ * Gets the maximum time interval in the time discretization.
+ *
+ * @param timeDiscretization: The time discretization grids.
+ * @return The maximum time interval in the input time discretization.
+ */
+scalar_t getMaxTimeInterval(const std::vector<Grid>& timeDiscretization);
 
-size_array_t getNumGrids(const std::vector<Grid>& timeDiscretizationGrid);
+/**
+ * Gets the number of grids in each phase.
+ *
+ * @param timeDiscretization: The time discretization grids.
+ * @return The number of grids in each phase.
+ */
+size_array_t getNumGrids(const std::vector<Grid>& timeDiscretization);
 
-scalar_array_t getTimeIntervals(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule, const size_array_t& numGrids);
-
+/**
+ * Transforms vector of TimePoint to vector of scalar times.
+ */
 template <typename TimePoint>
 scalar_array_t toTimeTrajectory(const std::vector<TimePoint>& timeDiscretization) {
   scalar_array_t timeTrajectory;
@@ -91,6 +112,9 @@ scalar_array_t toTimeTrajectory(const std::vector<TimePoint>& timeDiscretization
   return timeTrajectory;
 }
 
+/**
+ * Cast a Grid::Event to AnnotatedTime::Event.
+ */
 inline Grid::Event castEvent(const AnnotatedTime::Event& event) {
   switch (event)
   {

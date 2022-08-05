@@ -75,7 +75,7 @@ class STOC : public SolverBase {
   std::string getBenchmarkingInformation() const;
 
   /**
-   * Const access to ddp settings
+   * Const access to stoc settings
    */
   const stoc::Settings& settings() const { return settings_; }
 
@@ -93,45 +93,56 @@ class STOC : public SolverBase {
   /** Run a task in parallel with settings.nThreads */
   void runParallel(std::function<void(int)> taskFunction);
 
+  /** Initializes for the state-input trajectories */
   void initializeStateInputTrajectories(const std::vector<Grid>& timeDiscretization, const vector_t& initState,  
                                         vector_array_t& stateTrajectory, vector_array_t& inputTrajectory);
 
+  /** Initializes for the costate trajectories */
   void initializeCostateTrajectories(const std::vector<Grid>& timeDiscretization, const vector_array_t& stateTrajectory, 
                                      const vector_array_t& inputTrajectory, vector_array_t& costateTrajectory);
 
+  /** Creates quadratic approximation of the optimal control problem (OCP) around t, x(t), u(t). */
   ipm::PerformanceIndex approximateOptimalControlProblem(const std::vector<Grid>& timeDiscretization, const vector_t& initState, 
                                                          const vector_array_t& stateTrajectory, const vector_array_t& inputTrajectory,
                                                          const vector_array_t& costateTrajectory, 
                                                          std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
                                                          scalar_t barrierParameter, bool initIpmVariablesTrajectory);
 
+  /** Creates quadratic approximation of the switching time optimization (STO) problem around current mode schedule. */
   ipm::PerformanceIndex approximateSwitchingTimeOptimizationProblem(scalar_t initTime, scalar_t finalTime, 
                                                                     const ModeSchedule& referenceModeSchedule, 
                                                                     const ModeSchedule& stoModeSchedule, 
                                                                     ipm::IpmVariables& stoIpmVariables,
                                                                     scalar_t barrierParameter, bool initStoIpmVariables);
 
+  /** Summarizes the OCP approximation and STO approximatioin. */
   void summarizeModelData(const std::vector<Grid>& timeDiscretization);
 
   struct StepSizes {
     scalar_t primalStepSize, dualStepSize;
   };
+
+  /** Computes the IPM directions and returns the primal and dual step sizes from OCP-data */
   StepSizes selectStepSizes(const std::vector<Grid>& timeDiscretization, const std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
                             const vector_array_t& dx, const vector_array_t& du, const vector_array_t& dlmd,
                             std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory, scalar_t fractionToBoundaryMargin); 
 
+  /** Computes the IPM directions and returns the primal and dual step sizes from STO-data */
   StepSizes selectStepSizes(const ipm::IpmVariables& stoIpmVariables, const scalar_array_t& dts, 
                             ipm::IpmVariablesDirection& stoIpmVariablesDirection, scalar_t fractionToBoundaryMargin); 
 
+  /** Updates the OCP-related variables */
   static void updateIterate(vector_array_t& x, vector_array_t& u, vector_array_t& lmd, std::vector<ipm::IpmVariables>& ipmVariablesTrajectory,
                             const vector_array_t& dx, const vector_array_t& du, const vector_array_t& dlmd, 
                             const std::vector<ipm::IpmVariablesDirection>& ipmVariablesDirectionTrajectory,
                             scalar_t primalStepSize, scalar_t dualStepSize);
 
+  /** Updates the STO-related variables */
   void updateIterate(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule, ModeSchedule& modeSchedule, 
                      ipm::IpmVariables& stoIpmVariables, const scalar_array_t& dts, 
                      const ipm::IpmVariablesDirection& stoIpmVariablesDirection, scalar_t primalStepSize, scalar_t dualStepSize);
 
+  /** Set up the primal solution based on the optimized state and input trajectories */
   void setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector_array_t&& stateTrajectory, vector_array_t&& inputTrajectory,
                          vector_array_t&& costateTrajectory);
 
@@ -158,12 +169,15 @@ class STOC : public SolverBase {
       break;
     }
   }
+
+  /** Determine convergence after a step */
   Convergence checkConvergence(size_t iteration, scalar_t barrierParameter, scalar_t maxTimeInterval, 
                                const ipm::PerformanceIndex& performanceIndex, scalar_t primalStepSize, scalar_t dualStepSize) const;
 
+  /** Updates the barrier parameter */
   scalar_t updateBarrierParameter(scalar_t currentBarrierParameter,
                                   const ipm::PerformanceIndex& performanceIndex) const;
-  
+
   // Problem definition
   stoc::Settings settings_;
   std::vector<ipm::OptimalControlProblem> optimalControlProblemStock_;

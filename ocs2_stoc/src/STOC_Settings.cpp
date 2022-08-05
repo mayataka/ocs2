@@ -49,15 +49,18 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.barrierReductionPrimalFeasTol, fieldName + ".barrierReductionPrimalFeasTol", verbose);
   loadData::loadPtreeValue(pt, settings.barrierReductionDualFeasTol, fieldName + ".barrierReductionDualFeasTol", verbose);
 
-  loadData::loadPtreeValue(pt, settings.projectStateInputEqualityConstraints, fieldName + ".projectStateInputEqualityConstraints", verbose);
-
   loadData::loadPtreeValue(pt, settings.fractionToBoundaryMargin, fieldName + ".fractionToBoundaryMargin", verbose);
+
+  loadData::loadPtreeValue(pt, settings.projectStateInputEqualityConstraints, fieldName + ".projectStateInputEqualityConstraints", verbose);
 
   loadData::loadPtreeValue(pt, settings.useFeedbackPolicy, fieldName + ".useFeedbackPolicy", verbose);
 
   loadData::loadPtreeValue(pt, settings.dt, fieldName + ".dt", verbose);
 
+  // std::vector<bool> stoEnableInput;
+  // loadData::loadStdVector(filename, fieldName + ".stoEnable", stoEnableInput, verbose);
   loadData::loadPtreeValue(pt, settings.maxTimeInterval, fieldName + ".maxTimeInterval", verbose);
+
   loadData::loadPtreeValue(pt, settings.meshRefinementPrimalFeasTol, fieldName + ".meshRefinementPrimalFeasTol", verbose);
   loadData::loadPtreeValue(pt, settings.meshRefinementDualFeasTol, fieldName + ".meshRefinementDualFeasTol", verbose);
 
@@ -67,12 +70,10 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.switchingTimeTrustRegionRadius, fieldName + ".switchingTimeTrustRegion", verbose);
   loadData::loadPtreeValue(pt, settings.enableSwitchingTimeTrustRegion, fieldName + ".enableSwitchingTimeTrustRegion", verbose);
 
-  // std::vector<bool> stoEnableInput;
-  // loadData::loadStdVector(filename, fieldName + ".stoEnable", stoEnableInput, verbose);
-
   loadData::loadPtreeValue(pt, settings.printSolverStatus, fieldName + ".printSolverStatus", verbose);
   loadData::loadPtreeValue(pt, settings.printSolverStatistics, fieldName + ".printSolverStatistics", verbose);
   loadData::loadPtreeValue(pt, settings.printLinesearch, fieldName + ".printLinesearch", verbose);
+  loadData::loadPtreeValue(pt, settings.printSwitchingTimeOptimization, fieldName + ".printSwitchingTimeOptimization", verbose);
 
   loadData::loadPtreeValue(pt, settings.nThreads, fieldName + ".nThreads", verbose);
   loadData::loadPtreeValue(pt, settings.threadPriority, fieldName + ".threadPriority", verbose);
