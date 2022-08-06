@@ -281,7 +281,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
   computeControllerTimer_.startTimer();
   setPrimalSolution(timeDiscretization, std::move(stateTrajectory), std::move(inputTrajectory), std::move(costateTrajectory));
-  if (internalReferenceManagerPtr_) {
+  if (internalReferenceManagerPtr_ && settings_.useOptimizedModeShceduleInReferenceManager) {
     this->getReferenceManager().setModeSchedule(modeSchedule);
     this->getReferenceManager().preSolverRun(initTime, finalTime, initState);
   }
