@@ -4,6 +4,7 @@
 #include <boost/property_tree/ptree.hpp>
 
 #include <ocs2_core/misc/LoadData.h>
+#include <ocs2_core/misc/LoadStdVectorOfPair.h>
 
 namespace ocs2 {
 namespace stoc {
@@ -57,9 +58,27 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
 
   loadData::loadPtreeValue(pt, settings.dt, fieldName + ".dt", verbose);
 
-  // std::vector<bool> stoEnableInput;
-  // loadData::loadStdVector(filename, fieldName + ".stoEnable", stoEnableInput, verbose);
+  std::vector<std::pair<size_t, size_t>> isStoEnabledInModePair;
+  loadData::loadStdVectorOfPair(filename, fieldName + ".isStoEnabledInMode", isStoEnabledInModePair, false);
+  settings.isStoEnabledInMode.reserve(isStoEnabledInModePair.size());
+  for (const auto& e : isStoEnabledInModePair) {
+    settings.isStoEnabledInMode.emplace(e.first, static_cast<bool>(e.second));
+  }
+  if (verbose) {
+    std::cerr << " #### 'isStoEnableInMode': {";
+    if (!isStoEnabledInModePair.empty()) {
+      for (int i = 0; i < isStoEnabledInModePair.size() - 1; ++i) {
+        std::cerr << "{" << isStoEnabledInModePair[i].first << ", " << std::boolalpha << static_cast<bool>(isStoEnabledInModePair[i].second) << "}, ";
+      }
+      if (isStoEnabledInModePair.size() > 0) {
+        std::cerr << "{" << isStoEnabledInModePair.back().first << ", " << std::boolalpha << static_cast<bool>(isStoEnabledInModePair.back().second) << "}";
+      }
+    }
+    std::cerr << "}\n";
+  }
+
   loadData::loadPtreeValue(pt, settings.maxTimeInterval, fieldName + ".maxTimeInterval", verbose);
+  loadData::loadPtreeValue(pt, settings.useOptimizedModeShceduleInReferenceManager, fieldName + ".useOptimizedModeShceduleInReferenceManager ", verbose);
 
   loadData::loadPtreeValue(pt, settings.meshRefinementPrimalFeasTol, fieldName + ".meshRefinementPrimalFeasTol", verbose);
   loadData::loadPtreeValue(pt, settings.meshRefinementDualFeasTol, fieldName + ".meshRefinementDualFeasTol", verbose);

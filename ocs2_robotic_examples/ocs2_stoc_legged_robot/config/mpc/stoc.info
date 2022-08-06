@@ -23,6 +23,13 @@ stoc
 
   dt                                   0.015
 
+  isStoEnabledInMode
+  {
+    [0] "0, 0" 
+    [1] "1, 0"
+    [2] "2, 0"
+    [3] "3, 0"
+  }
   maxTimeInterval                      0.03
 
   meshRefinementPrimalFeasTol          1.0e-02

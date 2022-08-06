@@ -41,6 +41,7 @@ struct Settings {
   // STO strategy
   std::unordered_map<size_t, bool> isStoEnabledInMode; // If the switching time associated with the specified mode is considered as the optimization variable or not.
   scalar_t maxTimeInterval = 0.02; // Maximum time interval of the discretization in STO. 
+  bool useOptimizedModeShceduleInReferenceManager = true; // If true, the optimized mode schedule is set to ReferenceManager after the optimization.
 
   // If the current iterate satisfies the these two criteria, the mesh-refinement is performed.
   scalar_t meshRefinementPrimalFeasTol = 1.0e-02;  // Mesh refinement condition : Primal feasibility, i.e., constraint violations, below this value
