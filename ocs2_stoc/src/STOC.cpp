@@ -16,7 +16,7 @@ STOC::STOC(stoc::Settings settings, const ipm::OptimalControlProblem& optimalCon
     : SolverBase(),
       settings_(std::move(settings)),
       riccatiRecursion_(settings_.riccatiSolverMode, settings_.switchingTimeTrustRegionRadius, settings_.enableSwitchingTimeTrustRegion),
-      internalReferenceManagerPtr_(new ReferenceManager),
+      internalReferenceManagerPtr_(nullptr),
       threadPool_(std::max(settings_.nThreads, size_t(1)) - 1, settings_.threadPriority) {
   Eigen::setNbThreads(1);  // No multithreading within Eigen.
   Eigen::initParallel();
@@ -48,9 +48,6 @@ STOC::~STOC() {
 }
 
 void STOC::setInternalReferenceManager(std::shared_ptr<ReferenceManagerInterface> internalReferenceManagerPtr) {
-  if (internalReferenceManagerPtr == nullptr) {
-    throw std::runtime_error("[STOC] ReferenceManager pointer cannot be a nullptr!");
-  }
   internalReferenceManagerPtr_ = std::move(internalReferenceManagerPtr);
 }
 
@@ -125,9 +122,11 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     const auto& targetTrajectories = this->getReferenceManager().getTargetTrajectories();
     optimalControlProblem.targetTrajectoriesPtr = &targetTrajectories;
   }
-  internalReferenceManagerPtr_->setModeSchedule(this->getReferenceManager().getModeSchedule());
-  internalReferenceManagerPtr_->setTargetTrajectories(this->getReferenceManager().getTargetTrajectories());
-  internalReferenceManagerPtr_->preSolverRun(initTime, finalTime, initState);
+  if (internalReferenceManagerPtr_) {
+    internalReferenceManagerPtr_->setModeSchedule(this->getReferenceManager().getModeSchedule());
+    internalReferenceManagerPtr_->setTargetTrajectories(this->getReferenceManager().getTargetTrajectories());
+    internalReferenceManagerPtr_->preSolverRun(initTime, finalTime, initState);
+  }
 
   // Save the initial mode schedule
   const auto initModeSchedule = this->getReferenceManager().getModeSchedule();
@@ -243,20 +242,26 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
                   primalStepSize, dualStepSize);
 
     // Update internal mode schedule 
-    internalReferenceManagerPtr_->setModeSchedule(modeSchedule);
-    internalReferenceManagerPtr_->preSolverRun(initTime, finalTime, initState);
+    if (internalReferenceManagerPtr_) {
+      internalReferenceManagerPtr_->setModeSchedule(modeSchedule);
+      internalReferenceManagerPtr_->preSolverRun(initTime, finalTime, initState);
+    }
 
-    updateTimeIntervals(initTime, finalTime, modeSchedule, timeDiscretization);
-    const scalar_t maxTimeInterval = getMaxTimeInterval(timeDiscretization);
-    if (settings_.printSwitchingTimeOptimization) {
-      std::cerr << "[SwitchingTimeOptimization] Event times:   {" << toDelimitedString(modeSchedule.eventTimes) << "}\n";
+    // update time discretization
+    scalar_t maxTimeInterval = 0.0;
+    if (internalReferenceManagerPtr_) {
+      updateTimeIntervals(initTime, finalTime, modeSchedule, timeDiscretization);
+      maxTimeInterval = getMaxTimeInterval(timeDiscretization);
+      if (settings_.printSwitchingTimeOptimization) {
+        std::cerr << "[SwitchingTimeOptimization] Event times:   {" << toDelimitedString(modeSchedule.eventTimes) << "}\n";
+      }
     }
 
     // Check convergence
     convergence = checkConvergence(iter, barrierParameter, maxTimeInterval, performanceIndex, primalStepSize, dualStepSize);
 
     // mesh refinement
-    if (maxTimeInterval > settings_.maxTimeInterval 
+    if (internalReferenceManagerPtr_ && maxTimeInterval > settings_.maxTimeInterval 
         && performanceIndex.primalFeasibilitySSE() < settings_.meshRefinementPrimalFeasTol 
         && performanceIndex.dualFeasibilitySSE() < settings_.meshRefinementDualFeasTol) {
       if (settings_.printSwitchingTimeOptimization) {
@@ -283,8 +288,10 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
 
   computeControllerTimer_.startTimer();
   setPrimalSolution(timeDiscretization, std::move(stateTrajectory), std::move(inputTrajectory), std::move(costateTrajectory));
-  this->getReferenceManager().setModeSchedule(modeSchedule);
-  this->getReferenceManager().preSolverRun(initTime, finalTime, initState);
+  if (internalReferenceManagerPtr_) {
+    this->getReferenceManager().setModeSchedule(modeSchedule);
+    this->getReferenceManager().preSolverRun(initTime, finalTime, initState);
+  }
   computeControllerTimer_.endTimer();
   ++numProblems_;
 
@@ -679,7 +686,11 @@ void STOC::setPrimalSolution(const std::vector<Grid>& timeDiscretization, vector
       primalSolution.postEventIndices_.push_back(i + 1);
     }
   }
-  primalSolution.modeSchedule_ = internalReferenceManagerPtr_->getModeSchedule();
+  if (internalReferenceManagerPtr_) {
+    primalSolution.modeSchedule_ = internalReferenceManagerPtr_->getModeSchedule();
+  } else {
+    primalSolution.modeSchedule_ = this->getReferenceManager().getModeSchedule();
+  }
 
   // Assign controller
   if (settings_.useFeedbackPolicy) {
@@ -724,12 +735,8 @@ scalar_t STOC::updateBarrierParameter(scalar_t currentBarrierParameter,
   if (currentBarrierParameter <= settings_.targetBarrierParameter) {
     return currentBarrierParameter;
   }
-  const auto primalFeas = performanceIndex.dynamicsViolationSSE 
-                          + performanceIndex.equalityConstraintsSSE
-                          + performanceIndex.inequalityConstraintsSSE;
-  const auto dualFeas = performanceIndex.dualDynamicsViolationSSE
-                          + performanceIndex.dualControlViolationSSE
-                          + performanceIndex.complementarySlacknessSSE;
+  const auto primalFeas = performanceIndex.primalFeasibilitySSE();
+  const auto dualFeas = performanceIndex.dualFeasibilitySSE();
   if (primalFeas < settings_.barrierReductionPrimalFeasTol && dualFeas < settings_.barrierReductionDualFeasTol) {
     return std::min((currentBarrierParameter*settings_.barrierLinearDecreaseFactor), 
                     std::pow(currentBarrierParameter, settings_.barrierSuperlinearDecreasePower));

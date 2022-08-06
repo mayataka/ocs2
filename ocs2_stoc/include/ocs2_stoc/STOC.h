@@ -47,7 +47,8 @@ class STOC : public SolverBase {
   ~STOC() override;
 
   /**
-   * Sets the internal ReferenceManager for the switching time optimization.
+   * Sets the internal ReferenceManager for the switching time optimization. The switching time optimization is enabled only if the internal
+   * ReferenceManager is set via this method.
    */
   void setInternalReferenceManager(std::shared_ptr<ReferenceManagerInterface> internalReferenceManagerPtr);
 
