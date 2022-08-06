@@ -47,10 +47,6 @@ STOC::~STOC() {
   }
 }
 
-void STOC::setInternalReferenceManager(std::shared_ptr<ReferenceManagerInterface> internalReferenceManagerPtr) {
-  internalReferenceManagerPtr_ = std::move(internalReferenceManagerPtr);
-}
-
 void STOC::reset() {
   // Clear solution
   primalData_.clear();
