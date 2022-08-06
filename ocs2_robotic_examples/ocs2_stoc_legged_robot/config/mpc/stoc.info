@@ -15,19 +15,27 @@ stoc
   barrierReductionPrimalFeasTol        1.0e-03
   barrierReductionDualFeasTol          1.0e-03
 
-  projectStateInputEqualityConstraints true
-
   fractionToBoundaryMargin             0.995
+
+  projectStateInputEqualityConstraints true
 
   useFeedbackPolicy                    true
 
   dt                                   0.015
 
+  maxTimeInterval                      0.03
+
+  meshRefinementPrimalFeasTol          1.0e-02
+  meshRefinementDualFeasTol            1.0e-02
+
   riccatiSolverMode                    Robust
+  enableSwitchingTimeTrustRegion       true
+  switchingTimeTrustRegionRadius       0.1
 
   printSolverStatus                    false
   printSolverStatistics                false
   printLinesearch                      false
+  printSwitchingTimeOptimization       false
 
   nThreads                             3
   threadPriority                       50
