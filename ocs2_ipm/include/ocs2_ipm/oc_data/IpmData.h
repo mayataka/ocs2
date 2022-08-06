@@ -18,8 +18,18 @@ struct IpmData {
   InteriorPointMethodData dataStateInputIneqConstraint; 
 };
 
+/**
+ * Initializes the IPM data according to the inequality constraints in the input model data.
+ * @param[in] modelData Model dasta
+ * @param[out] ipmData IPM data.
+ */
 void initIpmData(const ModelData& modelData, IpmData& ipmData);
 
+/**
+ * Initializes the IPM data according to the inequality constraints in the input model data.
+ * @param[in] modelData Model dasta
+ * @return IPM data.
+ */
 IpmData initIpmData(const ModelData& modelData);
 
 }  // namespace ipm

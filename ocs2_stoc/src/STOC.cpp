@@ -177,7 +177,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
                                                                     stoIpmVariables, barrierParameter, initIpmVariables);
     summarizeModelData(timeDiscretization);
     ipmPerformanceIndeces_.push_back(performanceIndex);
-    performanceIndeces_.push_back(convert(performanceIndex));
+    performanceIndeces_.push_back(performanceIndex.toOcs2PerformanceIndex());
     linearQuadraticApproximationTimer_.endTimer();
 
     // Reserve and resize directions
@@ -430,8 +430,8 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
         if (settings_.projectStateInputEqualityConstraints) {
           projectedModelDataTrajectory[i] = modelDataTrajectory[i];
         }
-        workerPerformance += ipm::fromModelData(modelDataTrajectory[i]);
-        workerPerformance += ipm::fromIpmData(ipmDataTrajectory[i]);
+        workerPerformance += ipm::PerformanceIndex::fromModelData(modelDataTrajectory[i]);
+        workerPerformance += ipm::PerformanceIndex::fromIpmData(ipmDataTrajectory[i]);
       } else {
         // Normal, intermediate node
         const scalar_t ti = getIntervalStart(timeDiscretization[i]);
@@ -448,11 +448,11 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
         ipm::eliminateIpmVariablesIntermediateLQ(ipmVariablesTrajectory[i], modelDataTrajectory[i], ipmDataTrajectory[i], barrierParameter);
         if (settings_.projectStateInputEqualityConstraints) {
           ipm::projectIntermediateLQ(modelDataTrajectory[i], constraintProjection[i], projectedModelDataTrajectory[i]);
-          workerPerformance += ipm::fromModelData(projectedModelDataTrajectory[i]);
+          workerPerformance += ipm::PerformanceIndex::fromModelData(projectedModelDataTrajectory[i]);
         } else {
-          workerPerformance += ipm::fromModelData(modelDataTrajectory[i]);
+          workerPerformance += ipm::PerformanceIndex::fromModelData(modelDataTrajectory[i]);
         }
-        workerPerformance += ipm::fromIpmData(ipmDataTrajectory[i]);
+        workerPerformance += ipm::PerformanceIndex::fromIpmData(ipmDataTrajectory[i]);
       }
 
       i = timeIndex++;
@@ -469,8 +469,8 @@ ipm::PerformanceIndex STOC::approximateOptimalControlProblem(const std::vector<G
       if (settings_.projectStateInputEqualityConstraints) {
         projectedModelDataTrajectory[N] = modelDataTrajectory[N];
       }
-      workerPerformance += ipm::fromModelData(modelDataTrajectory[N]);
-      workerPerformance += ipm::fromIpmData(ipmDataTrajectory[N]);
+      workerPerformance += ipm::PerformanceIndex::fromModelData(modelDataTrajectory[N]);
+      workerPerformance += ipm::PerformanceIndex::fromIpmData(ipmDataTrajectory[N]);
     }
 
     // Accumulate! Same worker might run multiple tasks
@@ -501,7 +501,7 @@ ipm::PerformanceIndex STOC::approximateSwitchingTimeOptimizationProblem(scalar_t
   }
   eliminateIpmVariablesSTO(stoIpmVariables, stoModelData, stoIpmData, barrierParameter);
 
-  const auto performance = ipm::fromStoModelData(stoModelData) + ipm::fromIpmData(stoIpmData);
+  const auto performance = ipm::PerformanceIndex::fromStoModelData(stoModelData) + ipm::PerformanceIndex::fromIpmData(stoIpmData);
   return performance;
 }
 

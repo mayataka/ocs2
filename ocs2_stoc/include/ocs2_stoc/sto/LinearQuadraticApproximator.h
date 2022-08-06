@@ -7,21 +7,41 @@
 
 namespace ocs2 {
 
+/**
+ * Calculates a quadratic approximate of the switching time optimization (STO) problem.
+ *
+ * @param [in] problem: The optimal control problem
+ * @param [in] initTime: The initial time.
+ * @param [in] finalTime: The final time.
+ * @param [in] referenceModeSchedule : The reference mode schedule.
+ * @param [in] stoModeSchedule : The mode schedule for STO.
+ * @param [out] stoModelData: The output data model.
+ */
 void approximateStoProblem(const ipm::OptimalControlProblem& problem, scalar_t initTime, scalar_t finalTime, 
                            const ModeSchedule& referenceModeSchedule, const ModeSchedule& stoModeSchedule, StoModelData& stoModelData);
 
+/**
+ * Calculates a quadratic approximate of the switching time optimization (STO) problem.
+ *
+ * @param [in] problem: The optimal control problem
+ * @param [in] initTime: The initial time.
+ * @param [in] finalTime: The final time.
+ * @param [in] referenceModeSchedule : The reference mode schedule.
+ * @param [in] stoModeSchedule : The mode schedule for STO.
+ * @return The output data model.
+ */
 StoModelData approximateStoProblem(const ipm::OptimalControlProblem& problem, scalar_t initTime, scalar_t finalTime, 
                                    const ModeSchedule& referenceModeSchedule, const ModeSchedule& stoModeSchedule);
 
 /**
- * Compute the total intermediate cost (i.e. cost + softConstraints). It is assumed that the precomputation request is already made.
+ * Compute the cost associated with the switching time optimization (STO). It is assumed that the precomputation request is already made.
  */
 scalar_t computeCost(const ipm::OptimalControlProblem& problem, scalar_t initTime, scalar_t finalTime, 
                      const ModeSchedule& referenceModeSchedule, const ModeSchedule& stoModeSchedule);
 
 /**
- * Compute the quadratic approximation of the total intermediate cost (i.e. cost + softConstraints). It is assumed that the precomputation
- * request is already made.
+ * Compute the quadratic approximation of the cost associated with the switching time optimization (STO). It is assumed that the 
+ * precomputation request is already made.
  */
 ScalarFunctionQuadraticApproximation approximateCost(const ipm::OptimalControlProblem& problem, scalar_t initTime, scalar_t finalTime, 
                                                      const ModeSchedule& referenceModeSchedule, const ModeSchedule& stoModeSchedule);

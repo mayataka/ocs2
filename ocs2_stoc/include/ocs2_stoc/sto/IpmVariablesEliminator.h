@@ -8,17 +8,24 @@
 namespace ocs2 {
 
 /**
- * Calculates an LQ approximate of the constrained optimal control problem at a given time, state, and input.
+ * Eliminates the IPM-related variables and inequality constraints from a quadratic approximation of the STO problem.
  *
- * @param [in] problem: The optimal control problem
- * @param [in] time: The current time.
- * @param [in] state: The current state.
- * @param [in] input: The current input.
- * @param [out] modelData: The output data model.
+ * @param [in] ipmVariables: The IPM-related variables (a collection of slack and dual variables).
+ * @param [in, out] stoModelData: The quadratic approximation model data.
+ * @param [out] ipmData: The IPM-related data.
+ * @param [out] barrierParam: The barrier parameter of the IPM.
  */
 void eliminateIpmVariablesSTO(const ipm::IpmVariables& ipmVariables, StoModelData& stoModelData, ipm::IpmData& ipmData, 
                               scalar_t barrierParam);
 
+/**
+ * Eliminates the IPM-related variables and inequality constraints from a quadratic approximation of the STO problem.
+ *
+ * @param [in] ipmVariables: The IPM-related variables (a collection of slack and dual variables).
+ * @param [in, out] stoModelData: The quadratic approximation model data.
+ * @param [out] barrierParam: The barrier parameter of the IPM.
+ * @return The IPM-related data.
+ */
 ipm::IpmData eliminateIpmVariablesSTO(const ipm::IpmVariables& ipmVariables, StoModelData& stoModelData, scalar_t barrierParam);
 
 }  // namespace ocs2

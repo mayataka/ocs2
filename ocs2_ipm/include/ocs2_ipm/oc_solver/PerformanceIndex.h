@@ -73,6 +73,16 @@ struct PerformanceIndex {
     return dualDynamicsViolationSSE + dualControlViolationSSE + complementarySlacknessSSE;
   }
 
+  ::ocs2::PerformanceIndex toOcs2PerformanceIndex() const {
+    ::ocs2::PerformanceIndex performanceIndex;
+    performanceIndex.cost = cost + costBarrier;
+    performanceIndex.dynamicsViolationSSE = dynamicsViolationSSE;
+    performanceIndex.equalityConstraintsSSE = equalityConstraintsSSE + inequalityConstraintsSSE;
+    performanceIndex.equalityLagrangian = equalityLagrangian;
+    performanceIndex.inequalityLagrangian = inequalityLagrangian;
+    return performanceIndex;
+  }
+
   /** Add performance indices */
   PerformanceIndex& operator+=(const PerformanceIndex& rhs) {
     this->cost += rhs.cost;
@@ -87,57 +97,47 @@ struct PerformanceIndex {
     this->complementarySlacknessSSE += rhs.complementarySlacknessSSE;
     return *this;
   }
-};
 
-PerformanceIndex fromModelData(const ModelData& modelData) {
-  PerformanceIndex performanceIndex;
-  performanceIndex.cost = modelData.cost.f;
-  performanceIndex.dynamicsViolationSSE = modelData.dynamics.f.squaredNorm();
-  if (modelData.stateEqConstraint.f.size() > 0)
-    performanceIndex.equalityConstraintsSSE += modelData.stateEqConstraint.f.squaredNorm();
-  if (modelData.stateInputEqConstraint.f.size() > 0)
-    performanceIndex.equalityConstraintsSSE += modelData.stateInputEqConstraint.f.squaredNorm();
-  if (modelData.cost.dfdx.size() > 0)
-    performanceIndex.dualDynamicsViolationSSE = modelData.cost.dfdx.squaredNorm();
-  if (modelData.cost.dfdu.size() > 0)
-    performanceIndex.dualControlViolationSSE = modelData.cost.dfdu.squaredNorm();
-  return performanceIndex;
-}
-
-PerformanceIndex fromIpmData(const IpmData& ipmData) {
-  PerformanceIndex performanceIndex;
-  if (ipmData.dataStateIneqConstraint.primalResidual.size() > 0)
-    performanceIndex.inequalityConstraintsSSE += ipmData.dataStateIneqConstraint.primalResidual.squaredNorm();
-  if (ipmData.dataStateInputIneqConstraint.primalResidual.size() > 0)
-    performanceIndex.inequalityConstraintsSSE += ipmData.dataStateInputIneqConstraint.primalResidual.squaredNorm();
-  if (ipmData.dataStateIneqConstraint.complementarySlackness.size() > 0)
-    performanceIndex.complementarySlacknessSSE += ipmData.dataStateIneqConstraint.complementarySlackness.squaredNorm();
-  if (ipmData.dataStateInputIneqConstraint.complementarySlackness.size() > 0)
-    performanceIndex.complementarySlacknessSSE += ipmData.dataStateInputIneqConstraint.complementarySlackness.squaredNorm();
-  performanceIndex.costBarrier = ipmData.dataStateIneqConstraint.costBarrier 
-                                  + ipmData.dataStateInputIneqConstraint.costBarrier;
-  return performanceIndex;
-}
-
-PerformanceIndex fromStoModelData(const StoModelData& stoModelData, bool includeDualDynamicsViolation=false) {
-  PerformanceIndex performanceIndex;
-  performanceIndex.cost = stoModelData.stoCost.f;
-  if (includeDualDynamicsViolation && stoModelData.stoCost.dfdx.size() > 0) {
-    performanceIndex.dualDynamicsViolationSSE = stoModelData.stoCost.dfdx.squaredNorm();
+  static PerformanceIndex fromModelData(const ModelData& modelData) {
+    PerformanceIndex performanceIndex;
+    performanceIndex.cost = modelData.cost.f;
+    performanceIndex.dynamicsViolationSSE = modelData.dynamics.f.squaredNorm();
+    if (modelData.stateEqConstraint.f.size() > 0)
+      performanceIndex.equalityConstraintsSSE += modelData.stateEqConstraint.f.squaredNorm();
+    if (modelData.stateInputEqConstraint.f.size() > 0)
+      performanceIndex.equalityConstraintsSSE += modelData.stateInputEqConstraint.f.squaredNorm();
+    if (modelData.cost.dfdx.size() > 0)
+      performanceIndex.dualDynamicsViolationSSE = modelData.cost.dfdx.squaredNorm();
+    if (modelData.cost.dfdu.size() > 0)
+      performanceIndex.dualControlViolationSSE = modelData.cost.dfdu.squaredNorm();
+    return performanceIndex;
   }
-  return performanceIndex;
-}
 
-::ocs2::PerformanceIndex convert(const ::ocs2::ipm::PerformanceIndex& ipmPerformanceIndex) {
-  ::ocs2::PerformanceIndex performanceIndex;
-  performanceIndex.cost = ipmPerformanceIndex.cost + ipmPerformanceIndex.costBarrier;
-  performanceIndex.dynamicsViolationSSE = ipmPerformanceIndex.dynamicsViolationSSE;
-  performanceIndex.equalityConstraintsSSE = ipmPerformanceIndex.equalityConstraintsSSE;
-                                              + ipmPerformanceIndex.inequalityConstraintsSSE;
-  performanceIndex.equalityLagrangian = ipmPerformanceIndex.equalityLagrangian;
-  performanceIndex.inequalityLagrangian = ipmPerformanceIndex.inequalityLagrangian;
-  return performanceIndex;
-}
+  static PerformanceIndex fromIpmData(const IpmData& ipmData) {
+    PerformanceIndex performanceIndex;
+    if (ipmData.dataStateIneqConstraint.primalResidual.size() > 0)
+      performanceIndex.inequalityConstraintsSSE += ipmData.dataStateIneqConstraint.primalResidual.squaredNorm();
+    if (ipmData.dataStateInputIneqConstraint.primalResidual.size() > 0)
+      performanceIndex.inequalityConstraintsSSE += ipmData.dataStateInputIneqConstraint.primalResidual.squaredNorm();
+    if (ipmData.dataStateIneqConstraint.complementarySlackness.size() > 0)
+      performanceIndex.complementarySlacknessSSE += ipmData.dataStateIneqConstraint.complementarySlackness.squaredNorm();
+    if (ipmData.dataStateInputIneqConstraint.complementarySlackness.size() > 0)
+      performanceIndex.complementarySlacknessSSE += ipmData.dataStateInputIneqConstraint.complementarySlackness.squaredNorm();
+    performanceIndex.costBarrier = ipmData.dataStateIneqConstraint.costBarrier 
+                                    + ipmData.dataStateInputIneqConstraint.costBarrier;
+    return performanceIndex;
+  }
+
+  static PerformanceIndex fromStoModelData(const StoModelData& stoModelData, bool includeDualDynamicsViolation=false) {
+    PerformanceIndex performanceIndex;
+    performanceIndex.cost = stoModelData.stoCost.f;
+    if (includeDualDynamicsViolation && stoModelData.stoCost.dfdx.size() > 0) {
+      performanceIndex.dualDynamicsViolationSSE = stoModelData.stoCost.dfdx.squaredNorm();
+    }
+    return performanceIndex;
+  }
+
+};
 
 inline PerformanceIndex operator+(PerformanceIndex lhs, const PerformanceIndex& rhs) {
   lhs += rhs;  // Copied lhs, add rhs to it.
