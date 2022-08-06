@@ -192,9 +192,11 @@ TEST(testTimeDiscretization, testMultiPhaseTimeDiscretizationGridWithSTO) {
   size_t phase = 0;
   for (size_t i=0; i<grids.size(); ++i) {
     EXPECT_EQ(grids[i].time, timeDiscretization[i].time);
-    EXPECT_EQ(grids[i].event, castEvent(timeDiscretization[i].event));
+    if (i > 0) {
+      EXPECT_EQ(grids[i].event, castEvent(timeDiscretization[i].event)); // event whose evenTime is initTime is skipped
+    }
     size_t mode = modeSchedule.modeAtTime(grids[i].time);
-    if (grids[i].event == Grid::Event::PostEvent) {
+    if (grids[i].event == Grid::Event::PostEvent && i > 0) { // event whose evenTime is initTime is skipped
       mode = modeSchedule.modeAtTime(grids[i].time + min_dt);
       ++phase;
     }
@@ -211,12 +213,11 @@ TEST(testTimeDiscretization, testUpdateTimeIntervals) {
   const scalar_t min_dt = 10.0 * numeric_traits::limitEpsilon<scalar_t>();
   const scalar_array_t eventTimesInput = {1.0, 1.1, 1.5, 4.0};
   const size_array_t modeScheduleInput = {1, 0, 1, 2, 0};
-  const auto modeScheduleRef = ModeSchedule(eventTimesInput, modeScheduleInput);
-  const auto gridsRef = multiPhaseTimeDiscretizationGrid(initTime, finalTime, dt, modeScheduleRef);
-  auto modeSchedule = modeScheduleRef;
-  modeSchedule.eventTimes = {0.6, 0.8, 2.2, 3.8};
+  const auto modeSchedule = ModeSchedule(eventTimesInput, modeScheduleInput);
+  const auto gridsRef = multiPhaseTimeDiscretizationGrid(initTime, finalTime, dt, modeSchedule);
+  const scalar_array_t switchingTimeDirections = {0.2, -0.3, 1.0, 0.3};
   auto grids = gridsRef;
-  updateTimeIntervals(initTime, finalTime, modeSchedule, grids);
+  updateTimeIntervals(initTime, finalTime, switchingTimeDirections, grids);
   for (size_t i=0; i<grids.size(); ++i) {
     EXPECT_EQ(grids[i].event, gridsRef[i].event);
     EXPECT_EQ(grids[i].mode, gridsRef[i].mode);
@@ -226,12 +227,16 @@ TEST(testTimeDiscretization, testUpdateTimeIntervals) {
     EXPECT_EQ(grids[i].stoNextNext, gridsRef[i].stoNextNext);
   }
   const auto numGrids = getNumGrids(gridsRef);
-  scalar_array_t dtPhase(modeSchedule.eventTimes.size() + 1); 
-  dtPhase[0] = (modeSchedule.eventTimes[0] - initTime) / numGrids[0];
-  for (size_t i=1; i<dtPhase.size() - 1; ++i) {
-    dtPhase[i] = (modeSchedule.eventTimes[i] - modeSchedule.eventTimes[i - 1]) / numGrids[i];
+  scalar_array_t updatedEventTimes = modeSchedule.eventTimes;
+  for (size_t i = 0; i < updatedEventTimes.size(); ++i) {
+    updatedEventTimes[i] += switchingTimeDirections[i];
   }
-  dtPhase.back() = (finalTime - modeSchedule.eventTimes.back()) / numGrids.back();
+  scalar_array_t dtPhase(updatedEventTimes.size() + 1); 
+  dtPhase[0] = (updatedEventTimes[0] - initTime) / numGrids[0];
+  for (size_t i=1; i<dtPhase.size() - 1; ++i) {
+    dtPhase[i] = (updatedEventTimes[i] - updatedEventTimes[i - 1]) / numGrids[i];
+  }
+  dtPhase.back() = (finalTime - updatedEventTimes.back()) / numGrids.back();
   scalar_t time = initTime;
   for (size_t i=0; i<grids.size(); ++i) {
     EXPECT_NEAR(grids[i].time, time, numeric_traits::weakEpsilon<scalar_t>());

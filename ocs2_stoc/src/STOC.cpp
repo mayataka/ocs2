@@ -248,13 +248,10 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     }
 
     // update time discretization
-    scalar_t maxTimeInterval = 0.0;
-    if (internalReferenceManagerPtr_) {
-      updateTimeIntervals(initTime, finalTime, modeSchedule, timeDiscretization);
-      maxTimeInterval = getMaxTimeInterval(timeDiscretization);
-      if (settings_.printSwitchingTimeOptimization) {
-        std::cerr << "[SwitchingTimeOptimization] Event times:   {" << toDelimitedString(modeSchedule.eventTimes) << "}\n";
-      }
+    updateTimeIntervals(initTime, finalTime, dts, timeDiscretization);
+    const scalar_t maxTimeInterval = getMaxTimeInterval(timeDiscretization);
+    if (settings_.printSwitchingTimeOptimization) {
+      std::cerr << "[SwitchingTimeOptimization] Event times:   {" << toDelimitedString(modeSchedule.eventTimes) << "}\n";
     }
 
     // Check convergence

@@ -31,7 +31,8 @@ scalar_t getIntervalDuration(const Grid& start, const Grid& end) {
 
 std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t finalTime, scalar_t dt, const ModeSchedule& modeSchedule, 
                                                    const std::unordered_map<size_t, bool>& isStoEnabledInMode, scalar_t dt_min) {
-  const auto timeDiscretization = multiPhaseTimeDiscretization(initTime, finalTime, dt, modeSchedule.eventTimes, dt_min);
+  auto timeDiscretization = multiPhaseTimeDiscretization(initTime, finalTime, dt, modeSchedule.eventTimes, dt_min);
+  timeDiscretization.front().event = AnnotatedTime::Event::None; // disable post-event at the initial stage.
   std::vector<Grid> timeDiscretizationGrid;
   timeDiscretizationGrid.reserve(timeDiscretization.size());
   size_t phase = 0;
@@ -69,18 +70,19 @@ std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t f
   return timeDiscretizationGrid; 
 }
 
-void updateTimeIntervals(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule, std::vector<Grid>& timeDiscretization) {
-  const int N = static_cast<int>(timeDiscretization.size()) - 1;
-  if (modeSchedule.eventTimes.empty()) return;
+void updateTimeIntervals(scalar_t initTime, scalar_t finalTime, const scalar_array_t& switchingTimeDirections, 
+                         std::vector<Grid>& timeDiscretization) {
+  if (switchingTimeDirections.empty()) return;
 
-  int eventIndex = 0;
+  const int N = static_cast<int>(timeDiscretization.size()) - 1;
+
+  size_t validEventIndex = 0;
   for (int i=0; i<N; ++i) {
     if (timeDiscretization[i].event == Grid::Event::PreEvent) {
-      timeDiscretization[i].time = modeSchedule.eventTimes[eventIndex];
-    }
-    else if (timeDiscretization[i].event == Grid::Event::PostEvent) {
-      timeDiscretization[i].time = modeSchedule.eventTimes[eventIndex];
-      ++eventIndex;
+      timeDiscretization[i].time += switchingTimeDirections[validEventIndex];
+    } else if (timeDiscretization[i].event == Grid::Event::PostEvent) {
+      timeDiscretization[i].time += switchingTimeDirections[validEventIndex];
+      ++validEventIndex;
     }
   }
 
@@ -93,8 +95,7 @@ void updateTimeIntervals(scalar_t initTime, scalar_t finalTime, const ModeSchedu
       for (int j=lastPostEventGrid+1; j<i; ++j) {
         timeDiscretization[j].time = lastEventTime + (j - lastPostEventGrid) * dt;
       }
-    }
-    else if (timeDiscretization[i].event == Grid::Event::PostEvent) {
+    } else if (timeDiscretization[i].event == Grid::Event::PostEvent) {
       lastPostEventGrid = i;
       lastEventTime = timeDiscretization[i].time;
     }

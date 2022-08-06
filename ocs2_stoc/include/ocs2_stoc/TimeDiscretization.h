@@ -62,10 +62,11 @@ std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t f
  *
  * @param initTime : start time.
  * @param finalTime : final time.
- * @param modeSchedule : Mode schedule reference.
+ * @param switchingTimeDirections : Switchig time directions.
  * @param timeDiscretization: The time discretization grids.
  */
-void updateTimeIntervals(scalar_t initTime, scalar_t finalTime, const ModeSchedule& modeSchedule, std::vector<Grid>& timeDiscretization);
+void updateTimeIntervals(scalar_t initTime, scalar_t finalTime, const scalar_array_t& switchingTimeDirections, 
+                         std::vector<Grid>& timeDiscretization);
 
 /**
  * Decides on multi-phase time discretization along the horizon. Tries to makes step of dt, but will also ensure that eventtimes are part of the
