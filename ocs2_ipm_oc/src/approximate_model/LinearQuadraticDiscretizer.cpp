@@ -20,9 +20,9 @@ void discretizeIntermediateLQ(const scalar_t dt, const vector_t& state, const ve
   modelData.hamiltonian.dfdt = modelData.dynamics.f;
 
   // dynamics 
-  modelData.dynamics.f *= dt; 
-  modelData.dynamics.dfdx *= dt; 
-  modelData.dynamics.dfdu *= dt; 
+  modelData.dynamics.f.array() *= dt; 
+  modelData.dynamics.dfdx.array() *= dt; 
+  modelData.dynamics.dfdu.array() *= dt; 
   modelData.dynamics.f.noalias() += state;
   modelData.dynamics.f.noalias() -= stateNext;
   modelData.dynamics.dfdx.diagonal().array() += 1.0;
