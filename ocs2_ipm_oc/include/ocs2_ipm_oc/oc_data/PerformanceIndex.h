@@ -4,7 +4,7 @@
 #include <ostream>
 
 #include <ocs2_core/Types.h>
-#include <ocs2_oc/oc_solver/PerformanceIndex.h>
+#include <ocs2_oc/oc_data/PerformanceIndex.h>
 #include <ocs2_ipm/model_data/ModelData.h>
 #include <ocs2_sto/model_data/StoModelData.h>
 

@@ -119,6 +119,8 @@ struct OptimalControlProblem {
 
   /** Swap */
   void swap(OptimalControlProblem& other) noexcept;
+
+  ::ocs2::OptimalControlProblem toOcs2OptimalControlProblem() const;
 };
 
 }  // namespace ipm

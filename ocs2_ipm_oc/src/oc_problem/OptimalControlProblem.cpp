@@ -190,5 +190,47 @@ void OptimalControlProblem::swap(OptimalControlProblem& other) noexcept {
   std::swap(targetTrajectoriesPtr, other.targetTrajectoriesPtr);
 }
 
+::ocs2::OptimalControlProblem OptimalControlProblem::toOcs2OptimalControlProblem() const {
+  ::ocs2::OptimalControlProblem ocs2OptimalControlProblem;
+  /* Cost */
+  ocs2OptimalControlProblem.costPtr.reset(costPtr->clone());
+  ocs2OptimalControlProblem.stateCostPtr.reset(stateCostPtr->clone());
+  ocs2OptimalControlProblem.preJumpCostPtr.reset(preJumpCostPtr->clone());
+  ocs2OptimalControlProblem.finalCostPtr.reset(finalCostPtr->clone());
+  /* Soft constraints */
+  ocs2OptimalControlProblem.softConstraintPtr.reset(softConstraintPtr->clone());
+  ocs2OptimalControlProblem.stateSoftConstraintPtr.reset(stateSoftConstraintPtr->clone());
+  ocs2OptimalControlProblem.preJumpSoftConstraintPtr.reset(preJumpSoftConstraintPtr->clone());
+  ocs2OptimalControlProblem.finalSoftConstraintPtr.reset(finalSoftConstraintPtr->clone());
+  // TODO: convert inequality constraints to Augmented Lagrangians
+  /* Inequality constraints */
+  // inequalityConstraintPtr->clone();
+  // stateInequalityConstraintPtr->clone();
+  // preJumpInequalityConstraintPtr->clone();
+  // finalInequalityConstraintPtr->clone();
+  /* Equality constraints */
+  ocs2OptimalControlProblem.equalityConstraintPtr.reset(equalityConstraintPtr->clone());
+  ocs2OptimalControlProblem.stateEqualityConstraintPtr.reset(stateEqualityConstraintPtr->clone());
+  ocs2OptimalControlProblem.preJumpEqualityConstraintPtr.reset(preJumpEqualityConstraintPtr->clone());
+  ocs2OptimalControlProblem.finalEqualityConstraintPtr.reset(finalEqualityConstraintPtr->clone());
+  /* Lagrangians */
+  ocs2OptimalControlProblem.equalityLagrangianPtr.reset(equalityLagrangianPtr->clone());
+  ocs2OptimalControlProblem.stateEqualityLagrangianPtr.reset(stateEqualityLagrangianPtr->clone());
+  ocs2OptimalControlProblem.inequalityLagrangianPtr.reset(inequalityLagrangianPtr->clone());
+  ocs2OptimalControlProblem.stateInequalityLagrangianPtr.reset(stateInequalityLagrangianPtr->clone());
+  ocs2OptimalControlProblem.preJumpEqualityLagrangianPtr.reset(preJumpEqualityLagrangianPtr->clone());
+  ocs2OptimalControlProblem.preJumpInequalityLagrangianPtr.reset(preJumpInequalityLagrangianPtr->clone());
+  ocs2OptimalControlProblem.finalEqualityLagrangianPtr.reset(finalEqualityLagrangianPtr->clone());
+  ocs2OptimalControlProblem.finalInequalityLagrangianPtr.reset(finalInequalityLagrangianPtr->clone());
+  /** System dynamics pointer */
+  if (dynamicsPtr != nullptr) {
+    ocs2OptimalControlProblem.dynamicsPtr.reset(dynamicsPtr->clone());
+  }
+  /* Misc. */
+  ocs2OptimalControlProblem.preComputationPtr.reset(preComputationPtr->clone());
+  ocs2OptimalControlProblem.targetTrajectoriesPtr = targetTrajectoriesPtr;
+  return ocs2OptimalControlProblem;
+}
+
 }  // namespace ipm
 }  // namespace ocs2
