@@ -48,16 +48,33 @@ std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t f
     timeDiscretizationGrid.emplace_back(e.time, mode, phase, castEvent(e.event), sto, stoNext, stoNextNext);
   }
 
-  auto checkIsStoEnabledInmode = [](const std::unordered_map<size_t, bool>& isStoEnabledInMode, size_t mode) {
+  auto extractValidModeSequence = [](const std::vector<Grid>& timeDiscretizationGrid) {
+    std::vector<size_t> validModeSequence;
+    validModeSequence.reserve(timeDiscretizationGrid.back().phase+1); 
+    auto prevPhase = timeDiscretizationGrid.front().phase;
+    validModeSequence.push_back(timeDiscretizationGrid.front().mode);
+    for (const auto& e : timeDiscretizationGrid) {
+      if (e.phase != prevPhase) {
+        validModeSequence.push_back(e.mode);
+        prevPhase = e.phase;
+      }
+    }
+    return validModeSequence;
+  };
+  const std::vector<size_t> validModeSequence = extractValidModeSequence(timeDiscretizationGrid);
+
+  auto checkIsStoEnabledInMode = [](const std::unordered_map<size_t, bool>& isStoEnabledInMode, size_t mode) {
     if (isStoEnabledInMode.empty()) return false;
     if (isStoEnabledInMode.find(mode) == isStoEnabledInMode.end()) return false;
     return isStoEnabledInMode.at(mode); 
   };
   std::vector<bool> isStoEnabledInPhase;
-  isStoEnabledInPhase.reserve(modeSchedule.modeSequence.size());
-  for (const auto mode : modeSchedule.modeSequence) {
-    isStoEnabledInPhase.push_back(checkIsStoEnabledInmode(isStoEnabledInMode, mode));
+  isStoEnabledInPhase.reserve(validModeSequence.size()+2); // maximum size
+  for (const auto mode : validModeSequence) {
+    isStoEnabledInPhase.push_back(checkIsStoEnabledInMode(isStoEnabledInMode, mode));
   }
+  isStoEnabledInPhase.push_back(false);
+  isStoEnabledInPhase.push_back(false);
   for (auto& e : timeDiscretizationGrid) {
     e.sto = isStoEnabledInPhase[e.phase];
     if (e.phase+1 < isStoEnabledInPhase.size()) {
