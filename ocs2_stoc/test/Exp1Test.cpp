@@ -218,6 +218,8 @@ TEST(Exp1Test, Unconstrained_SwitchingTimeOptimization) {
   settings.switchingTimeTrustRegionRadius = 0.1;
   settings.enableSwitchingTimeTrustRegion = true; 
 
+  settings.printSwitchingTimeOptimization = true; 
+
   const scalar_array_t initEventTimes{1.0, 2.0};
   const std::vector<size_t> modeSequence{0, 1, 2};
   auto internalReferenceManagerPtr = getExp1ReferenceManager(initEventTimes, modeSequence);
@@ -249,6 +251,112 @@ TEST(Exp1Test, Unconstrained_SwitchingTimeOptimization) {
 
   const scalar_t expectedCost = 5.4399;
   EXPECT_NEAR(stoc.getIpmPerformanceIndeces().cost, expectedCost, 0.05); 
+}
+
+TEST(Exp1Test, Unconstrained_SwitchingTimeOptimizationPartial1) {
+  static constexpr size_t STATE_DIM = 2;
+  static constexpr size_t INPUT_DIM = 1;
+
+  stoc::Settings settings;
+  settings.numIteration = 100;
+  settings.useFeedbackPolicy = true;
+  settings.dt = 0.01;
+  settings.printSolverStatus = true;
+  settings.printSolverStatistics = true;
+  settings.printLinesearch = true;
+  settings.printSwitchingTimeOptimization = true;
+  settings.nThreads = 4;
+  settings.initialBarrierParameter = 1.0e-02;
+  settings.targetBarrierParameter = 1.0e-04;
+
+  settings.isStoEnabledInMode = {{0, true}, {1, true}, {2, false}};
+  settings.maxTimeInterval = 0.015;
+  settings.meshRefinementPrimalFeasTol = 1.0e-02; 
+  settings.meshRefinementDualFeasTol = 1.0e-02; 
+  settings.switchingTimeTrustRegionRadius = 0.1;
+  settings.enableSwitchingTimeTrustRegion = true; 
+
+  settings.printSwitchingTimeOptimization = true; 
+
+  const scalar_array_t initEventTimes{1.0, 2.0};
+  const std::vector<size_t> modeSequence{0, 1, 2};
+  auto internalReferenceManagerPtr = getExp1ReferenceManager(initEventTimes, modeSequence);
+  auto problem = createExp1Problem(internalReferenceManagerPtr);
+  auto ipmProblem = ipm::OptimalControlProblem(problem);
+  auto quadraticStoCost = std::unique_ptr<QuadraticStoCost>(new QuadraticStoCost(0.0));
+  ipmProblem.stoCostPtr->add("quadraticStoCost", std::move(quadraticStoCost));
+  auto minimumDwellTimeConstraint = std::unique_ptr<MinimumDwellTimeConstraint>(new MinimumDwellTimeConstraint({{0, 0.01}, {1, 0.01}, {2, 0.01}}));
+  ipmProblem.stoConstraintPtr->add("minimumDwellTimeConstraint", std::move(minimumDwellTimeConstraint));
+
+  const scalar_t startTime = 0.0;
+  const scalar_t finalTime = 3.0;
+  const vector_t initState = (vector_t(STATE_DIM) << 2.0, 3.0).finished();
+
+  auto initializerPtr = std::unique_ptr<Initializer>(new DefaultInitializer(INPUT_DIM));
+
+  STOC stoc(settings, ipmProblem, *initializerPtr);
+  auto referenceManagerPtr = getExp1ReferenceManager(initEventTimes, modeSequence);
+  stoc.setReferenceManager(referenceManagerPtr);
+  stoc.setInternalReferenceManager(internalReferenceManagerPtr);
+  stoc.run(startTime, initState, finalTime);
+  std::cout << stoc.getBenchmarkingInformation() << std::endl;
+  std::cout << stoc.getIpmPerformanceIndeces() << std::endl;
+  std::cout << "\n========= Optimized modeSchedule: =========\n" << stoc.getReferenceManager().getModeSchedule() << "\n" << std::endl;
+
+  EXPECT_DOUBLE_EQ(stoc.getReferenceManager().getModeSchedule().eventTimes[1], 2.0); 
+}
+
+TEST(Exp1Test, Unconstrained_SwitchingTimeOptimizationPartial2) {
+  static constexpr size_t STATE_DIM = 2;
+  static constexpr size_t INPUT_DIM = 1;
+
+  stoc::Settings settings;
+  settings.numIteration = 100;
+  settings.useFeedbackPolicy = true;
+  settings.dt = 0.01;
+  settings.printSolverStatus = true;
+  settings.printSolverStatistics = true;
+  settings.printLinesearch = true;
+  settings.printSwitchingTimeOptimization = true;
+  settings.nThreads = 4;
+  settings.initialBarrierParameter = 1.0e-02;
+  settings.targetBarrierParameter = 1.0e-04;
+
+  settings.isStoEnabledInMode = {{0, false}, {1, true}, {2, true}};
+  settings.maxTimeInterval = 0.015;
+  settings.meshRefinementPrimalFeasTol = 1.0e-02; 
+  settings.meshRefinementDualFeasTol = 1.0e-02; 
+  settings.switchingTimeTrustRegionRadius = 0.1;
+  settings.enableSwitchingTimeTrustRegion = true; 
+
+  settings.printSwitchingTimeOptimization = true; 
+
+  const scalar_array_t initEventTimes{1.0, 2.0};
+  const std::vector<size_t> modeSequence{0, 1, 2};
+  auto internalReferenceManagerPtr = getExp1ReferenceManager(initEventTimes, modeSequence);
+  auto problem = createExp1Problem(internalReferenceManagerPtr);
+  auto ipmProblem = ipm::OptimalControlProblem(problem);
+  auto quadraticStoCost = std::unique_ptr<QuadraticStoCost>(new QuadraticStoCost(0.0));
+  ipmProblem.stoCostPtr->add("quadraticStoCost", std::move(quadraticStoCost));
+  auto minimumDwellTimeConstraint = std::unique_ptr<MinimumDwellTimeConstraint>(new MinimumDwellTimeConstraint({{0, 0.01}, {1, 0.01}, {2, 0.01}}));
+  ipmProblem.stoConstraintPtr->add("minimumDwellTimeConstraint", std::move(minimumDwellTimeConstraint));
+
+  const scalar_t startTime = 0.0;
+  const scalar_t finalTime = 3.0;
+  const vector_t initState = (vector_t(STATE_DIM) << 2.0, 3.0).finished();
+
+  auto initializerPtr = std::unique_ptr<Initializer>(new DefaultInitializer(INPUT_DIM));
+
+  STOC stoc(settings, ipmProblem, *initializerPtr);
+  auto referenceManagerPtr = getExp1ReferenceManager(initEventTimes, modeSequence);
+  stoc.setReferenceManager(referenceManagerPtr);
+  stoc.setInternalReferenceManager(internalReferenceManagerPtr);
+  stoc.run(startTime, initState, finalTime);
+  std::cout << stoc.getBenchmarkingInformation() << std::endl;
+  std::cout << stoc.getIpmPerformanceIndeces() << std::endl;
+  std::cout << "\n========= Optimized modeSchedule: =========\n" << stoc.getReferenceManager().getModeSchedule() << "\n" << std::endl;
+
+  EXPECT_DOUBLE_EQ(stoc.getReferenceManager().getModeSchedule().eventTimes[0], 1.0); 
 }
 
 int main(int argc, char** argv) {
