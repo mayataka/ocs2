@@ -19,10 +19,11 @@ class MPC_MinimumDwellTimeConstraint : public MinimumDwellTimeConstraint {
   /**
    * Constructor for the minimum dwell-time constraint for MPC.
    * @param [in] minimumDwellTimeAtInitialPhase: Minimum dwell time at the initial phase.
+   * @param [in] minimumDwellTimeAtFinalPhase: Minimum dwell time at the final phase.
    * @param [in] minimumDwellTimesMap: Minimum dwell times for modes.
    * @param [in] minimumDwellTime: Minimum dwell time for the modes that are not specified by minimumDwellTimesMap. 
    */
-  MPC_MinimumDwellTimeConstraint(const scalar_t minimumDwellTimeAtInitialPhase,
+  MPC_MinimumDwellTimeConstraint(const scalar_t minimumDwellTimeAtInitialPhase, const scalar_t minimumDwellTimeAtFinalPhase,
                                  const std::unordered_map<size_t, scalar_t>& minimumDwellTimesMap,
                                  const scalar_t minimumDwellTime=numeric_traits::limitEpsilon<scalar_t>());
   MPC_MinimumDwellTimeConstraint() = default;
@@ -36,7 +37,7 @@ class MPC_MinimumDwellTimeConstraint : public MinimumDwellTimeConstraint {
 
  private:
   std::unordered_map<size_t, scalar_t> minimumDwellTimesMap_;
-  scalar_t minimumDwellTime_, minimumDwellTimeAtInitialPhase_;
+  scalar_t minimumDwellTime_, minimumDwellTimeAtInitialPhase_, minimumDwellTimeAtFinalPhase_;
 };
 
 } // namespace ocs2
