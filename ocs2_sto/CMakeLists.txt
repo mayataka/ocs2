@@ -50,6 +50,7 @@ add_library(${PROJECT_NAME}
   src/cost/QuadraticStoCost.cpp
   src/constraint/StoConstraintCollection.cpp
   src/constraint/MinimumDwellTimeConstraint.cpp
+  src/constraint/MPC_MinimumDwellTimeConstraint.cpp
 )
 add_dependencies(${PROJECT_NAME}
   ${catkin_EXPORTED_TARGETS}

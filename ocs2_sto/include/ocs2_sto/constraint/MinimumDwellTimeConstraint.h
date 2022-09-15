@@ -45,10 +45,11 @@ class MinimumDwellTimeConstraint : public StoConstraint {
  protected:
   MinimumDwellTimeConstraint(const MinimumDwellTimeConstraint& rhs) = default;
 
+  virtual vector_t getMinimumDwellTimes(const ModeSchedule& validModeSchedule) const;
+
  private:
   std::unordered_map<size_t, scalar_t> minimumDwellTimesMap_;
   scalar_t minimumDwellTime_;
-
 };
 
 } // namespace ocs2
