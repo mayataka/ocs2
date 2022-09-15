@@ -211,7 +211,7 @@ TEST(Exp1Test, Unconstrained_SwitchingTimeOptimization) {
   settings.initialBarrierParameter = 1.0e-02;
   settings.targetBarrierParameter = 1.0e-04;
 
-  settings.isStoEnabledInMode = {{0, true}, {1, true}, {2, true}};
+  settings.stoEnabledModeSwitches = {{0, 1}, {1, 2}, };
   settings.maxTimeInterval = 0.015;
   settings.meshRefinementPrimalFeasTol = 1.0e-02; 
   settings.meshRefinementDualFeasTol = 1.0e-02; 
@@ -269,7 +269,7 @@ TEST(Exp1Test, Unconstrained_SwitchingTimeOptimizationPartial1) {
   settings.initialBarrierParameter = 1.0e-02;
   settings.targetBarrierParameter = 1.0e-04;
 
-  settings.isStoEnabledInMode = {{0, true}, {1, true}, {2, false}};
+  settings.stoEnabledModeSwitches = {{0, 1}, };
   settings.maxTimeInterval = 0.015;
   settings.meshRefinementPrimalFeasTol = 1.0e-02; 
   settings.meshRefinementDualFeasTol = 1.0e-02; 
@@ -322,7 +322,7 @@ TEST(Exp1Test, Unconstrained_SwitchingTimeOptimizationPartial2) {
   settings.initialBarrierParameter = 1.0e-02;
   settings.targetBarrierParameter = 1.0e-04;
 
-  settings.isStoEnabledInMode = {{0, false}, {1, true}, {2, true}};
+  settings.stoEnabledModeSwitches = {{1, 2}, };
   settings.maxTimeInterval = 0.015;
   settings.meshRefinementPrimalFeasTol = 1.0e-02; 
   settings.meshRefinementDualFeasTol = 1.0e-02; 

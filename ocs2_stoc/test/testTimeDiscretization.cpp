@@ -186,8 +186,8 @@ TEST(testTimeDiscretization, testMultiPhaseTimeDiscretizationGridWithSTO) {
   const scalar_array_t eventTimesInput = {1.0, 1.1, 1.5, 4.0, 5.5};
   const size_array_t modeScheduleInput = {1, 0, 1, 2, 0, 1};
   const auto modeSchedule = ModeSchedule(eventTimesInput, modeScheduleInput);
-  const std::unordered_map<size_t, bool> isStoEnabledInMode = {{0, true}, {1, false}, {2, true}, };
-  const auto grids = multiPhaseTimeDiscretizationGrid(initTime, finalTime, dt, modeSchedule, isStoEnabledInMode);
+  const std::vector<std::pair<size_t, size_t>> stoEnabledModeSwitches = {{0, 1}, {1, 2}, };
+  const auto grids = multiPhaseTimeDiscretizationGrid(initTime, finalTime, dt, modeSchedule, stoEnabledModeSwitches);
   const auto timeDiscretization = multiPhaseTimeDiscretization(initTime, finalTime, dt, modeSchedule.eventTimes);
   size_t phase = 0;
   for (size_t i=0; i<grids.size(); ++i) {

@@ -131,7 +131,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   // Determine time discretization, taking into account event times.
   auto modeSchedule = initModeSchedule;
   const auto initTimeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule, 
-                                                                       settings_.isStoEnabledInMode);
+                                                                       settings_.stoEnabledModeSwitches);
   const auto numPhases = initTimeDiscretization.back().phase + 1;
 
   // initialize Barrier param
@@ -157,7 +157,6 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   std::vector<ipm::IpmVariablesDirection> ipmVariablesDirectionTrajectory;
   ipm::IpmVariablesDirection stoIpmVariablesDirection;
 
-  std::cout << initTimeDiscretization << std::endl;
   auto timeDiscretization = initTimeDiscretization;
   size_t iter = 0;
   bool initIpmVariables = true;
@@ -267,7 +266,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
       }
       setPrimalSolution(timeDiscretization, std::move(stateTrajectory), std::move(inputTrajectory), std::move(costateTrajectory));
       timeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule, 
-                                                            settings_.isStoEnabledInMode);
+                                                            settings_.stoEnabledModeSwitches);
       initializeStateInputTrajectories(timeDiscretization, initState, stateTrajectory, inputTrajectory);
       initializeCostateTrajectories(timeDiscretization, stateTrajectory, inputTrajectory, costateTrajectory);
       initIpmVariables = true;
@@ -616,14 +615,20 @@ void STOC::updateIterate(vector_array_t& x, vector_array_t& u, vector_array_t& l
 void STOC::updateIterate(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule, ModeSchedule& modeSchedule, 
                          ipm::IpmVariables& stoIpmVariables, const scalar_array_t& dts, 
                          const ipm::IpmVariablesDirection& stoIpmVariablesDirection, scalar_t primalStepSize, scalar_t dualStepSize) {
-  if (settings_.isStoEnabledInMode.empty()) return;
+  if (settings_.stoEnabledModeSwitches.empty()) return;
+
+  // const auto isStoEnabledInPhase = extractIsStoEnabledInPhase(timeDiscretizationGrid, settings_.stoEnabledModeSwitches);
+  // const auto validSwitchingTimeIndices = extractValidSwitchingTimeIndices(initTime, finalTime, referenceModeSchedule);
+  // for (size_t phase=0; phase<validSwitchingTimeIndices.size(); ++phase) {
+  //   const auto mode = modeSchedule.modeSequence[phase+validSwitchingTimeIndices.front()];
+  //   if (settings_.stoEnabledInModeSwitches.find(mode) != settings_.stoEnabledInModeSwitches.end()) {
+  //     if (settings_.isStoEnabledInMode[mode]) modeSchedule.eventTimes[validSwitchingTimeIndices[phase]] += primalStepSize * dts[phase];
+  //   }
+  // }
 
   const auto validSwitchingTimeIndices = extractValidSwitchingTimeIndices(initTime, finalTime, referenceModeSchedule);
   for (size_t phase=0; phase<validSwitchingTimeIndices.size(); ++phase) {
-    const auto mode = modeSchedule.modeSequence[phase+validSwitchingTimeIndices.front()];
-    if (settings_.isStoEnabledInMode.find(mode) != settings_.isStoEnabledInMode.end()) {
-      if (settings_.isStoEnabledInMode[mode]) modeSchedule.eventTimes[validSwitchingTimeIndices[phase]] += primalStepSize * dts[phase];
-    }
+    modeSchedule.eventTimes[validSwitchingTimeIndices[phase]] += primalStepSize * dts[phase];
   }
   ipm::updateIpmVariables(stoIpmVariables, stoIpmVariablesDirection, primalStepSize, dualStepSize);
 }

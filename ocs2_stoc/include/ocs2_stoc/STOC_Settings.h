@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <unordered_map>
 
 #include <ocs2_core/Types.h>
 #include <ocs2_stoc/riccati_recursion/RiccatiSolverMode.h>
@@ -39,7 +38,7 @@ struct Settings {
   scalar_t dt = 0.01;  // user-defined time discretization
 
   // STO strategy
-  std::unordered_map<size_t, bool> isStoEnabledInMode; // If the switching time associated with the specified mode is considered as the optimization variable or not.
+  std::vector<std::pair<size_t, size_t>> stoEnabledModeSwitches; // Collection of the mode switches of which switching times will be optimized.
   scalar_t maxTimeInterval = 0.02; // Maximum time interval of the discretization in STO. 
   bool useOptimizedModeShceduleInReferenceManager = true; // If true, the optimized mode schedule is set to ReferenceManager after the optimization.
 

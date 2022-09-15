@@ -5,7 +5,6 @@
 #include <ocs2_sqp/TimeDiscretization.h>
 #include <ocs2_core/reference/ModeSchedule.h>
 
-#include <unordered_map>
 #include <iostream>
 
 namespace ocs2 {
@@ -38,6 +37,11 @@ scalar_t getIntervalEnd(const Grid& grid);
 /** Computes the interval duration that respects interpolation rules around event times */
 scalar_t getIntervalDuration(const Grid& start, const Grid& end);
 
+std::vector<size_t> extractValidModeSequence(const std::vector<Grid>& timeDiscretizationGrid);
+
+std::vector<bool> extractIsStoEnabledInPhase(const std::vector<Grid>& timeDiscretizationGrid,
+                                             const std::vector<std::pair<size_t, size_t>>& stoEnabledModeSwitches);
+
 /**
  * Decides on multi-phase time discretization along the horizon. Tries to makes step of dt, but will also ensure that eventtimes are part of the
  * discretization.
@@ -46,14 +50,13 @@ scalar_t getIntervalDuration(const Grid& start, const Grid& end);
  * @param finalTime : final time.
  * @param dt : desired discretization step.
  * @param modeSchedule : Mode schedule reference.
- * @param isStoEnabledInMode : Falgs if the sto is enabled or not in the specified mode. If the STO for a mode is not speficied, then the
- * STO for the mode is disabled.
+ * @param stoEnabledModeSwitches : Collection of the mode switches of which switching times will be optimized.
  * @param dt_min : minimum discretization step. Smaller intervals will be merged. Needs to be bigger than limitEpsilon to avoid
  * interpolation problems
  * @return vector of discrete time grid
  */
 std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t finalTime, scalar_t dt, const ModeSchedule& modeSchedule,
-                                                   const std::unordered_map<size_t, bool>& isStoEnabledInMode = {},
+                                                   const std::vector<std::pair<size_t, size_t>>& stoEnabledModeSwitches = {},
                                                    scalar_t dt_min = 10.0 * numeric_traits::limitEpsilon<scalar_t>());
 
 /**

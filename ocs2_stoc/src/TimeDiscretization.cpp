@@ -1,5 +1,6 @@
 #include "ocs2_stoc/TimeDiscretization.h"
 
+#include <set>
 #include <cassert>
 #include <string>
 
@@ -29,8 +30,40 @@ scalar_t getIntervalDuration(const Grid& start, const Grid& end) {
   return getIntervalEnd(end) - getIntervalStart(start);
 }
 
+std::vector<size_t> extractValidModeSequence(const std::vector<Grid>& timeDiscretizationGrid) {
+  std::vector<size_t> validModeSequence;
+  validModeSequence.reserve(timeDiscretizationGrid.back().phase+1); 
+  auto prevPhase = timeDiscretizationGrid.front().phase;
+  validModeSequence.push_back(timeDiscretizationGrid.front().mode);
+  for (const auto& e : timeDiscretizationGrid) {
+    if (e.phase != prevPhase) {
+      validModeSequence.push_back(e.mode);
+      prevPhase = e.phase;
+    }
+  }
+  return validModeSequence;
+};
+
+std::vector<bool> extractIsStoEnabledInPhase(const std::vector<Grid>& timeDiscretizationGrid,
+                                             const std::vector<std::pair<size_t, size_t>>& stoEnabledModeSwitches) {
+  const std::vector<size_t> validModeSequence = extractValidModeSequence(timeDiscretizationGrid);
+
+  std::vector<bool> isStoEnabledInPhase(validModeSequence.size()+1, false);
+  for (size_t phase=1; phase<validModeSequence.size(); ++phase) {
+    const auto modeSwitch = std::pair<size_t, size_t>(validModeSequence[phase-1], validModeSequence[phase]);
+    const bool sto = (std::find(stoEnabledModeSwitches.begin(), stoEnabledModeSwitches.end(), modeSwitch) != stoEnabledModeSwitches.end());
+    isStoEnabledInPhase[phase] = (sto || isStoEnabledInPhase[phase]);
+  }
+  for (size_t phase=0; phase<validModeSequence.size()-1; ++phase) {
+    const auto modeSwitch = std::pair<size_t, size_t>(validModeSequence[phase], validModeSequence[phase+1]);
+    const bool sto = (std::find(stoEnabledModeSwitches.begin(), stoEnabledModeSwitches.end(), modeSwitch) != stoEnabledModeSwitches.end());
+    isStoEnabledInPhase[phase] = (sto || isStoEnabledInPhase[phase]);
+  }
+  return isStoEnabledInPhase;
+}
+
 std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t finalTime, scalar_t dt, const ModeSchedule& modeSchedule, 
-                                                   const std::unordered_map<size_t, bool>& isStoEnabledInMode, scalar_t dt_min) {
+                                                   const std::vector<std::pair<size_t, size_t>>& stoEnabledModeSwitches, scalar_t dt_min) {
   auto timeDiscretization = multiPhaseTimeDiscretization(initTime, finalTime, dt, modeSchedule.eventTimes, dt_min);
   timeDiscretization.front().event = AnnotatedTime::Event::None; // disable post-event at the initial stage.
   std::vector<Grid> timeDiscretizationGrid;
@@ -46,40 +79,14 @@ std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t f
     constexpr bool stoNext = false;
     timeDiscretizationGrid.emplace_back(e.time, mode, phase, castEvent(e.event), sto, stoNext);
   }
-
-  auto extractValidModeSequence = [](const std::vector<Grid>& timeDiscretizationGrid) {
-    std::vector<size_t> validModeSequence;
-    validModeSequence.reserve(timeDiscretizationGrid.back().phase+1); 
-    auto prevPhase = timeDiscretizationGrid.front().phase;
-    validModeSequence.push_back(timeDiscretizationGrid.front().mode);
-    for (const auto& e : timeDiscretizationGrid) {
-      if (e.phase != prevPhase) {
-        validModeSequence.push_back(e.mode);
-        prevPhase = e.phase;
-      }
-    }
-    return validModeSequence;
-  };
-  const std::vector<size_t> validModeSequence = extractValidModeSequence(timeDiscretizationGrid);
-
-  auto checkIsStoEnabledInMode = [](const std::unordered_map<size_t, bool>& isStoEnabledInMode, size_t mode) {
-    if (isStoEnabledInMode.empty()) return false;
-    if (isStoEnabledInMode.find(mode) == isStoEnabledInMode.end()) return false;
-    return isStoEnabledInMode.at(mode); 
-  };
-  std::vector<bool> isStoEnabledInPhase;
-  isStoEnabledInPhase.reserve(validModeSequence.size()+2); // maximum size
-  for (const auto mode : validModeSequence) {
-    isStoEnabledInPhase.push_back(checkIsStoEnabledInMode(isStoEnabledInMode, mode));
-  }
-  isStoEnabledInPhase.push_back(false);
-  isStoEnabledInPhase.push_back(false);
+  const auto isStoEnabledInPhase = extractIsStoEnabledInPhase(timeDiscretizationGrid, stoEnabledModeSwitches);
   for (auto& e : timeDiscretizationGrid) {
     e.sto = isStoEnabledInPhase[e.phase];
     if (e.phase+1 < isStoEnabledInPhase.size()) {
       e.stoNext = isStoEnabledInPhase[e.phase+1];
     }
   }
+
   return timeDiscretizationGrid; 
 }
 

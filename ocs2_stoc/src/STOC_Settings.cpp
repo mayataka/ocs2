@@ -58,24 +58,7 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
 
   loadData::loadPtreeValue(pt, settings.dt, fieldName + ".dt", verbose);
 
-  std::vector<std::pair<size_t, size_t>> isStoEnabledInModePair;
-  loadData::loadStdVectorOfPair(filename, fieldName + ".isStoEnabledInMode", isStoEnabledInModePair, false);
-  settings.isStoEnabledInMode.reserve(isStoEnabledInModePair.size());
-  for (const auto& e : isStoEnabledInModePair) {
-    settings.isStoEnabledInMode.emplace(e.first, static_cast<bool>(e.second));
-  }
-  if (verbose) {
-    std::cerr << " #### 'isStoEnableInMode': {";
-    if (!isStoEnabledInModePair.empty()) {
-      for (int i = 0; i < isStoEnabledInModePair.size() - 1; ++i) {
-        std::cerr << "{" << isStoEnabledInModePair[i].first << ", " << std::boolalpha << static_cast<bool>(isStoEnabledInModePair[i].second) << "}, ";
-      }
-      if (isStoEnabledInModePair.size() > 0) {
-        std::cerr << "{" << isStoEnabledInModePair.back().first << ", " << std::boolalpha << static_cast<bool>(isStoEnabledInModePair.back().second) << "}";
-      }
-    }
-    std::cerr << "}\n";
-  }
+  loadData::loadStdVectorOfPair(filename, fieldName + ".stoEnabledModeSwitches", settings.stoEnabledModeSwitches, verbose);
 
   loadData::loadPtreeValue(pt, settings.maxTimeInterval, fieldName + ".maxTimeInterval", verbose);
   loadData::loadPtreeValue(pt, settings.useOptimizedModeShceduleInReferenceManager, fieldName + ".useOptimizedModeShceduleInReferenceManager ", verbose);
