@@ -233,10 +233,13 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     }
 
     // Update iterate
+    std::cerr << "update iterate 1" << "\n";
     updateIterate(stateTrajectory, inputTrajectory, costateTrajectory, ipmVariablesTrajectory, 
                   dx, du, dlmd, ipmVariablesDirectionTrajectory, primalStepSize, dualStepSize);
+    std::cerr << "update iterate 2" << "\n";
     updateIterate(initTime, finalTime, initModeSchedule, modeSchedule, stoIpmVariables, dts, stoIpmVariablesDirection, 
                   primalStepSize, dualStepSize);
+    std::cerr << "end update iterate 2" << "\n";
 
     // Update internal mode schedule 
     if (internalReferenceManagerPtr_) {
@@ -615,16 +618,7 @@ void STOC::updateIterate(vector_array_t& x, vector_array_t& u, vector_array_t& l
 void STOC::updateIterate(scalar_t initTime, scalar_t finalTime, const ModeSchedule& referenceModeSchedule, ModeSchedule& modeSchedule, 
                          ipm::IpmVariables& stoIpmVariables, const scalar_array_t& dts, 
                          const ipm::IpmVariablesDirection& stoIpmVariablesDirection, scalar_t primalStepSize, scalar_t dualStepSize) {
-  if (settings_.stoEnabledModeSwitches.empty()) return;
-
-  // const auto isStoEnabledInPhase = extractIsStoEnabledInPhase(timeDiscretizationGrid, settings_.stoEnabledModeSwitches);
-  // const auto validSwitchingTimeIndices = extractValidSwitchingTimeIndices(initTime, finalTime, referenceModeSchedule);
-  // for (size_t phase=0; phase<validSwitchingTimeIndices.size(); ++phase) {
-  //   const auto mode = modeSchedule.modeSequence[phase+validSwitchingTimeIndices.front()];
-  //   if (settings_.stoEnabledInModeSwitches.find(mode) != settings_.stoEnabledInModeSwitches.end()) {
-  //     if (settings_.isStoEnabledInMode[mode]) modeSchedule.eventTimes[validSwitchingTimeIndices[phase]] += primalStepSize * dts[phase];
-  //   }
-  // }
+  if (settings_.stoEnabledModeSwitches.empty() || dts.empty()) return;
 
   const auto validSwitchingTimeIndices = extractValidSwitchingTimeIndices(initTime, finalTime, referenceModeSchedule);
   for (size_t phase=0; phase<validSwitchingTimeIndices.size(); ++phase) {
