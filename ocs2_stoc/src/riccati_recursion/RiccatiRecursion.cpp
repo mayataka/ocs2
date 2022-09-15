@@ -28,20 +28,21 @@ void RiccatiRecursion::backwardRecursion(const std::vector<Grid>& timeDiscretiza
   resize(N);
   backwardRecursion_.computeFinal(modelData[N], riccatiData_[N]);
   for (int i=N-1; i>=0; --i) {
-    const bool sto     = timeDiscretizationGrid[i].sto;
+    const bool sto = timeDiscretizationGrid[i].sto;
     const bool stoNext = timeDiscretizationGrid[i].stoNext;
     if (timeDiscretizationGrid[i].event == Grid::Event::PreEvent) {
+      backwardRecursion_.computePreJump(riccatiData_[i+1], modelData[i], riccatiData_[i], lqrPolicy_[i], sto, stoNext);
+    } else if (timeDiscretizationGrid[i].event == Grid::Event::PostEvent) {
       const auto phase = timeDiscretizationGrid[i].phase;
-      const bool stoNextNext = timeDiscretizationGrid[i].stoNextNext;
-      backwardRecursion_.computePreJump(riccatiData_[i+1], modelData[i], riccatiData_[i], lqrPolicy_[i], stoPolicy_[phase+1], sto, stoNext, 
-                                        stoNextNext);
+      backwardRecursion_.computePostJump(riccatiData_[i+1], modelData[i], riccatiData_[i], lqrPolicy_[i], stoPolicy_[phase], 
+                                         sto, stoNext);
     } else {
       backwardRecursion_.computeIntermediate(riccatiData_[i+1], modelData[i], riccatiData_[i], lqrPolicy_[i], sto, stoNext);
     }
   }
   if (timeDiscretizationGrid[0].sto) {
     const auto phase = timeDiscretizationGrid[0].phase;
-    backwardRecursion_.modifyPreJump(riccatiData_[0], stoPolicy_[phase], timeDiscretizationGrid[0].stoNext);
+    backwardRecursion_.modifyPostJump(riccatiData_[0], stoPolicy_[phase], timeDiscretizationGrid[0].stoNext);
     riccatiData_[0].Phi.setZero();
   }
 }

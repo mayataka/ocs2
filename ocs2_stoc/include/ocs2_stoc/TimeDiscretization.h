@@ -20,11 +20,10 @@ struct Grid {
   Event event;
   bool sto;
   bool stoNext;
-  bool stoNextNext;
 
   /** Constructor defaulting to 'None' event  */
-  explicit Grid(scalar_t t, size_t m, size_t p, Event e = Event::None, bool s=false, bool sNext=false, bool sNextNext=false) 
-    : time(t), mode(m), phase(p), event(e), sto(s), stoNext(sNext), stoNextNext(sNextNext){};
+  explicit Grid(scalar_t t, size_t m, size_t p, Event e = Event::None, bool s=false, bool sNext=false) 
+    : time(t), mode(m), phase(p), event(e), sto(s), stoNext(sNext) {};
 };
 
 /** Computes the time at which to interpolate, respecting interpolation rules around event times */

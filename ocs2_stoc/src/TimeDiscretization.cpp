@@ -44,8 +44,7 @@ std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t f
     } 
     constexpr bool sto = false;
     constexpr bool stoNext = false;
-    constexpr bool stoNextNext = false;
-    timeDiscretizationGrid.emplace_back(e.time, mode, phase, castEvent(e.event), sto, stoNext, stoNextNext);
+    timeDiscretizationGrid.emplace_back(e.time, mode, phase, castEvent(e.event), sto, stoNext);
   }
 
   auto extractValidModeSequence = [](const std::vector<Grid>& timeDiscretizationGrid) {
@@ -79,9 +78,6 @@ std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t f
     e.sto = isStoEnabledInPhase[e.phase];
     if (e.phase+1 < isStoEnabledInPhase.size()) {
       e.stoNext = isStoEnabledInPhase[e.phase+1];
-    }
-    if (e.phase+2 < isStoEnabledInPhase.size()) {
-      e.stoNextNext = isStoEnabledInPhase[e.phase+2];
     }
   }
   return timeDiscretizationGrid; 
@@ -223,7 +219,6 @@ std::ostream& operator<<(std::ostream& stream, const std::vector<Grid>& timeDisc
            << ", event: " << toString(e.event) 
            << ", sto: " << std::boolalpha << e.sto
            << ", stoNext: " << std::boolalpha << e.stoNext
-           << ", stoNextNext: " << std::boolalpha << e.stoNextNext 
            << "\n";
   }
   return stream;

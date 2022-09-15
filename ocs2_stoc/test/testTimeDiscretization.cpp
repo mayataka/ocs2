@@ -224,7 +224,6 @@ TEST(testTimeDiscretization, testUpdateTimeIntervals) {
     EXPECT_EQ(grids[i].phase, gridsRef[i].phase);
     EXPECT_EQ(grids[i].sto, gridsRef[i].sto);
     EXPECT_EQ(grids[i].stoNext, gridsRef[i].stoNext);
-    EXPECT_EQ(grids[i].stoNextNext, gridsRef[i].stoNextNext);
   }
   const auto numGrids = getNumGrids(gridsRef);
   scalar_array_t updatedEventTimes = modeSchedule.eventTimes;

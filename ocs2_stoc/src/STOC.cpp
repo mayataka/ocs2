@@ -157,6 +157,7 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   std::vector<ipm::IpmVariablesDirection> ipmVariablesDirectionTrajectory;
   ipm::IpmVariablesDirection stoIpmVariablesDirection;
 
+  std::cout << initTimeDiscretization << std::endl;
   auto timeDiscretization = initTimeDiscretization;
   size_t iter = 0;
   bool initIpmVariables = true;
@@ -248,8 +249,11 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
     updateTimeIntervals(initTime, finalTime, dts, timeDiscretization);
     const scalar_t maxTimeInterval = getMaxTimeInterval(timeDiscretization);
     if (settings_.printSwitchingTimeOptimization) {
+      std::cerr << "[SwitchingTimeOptimization] Mode sequence: {" << toDelimitedString(modeSchedule.modeSequence) << "}\n";
       std::cerr << "[SwitchingTimeOptimization] Event times:   {" << toDelimitedString(modeSchedule.eventTimes) << "}\n";
+      std::cerr << "[SwitchingTimeOptimization] dts:           {" << toDelimitedString(dts) << "}\n";
     }
+
 
     // Check convergence
     convergence = checkConvergence(iter, barrierParameter, maxTimeInterval, performanceIndex, primalStepSize, dualStepSize);
