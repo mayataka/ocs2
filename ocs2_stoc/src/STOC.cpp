@@ -520,6 +520,7 @@ void STOC::summarizeModelData(const std::vector<Grid>& timeDiscretization) {
       const auto switchIndex = timeDiscretization[i].phase - 1;
       modelDataTrajectory[i].hamiltonian.h += stoModelData.stoCost.dfdx.coeff(switchIndex);
       modelDataTrajectory[i].hamiltonian.dhdt = stoModelData.stoCost.dfdxx.coeff(switchIndex, switchIndex); // diagonal approximation
+      modelDataTrajectory[i].hamiltonian.dhdt += settings_.stoRegularization;
     }
   }
 }

@@ -59,9 +59,9 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.dt, fieldName + ".dt", verbose);
 
   loadData::loadStdVectorOfPair(filename, fieldName + ".stoEnabledModeSwitches", settings.stoEnabledModeSwitches, verbose);
-
   loadData::loadPtreeValue(pt, settings.maxTimeInterval, fieldName + ".maxTimeInterval", verbose);
   loadData::loadPtreeValue(pt, settings.useOptimizedModeShceduleInReferenceManager, fieldName + ".useOptimizedModeShceduleInReferenceManager ", verbose);
+  loadData::loadPtreeValue(pt, settings.stoRegularization, fieldName + ".stoRegularization", verbose);
 
   loadData::loadPtreeValue(pt, settings.meshRefinementPrimalFeasTol, fieldName + ".meshRefinementPrimalFeasTol", verbose);
   loadData::loadPtreeValue(pt, settings.meshRefinementDualFeasTol, fieldName + ".meshRefinementDualFeasTol", verbose);

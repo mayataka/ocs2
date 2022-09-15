@@ -41,6 +41,7 @@ struct Settings {
   std::vector<std::pair<size_t, size_t>> stoEnabledModeSwitches; // Collection of the mode switches of which switching times will be optimized.
   scalar_t maxTimeInterval = 0.02; // Maximum time interval of the discretization in STO. 
   bool useOptimizedModeShceduleInReferenceManager = true; // If true, the optimized mode schedule is set to ReferenceManager after the optimization.
+  scalar_t stoRegularization = 0.0;
 
   // If the current iterate satisfies the these two criteria, the mesh-refinement is performed.
   scalar_t meshRefinementPrimalFeasTol = 1.0e-02;  // Mesh refinement condition : Primal feasibility, i.e., constraint violations, below this value
