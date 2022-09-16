@@ -17,10 +17,7 @@ BackwardRiccatiRecursion::BackwardRiccatiRecursion(RiccatiSolverMode riccatiSolv
     BtP_(),
     GK_(),
     Pf_(),
-    Ginv_4_(matrix_t::Zero(4, 4)),
-    Ginv_3_(matrix_t::Zero(3, 3)),
-    Ginv_2_(matrix_t::Zero(2, 2)),
-    Ginv_1_(0),
+    Ginv_(),
     llt_(),
     ldlt_() {
   setRegularization(switchingTimeTrustRegionRadius, enableSwitchingTimeTrustRegion);
@@ -76,47 +73,21 @@ void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& r
     cost.dfdu.noalias() += BtP_ * dynamics.f;
     cost.dfdu.noalias() -= dynamics.dfdu.transpose() * riccatiNext.s; 
   }
-  switch (nu)
-  {
-    case 4: {
-      Ginv_4_ = cost.dfduu.inverse();
-      lqrPolicy.K.noalias() = - Ginv_4_ * cost.dfdux;
-      lqrPolicy.k.noalias() = - Ginv_4_ * cost.dfdu;
-      break;
+  if (nu > 4) {
+    if (riccatiSolverMode_ == RiccatiSolverMode::Speed) {
+      llt_.compute(cost.dfduu);
+      lqrPolicy.K.noalias() = - llt_.solve(cost.dfdux);
+      lqrPolicy.k.noalias() = - llt_.solve(cost.dfdu);
+    } else {
+      ldlt_.compute(cost.dfduu);
+      lqrPolicy.K.noalias() = - ldlt_.solve(cost.dfdux);
+      lqrPolicy.k.noalias() = - ldlt_.solve(cost.dfdu);
     }
-    case 3: {
-      Ginv_3_ = cost.dfduu.inverse();
-      lqrPolicy.K.noalias() = - Ginv_3_ * cost.dfdux;
-      lqrPolicy.k.noalias() = - Ginv_3_ * cost.dfdu;
-      break;
-    }
-    case 2: {
-      Ginv_2_ = cost.dfduu.inverse();
-      lqrPolicy.K.noalias() = - Ginv_2_ * cost.dfdux;
-      lqrPolicy.k.noalias() = - Ginv_2_ * cost.dfdu;
-      break;
-    }
-    case 1: {
-      Ginv_1_ = 1.0 / cost.dfduu.coeff(0, 0);
-      lqrPolicy.K.noalias() = - Ginv_1_ * cost.dfdux;
-      lqrPolicy.k.noalias() = - Ginv_1_ * cost.dfdu;
-      break;
-    }
-    case 0: {
-      break;
-    }
-    default: {
-      if (riccatiSolverMode_ == RiccatiSolverMode::Speed) {
-        llt_.compute(cost.dfduu);
-        lqrPolicy.K.noalias() = - llt_.solve(cost.dfdux);
-        lqrPolicy.k.noalias() = - llt_.solve(cost.dfdu);
-      } else {
-        ldlt_.compute(cost.dfduu);
-        lqrPolicy.K.noalias() = - ldlt_.solve(cost.dfdux);
-        lqrPolicy.k.noalias() = - ldlt_.solve(cost.dfdu);
-      }
-      break;
-    }
+  }
+  else if (nu > 0) {
+    Ginv_ = cost.dfduu.inverse();
+    lqrPolicy.K.noalias() = - Ginv_ * cost.dfdux;
+    lqrPolicy.k.noalias() = - Ginv_ * cost.dfdu;
   }
   if (nu > 0) {
     GK_.noalias() = cost.dfduu * lqrPolicy.K; 
@@ -128,7 +99,9 @@ void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& r
   riccati.s.noalias()  = dynamics.dfdx.transpose() * riccatiNext.s;
   riccati.s.noalias() -= AtP_ * dynamics.f;
   riccati.s.noalias() -= cost.dfdx;
-  riccati.s.noalias() -= cost.dfdux.transpose() * lqrPolicy.k;
+  if (nu > 0) {
+    riccati.s.noalias() -= cost.dfdux.transpose() * lqrPolicy.k;
+  }
 }
 
 
@@ -138,83 +111,51 @@ void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& r
   computeIntermediate(riccatiNext, modelData, riccati, lqrPolicy);
   const auto& dynamics = modelData.dynamics;
   const auto& hamiltonian = modelData.hamiltonian;
-  if (!sto) {
-    riccati.Psi.setZero();
-    riccati.xi = 0.;
-    riccati.chi = 0.;
-    riccati.eta = 0.;
-    return;
-  }
 
+  const auto nx = modelData.stateDim;
   const auto nu = modelData.inputDim;
-  riccati.psi_x.noalias()  = AtP_ * hamiltonian.dfdt;
-  riccati.psi_x.noalias() += hamiltonian.dhdx;
-  riccati.psi_x.noalias() += dynamics.dfdx.transpose() * riccatiNext.Psi;
-  if (nu > 0) {
-    riccati.psi_u.noalias()  = BtP_ * hamiltonian.dfdt;
-    riccati.psi_u.noalias() += hamiltonian.dhdu;
-    riccati.psi_u.noalias() += dynamics.dfdu.transpose() * riccatiNext.Psi;
+  if (!sto) {
+    riccati.psi_x.setZero(nx);
+    riccati.psi_u.setZero(nu);
+    lqrPolicy.T.setZero(nu);
+  } else {
+    riccati.psi_x.noalias()  = AtP_ * hamiltonian.dfdt;
+    riccati.psi_x.noalias() += hamiltonian.dhdx;
+    riccati.psi_x.noalias() += dynamics.dfdx.transpose() * riccatiNext.Psi;
+    if (nu > 0) {
+      riccati.psi_u.noalias()  = BtP_ * hamiltonian.dfdt;
+      riccati.psi_u.noalias() += hamiltonian.dhdu;
+      riccati.psi_u.noalias() += dynamics.dfdu.transpose() * riccatiNext.Psi;
+    }
+    if (nu > 4) {
+      if (riccatiSolverMode_ == RiccatiSolverMode::Speed) {
+        lqrPolicy.T.noalias() = - llt_.solve(riccati.psi_u);
+      } else {
+        lqrPolicy.T.noalias() = - ldlt_.solve(riccati.psi_u);
+      }
+    }
+    else if (nu > 0) {
+      lqrPolicy.T.noalias() = - Ginv_ * riccati.psi_u;
+    }
   }
-  if (stoNext) {
+  if (!stoNext) {
+    riccati.phi_x.setZero(nx);
+    riccati.phi_u.setZero(nu);
+    lqrPolicy.W.setZero(nu);
+  } else {
     riccati.phi_x.noalias() = dynamics.dfdx.transpose() * riccatiNext.Phi;
     if (nu > 0) {
       riccati.phi_u.noalias() = dynamics.dfdu.transpose() * riccatiNext.Phi;
     }
-  } else {
-    riccati.phi_x.setZero();
-    if (nu > 0) {
-      riccati.phi_u.setZero();
-    }
-  }
-  switch (nu)
-  {
-    case 3: {
-      lqrPolicy.T.noalias() = - Ginv_3_ * riccati.psi_u;
-      if (stoNext) {
-        lqrPolicy.W.noalias() = - Ginv_3_ * riccati.phi_u;
-      } else {
-        lqrPolicy.W.setZero();
-      }
-      break;
-    }
-    case 2: {
-      lqrPolicy.T.noalias() = - Ginv_2_ * riccati.psi_u;
-      if (stoNext) {
-        lqrPolicy.W.noalias() = - Ginv_2_ * riccati.phi_u;
-      } else {
-        lqrPolicy.W.setZero();
-      }
-      break;
-    }
-    case 1: {
-      lqrPolicy.T.noalias() = - Ginv_1_ * riccati.psi_u;
-      if (stoNext) {
-        lqrPolicy.W.noalias() = - Ginv_1_ * riccati.phi_u;
-      } else {
-        lqrPolicy.W.setZero();
-      }
-      break;
-    }
-    case 0: {
-      break;
-    }
-    default: {
+    if (nu > 4) {
       if (riccatiSolverMode_ == RiccatiSolverMode::Speed) {
-        lqrPolicy.T.noalias() = - llt_.solve(riccati.psi_u);
-        if (stoNext) {
-          lqrPolicy.W.noalias() = - llt_.solve(riccati.phi_u);
-        } else {
-          lqrPolicy.W.setZero();
-        }
+        lqrPolicy.W.noalias() = - llt_.solve(riccati.phi_u);
       } else {
-        lqrPolicy.T.noalias() = - ldlt_.solve(riccati.psi_u);
-        if (stoNext) {
-          lqrPolicy.W.noalias() = - ldlt_.solve(riccati.phi_u);
-        } else {
-          lqrPolicy.W.setZero();
-        }
+        lqrPolicy.W.noalias() = - ldlt_.solve(riccati.phi_u);
       }
-      break;
+    }
+    else if (nu > 0) {
+      lqrPolicy.W.noalias() = - Ginv_ * riccati.phi_u;
     }
   }
   // The cost-to-go w.r.t. switching times
@@ -223,57 +164,57 @@ void BackwardRiccatiRecursion::computeIntermediate(const RiccatiRecursionData& r
   if (nu > 0) {
     riccati.Psi.noalias() += lqrPolicy.K.transpose() * riccati.psi_u;
   }
-  if (stoNext) {
-    riccati.Phi              = riccati.phi_x;
-    if (nu > 0) {
-      riccati.Phi.noalias() += lqrPolicy.K.transpose() * riccati.phi_u;
-    }
-  } else {
-    riccati.Phi.setZero();
+  riccati.Phi              = riccati.phi_x;
+  if (nu > 0) {
+    riccati.Phi.noalias() += lqrPolicy.K.transpose() * riccati.phi_u;
   }
   // Vtt
-  Pf_.noalias() = riccatiNext.P * hamiltonian.dfdt;
-  riccati.xi    = hamiltonian.dfdt.dot(Pf_);
-  riccati.xi   += hamiltonian.dhdt; 
-  riccati.xi   += 2 * riccatiNext.Psi.dot(hamiltonian.dfdt);
-  if (nu > 0) {
-    riccati.xi   += lqrPolicy.T.dot(riccati.psi_u);
+  riccati.xi  = 0.;
+  if (sto) {
+    Pf_.noalias() = riccatiNext.P * hamiltonian.dfdt;
+    riccati.xi    = hamiltonian.dfdt.dot(Pf_);
+    riccati.xi   += hamiltonian.dhdt; 
+    riccati.xi   += 2 * riccatiNext.Psi.dot(hamiltonian.dfdt);
+    if (nu > 0) {
+      riccati.xi += lqrPolicy.T.dot(riccati.psi_u);
+    }
+    riccati.xi   += riccatiNext.xi;
   }
-  riccati.xi   += riccatiNext.xi;
+  riccati.chi = 0.0;
+  riccati.rho = 0.0;
   if (stoNext) {
-    riccati.chi  = hamiltonian.dhdt;
+    riccati.chi    = hamiltonian.dhdt;
     // TODO: change this to 
     // riccati.chi  = cost.dfdtt_prev;
-    riccati.chi += riccatiNext.Phi.dot(hamiltonian.dfdt);
+    riccati.chi   += riccatiNext.Phi.dot(hamiltonian.dfdt);
     if (nu > 0) {
       riccati.chi += lqrPolicy.T.dot(riccati.phi_u);
     }
-    riccati.chi += riccatiNext.chi;
-    riccati.rho = riccatiNext.rho;
+    riccati.chi   += riccatiNext.chi;
+    riccati.rho    = riccatiNext.rho;
     if (nu > 0) {
       riccati.rho += lqrPolicy.W.dot(riccati.phi_u);
     }
-  } else {
-    riccati.chi = 0.0;
-    riccati.rho = 0.0;
   }
   // Vt
   Pf_.noalias() = riccatiNext.P * dynamics.f - riccatiNext.s;
-  riccati.eta   = hamiltonian.dfdt.dot(Pf_);
-  riccati.eta  += hamiltonian.h;
-  riccati.eta  += riccatiNext.Psi.dot(dynamics.f);
-  if (nu > 0) {
-    riccati.eta  += riccati.psi_u.dot(lqrPolicy.k);
+  riccati.eta = 0.0;
+  if (sto) {
+    riccati.eta  = hamiltonian.dfdt.dot(Pf_);
+    riccati.eta  += hamiltonian.h;
+    riccati.eta  += riccatiNext.Psi.dot(dynamics.f);
+    if (nu > 0) {
+      riccati.eta  += riccati.psi_u.dot(lqrPolicy.k);
+    }
+    riccati.eta  += riccatiNext.eta;
   }
-  riccati.eta  += riccatiNext.eta;
+  riccati.iota = 0.0;
   if (stoNext) {
     riccati.iota  = riccatiNext.Phi.dot(dynamics.f);
     if (nu > 0) {
       riccati.iota += riccati.phi_u.dot(lqrPolicy.k);
     }
     riccati.iota += riccatiNext.iota;
-  } else {
-    riccati.iota = 0.0;
   }
 }
 

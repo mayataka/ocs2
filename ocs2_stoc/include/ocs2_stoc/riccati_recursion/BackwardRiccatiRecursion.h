@@ -39,9 +39,8 @@ private:
   RiccatiSolverMode riccatiSolverMode_;
   scalar_t switchingTimeTrustRegionRadius_, minQuadraticCoeff_;
   bool enableSwitchingTimeTrustRegion_;
-  matrix_t AtP_, BtP_, GK_, Ginv_4_, Ginv_3_, Ginv_2_;
+  matrix_t AtP_, BtP_, GK_, Ginv_;
   vector_t Pf_;
-  scalar_t Ginv_1_;
   Eigen::LLT<matrix_t> llt_;
   Eigen::LDLT<matrix_t> ldlt_;
 
