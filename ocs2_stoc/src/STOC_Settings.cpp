@@ -62,7 +62,8 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.maxTimeInterval, fieldName + ".maxTimeInterval", verbose);
   loadData::loadPtreeValue(pt, settings.useOptimizedModeShceduleInReferenceManager, fieldName + ".useOptimizedModeShceduleInReferenceManager ", verbose);
   loadData::loadPtreeValue(pt, settings.stoRegularization, fieldName + ".stoRegularization", verbose);
-  loadData::loadPtreeValue(pt, settings.skippedFinalStoModeSwiches, fieldName + ".skippedFinalStoModeSwiches ", verbose);
+  loadData::loadPtreeValue(pt, settings.skippedInitialStoModeSwitches, fieldName + ".skippedInitialStoModeSwitches", verbose);
+  loadData::loadPtreeValue(pt, settings.skippedFinalStoModeSwitches, fieldName + ".skippedFinalStoModeSwitches", verbose);
 
   loadData::loadPtreeValue(pt, settings.meshRefinementPrimalFeasTol, fieldName + ".meshRefinementPrimalFeasTol", verbose);
   loadData::loadPtreeValue(pt, settings.meshRefinementDualFeasTol, fieldName + ".meshRefinementDualFeasTol", verbose);
@@ -77,6 +78,7 @@ Settings loadSettings(const std::string& filename, const std::string& fieldName,
   loadData::loadPtreeValue(pt, settings.printSolverStatistics, fieldName + ".printSolverStatistics", verbose);
   loadData::loadPtreeValue(pt, settings.printLinesearch, fieldName + ".printLinesearch", verbose);
   loadData::loadPtreeValue(pt, settings.printSwitchingTimeOptimization, fieldName + ".printSwitchingTimeOptimization", verbose);
+  loadData::loadPtreeValue(pt, settings.printDebugInfo, fieldName + ".printDebugInfo", verbose);
 
   loadData::loadPtreeValue(pt, settings.nThreads, fieldName + ".nThreads", verbose);
   loadData::loadPtreeValue(pt, settings.threadPriority, fieldName + ".threadPriority", verbose);

@@ -63,7 +63,9 @@ std::vector<bool> extractIsStoEnabledInPhase(const std::vector<Grid>& timeDiscre
 }
 
 std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t finalTime, scalar_t dt, const ModeSchedule& modeSchedule, 
-                                                   const std::vector<std::pair<size_t, size_t>>& stoEnabledModeSwitches, scalar_t dt_min) {
+                                                   const std::vector<std::pair<size_t, size_t>>& stoEnabledModeSwitches, 
+                                                   size_t skippedInitialStoModeSwitches, size_t skippedFinalStoModeSwitches,
+                                                   scalar_t dt_min) {
   auto timeDiscretization = multiPhaseTimeDiscretization(initTime, finalTime, dt, modeSchedule.eventTimes, dt_min);
   timeDiscretization.front().event = AnnotatedTime::Event::None; // disable post-event at the initial stage.
   std::vector<Grid> timeDiscretizationGrid;
@@ -79,7 +81,14 @@ std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t f
     constexpr bool stoNext = false;
     timeDiscretizationGrid.emplace_back(e.time, mode, phase, castEvent(e.event), sto, stoNext);
   }
-  const auto isStoEnabledInPhase = extractIsStoEnabledInPhase(timeDiscretizationGrid, stoEnabledModeSwitches);
+  auto isStoEnabledInPhase = extractIsStoEnabledInPhase(timeDiscretizationGrid, stoEnabledModeSwitches);
+  for (int i = 0; i < std::min(skippedInitialStoModeSwitches, isStoEnabledInPhase.size()); ++i) {
+    isStoEnabledInPhase[i] = false;
+  }
+  for (int i = 0; i < std::min(skippedFinalStoModeSwitches, isStoEnabledInPhase.size()); ++i) {
+    isStoEnabledInPhase[isStoEnabledInPhase.size() - i - 1] = false;
+  }
+
   for (auto& e : timeDiscretizationGrid) {
     e.sto = isStoEnabledInPhase[e.phase];
     if (e.phase+1 < isStoEnabledInPhase.size()) {

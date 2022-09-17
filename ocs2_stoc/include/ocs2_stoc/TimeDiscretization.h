@@ -57,6 +57,7 @@ std::vector<bool> extractIsStoEnabledInPhase(const std::vector<Grid>& timeDiscre
  */
 std::vector<Grid> multiPhaseTimeDiscretizationGrid(scalar_t initTime, scalar_t finalTime, scalar_t dt, const ModeSchedule& modeSchedule,
                                                    const std::vector<std::pair<size_t, size_t>>& stoEnabledModeSwitches = {},
+                                                   size_t skippedInitialStoModeSwitches = 0, size_t skippedFinalStoModeSwitches = 0,
                                                    scalar_t dt_min = 10.0 * numeric_traits::limitEpsilon<scalar_t>());
 
 /**

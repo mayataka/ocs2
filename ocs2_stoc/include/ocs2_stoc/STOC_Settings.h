@@ -42,7 +42,8 @@ struct Settings {
   scalar_t maxTimeInterval = 0.02; // Maximum time interval of the discretization in STO. 
   bool useOptimizedModeShceduleInReferenceManager = true; // If true, the optimized mode schedule is set to ReferenceManager after the optimization.
   scalar_t stoRegularization = 0.0;
-  size_t skippedFinalStoModeSwiches = 0; 
+  size_t skippedInitialStoModeSwitches = 0;
+  size_t skippedFinalStoModeSwitches = 0;
 
   // If the current iterate satisfies the these two criteria, the mesh-refinement is performed.
   scalar_t meshRefinementPrimalFeasTol = 1.0e-02;  // Mesh refinement condition : Primal feasibility, i.e., constraint violations, below this value
@@ -58,6 +59,7 @@ struct Settings {
   bool printSolverStatistics = false;           // Print benchmarking  
   bool printLinesearch = false;                 // Print linesearch (step-size) information
   bool printSwitchingTimeOptimization = false;  // Print switching time optimization-related information
+  bool printDebugInfo = false;
 
   // Threading
   size_t nThreads = 4;

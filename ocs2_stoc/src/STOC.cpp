@@ -131,7 +131,9 @@ void STOC::runImpl(scalar_t initTime, const vector_t& initState, scalar_t finalT
   // Determine time discretization, taking into account event times.
   auto modeSchedule = initModeSchedule;
   const auto initTimeDiscretization = multiPhaseTimeDiscretizationGrid(initTime, finalTime, settings_.dt, modeSchedule, 
-                                                                       settings_.stoEnabledModeSwitches);
+                                                                       settings_.stoEnabledModeSwitches,
+                                                                       settings_.skippedInitialStoModeSwitches,
+                                                                       settings_.skippedFinalStoModeSwitches);
   const auto numPhases = initTimeDiscretization.back().phase + 1;
 
   // initialize Barrier param
